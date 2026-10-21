@@ -1,0 +1,74 @@
+name: Cheese
+
+options:
+  bundleIdPrefix: com.maanitgupta
+  deploymentTarget:
+    macOS: "27.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "27.0"
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    GCC_TREAT_WARNINGS_AS_ERRORS: YES
+    # Stable signing keeps Screen Recording / Accessibility grants across rebuilds.
+    # The author's personal team: the OU of the Apple Development certificate (not the ID in its name).
+    DEVELOPMENT_TEAM: 8H5274FWRC
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: Apple Development
+
+packages:
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    from: 3.1.0
+
+targets:
+  Cheese:
+    type: application
+    platform: macOS
+    sources: [Cheese]
+    dependencies:
+      - package: KeyboardShortcuts
+    settings:
+      base:
+        PRODUCT_NAME: Cheese
+        PRODUCT_BUNDLE_IDENTIFIER: com.maanitgupta.cheese
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Cheese
+        INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 Maanit Gupta. MIT License."
+        # Not sandboxed: Accessibility and posted CGEvents don't work inside the sandbox.
+        ENABLE_APP_SANDBOX: NO
+        ENABLE_HARDENED_RUNTIME: NO
+
+  CheeseTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [CheeseTests]
+    dependencies:
+      - target: Cheese
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.maanitgupta.cheese.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Cheese.app/Contents/MacOS/Cheese
+        BUNDLE_LOADER: $(TEST_HOST)
+
+schemes:
+  Cheese:
+    build:
+      targets:
+        Cheese: all
+        CheeseTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets: [CheeseTests]
