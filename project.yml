@@ -33,7 +33,7 @@ targets:
     platform: macOS
     sources:
       - path: Cheese
-        excludes: [Resources/Renderers]
+        excludes: [Resources/Renderers, Info.plist, Cheese.entitlements]
       # Folder reference: the vendored renderers keep their layout under Renderers/ in the bundle,
       # so office.html can load its scripts by relative path.
       - path: Cheese/Resources/Renderers
@@ -41,6 +41,20 @@ targets:
         buildPhase: resources
     dependencies:
       - package: KeyboardShortcuts
+      - target: CheeseFinderExtension
+    # Merged with the generated Info.plist keys below.
+    info:
+      path: Cheese/Info.plist
+      properties:
+        CFBundleURLTypes:
+          - CFBundleURLName: com.maanitgupta.cheese
+            CFBundleURLSchemes: [cheese]
+        # The Finder extension hands jobs over through this team-prefixed group; no profile needed on macOS.
+        CheeseAppGroup: $(TeamIdentifierPrefix)com.maanitgupta.cheese
+    entitlements:
+      path: Cheese/Cheese.entitlements
+      properties:
+        com.apple.security.application-groups: [$(TeamIdentifierPrefix)com.maanitgupta.cheese]
     settings:
       base:
         PRODUCT_NAME: Cheese
@@ -54,9 +68,46 @@ targets:
         INFOPLIST_KEY_LSUIElement: YES
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 Maanit Gupta. MIT License."
+        # Asked once, when the command palette uses the current Finder selection for a Files tool.
+        INFOPLIST_KEY_NSAppleEventsUsageDescription: "Cheese reads the files selected in Finder so Files tools can work on them. Office apps are asked to save as PDF only if you turn that on in Settings."
         # Not sandboxed: Accessibility and posted CGEvents don't work inside the sandbox.
         ENABLE_APP_SANDBOX: NO
         ENABLE_HARDENED_RUNTIME: NO
+
+  # Finder's right-click "Cheese ▸" submenu. Sandboxed, as Finder Sync requires; it only builds the
+  # menu and hands the job to the app through the App Group, with no tool logic of its own.
+  CheeseFinderExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - CheeseFinderExtension
+      - Cheese/Files/Core/ToolID.swift
+      - Cheese/Files/Core/ToolApplicability.swift
+      - Cheese/Files/Core/FilesHandoff.swift
+    info:
+      path: CheeseFinderExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Cheese
+        LSUIElement: true
+        CheeseAppGroup: $(TeamIdentifierPrefix)com.maanitgupta.cheese
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.FinderSync
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).FinderSync
+    entitlements:
+      path: CheeseFinderExtension/CheeseFinderExtension.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups: [$(TeamIdentifierPrefix)com.maanitgupta.cheese]
+    settings:
+      base:
+        PRODUCT_NAME: CheeseFinderExtension
+        PRODUCT_BUNDLE_IDENTIFIER: com.maanitgupta.cheese.FinderExtension
+        MARKETING_VERSION: 0.1.1
+        CURRENT_PROJECT_VERSION: 2
+        GENERATE_INFOPLIST_FILE: YES
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_HARDENED_RUNTIME: NO
+        SKIP_INSTALL: YES
 
   CheeseTests:
     type: bundle.unit-test

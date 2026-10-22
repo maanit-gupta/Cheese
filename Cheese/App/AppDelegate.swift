@@ -39,7 +39,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 showWelcome: { [weak welcomeWindow] in welcomeWindow?.show() },
                 appHotkeys: AppHotkeysSettingsModel(store: appHotkeyStore, index: installedApps) { [weak self] in
                     self?.takenAppHotkeyCharacters() ?? []
-                }
+                },
+                files: FilesSettingsModel()
             )
         )
 
@@ -51,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         EditorShortcutVariant.sync()
         registry.refresh()
+        FilesHandoff.setEnabled(Preferences().isModuleEnabled(.files))
         observeDefaults()
         welcomeWindow.showIfFirstLaunch()
         Logger.app.info("Cheese launched")
@@ -58,6 +60,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         registry?.stopAll()
+    }
+
+    /// `cheese://job/<uuid>` from the Finder extension: open that tool on the handed-over files.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            files?.openHandoff(url)
+        }
     }
 
     private func makeRegistry() -> ActionRegistry {
@@ -145,6 +154,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             (.settingsClipboard, "Clipboard", "doc.on.clipboard", .clipboard),
             (.settingsOCR, "OCR", "text.viewfinder", .ocr),
             (.settingsAppHotkeys, "App Hotkeys", "app.badge", .appHotkeys),
+            (.settingsFiles, "Files", "doc.on.doc", .files),
             (.settingsPermissions, "Permissions", "lock.shield", .permissions),
             (.settingsAbout, "About", "info.circle", .about),
         ]
@@ -164,6 +174,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 EditorShortcutVariant.sync()
                 self?.registry?.refresh()
                 self?.clipboard?.enforceRetention()
+                // The Finder extension shows "Cheese Files is turned off" when the module is off.
+                FilesHandoff.setEnabled(Preferences().isModuleEnabled(.files))
             }
         }
     }

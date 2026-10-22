@@ -8,6 +8,7 @@ struct SettingsDependencies {
     var supportedOCRLanguages: @MainActor () -> Set<OCRLanguage>
     var showWelcome: @MainActor () -> Void
     var appHotkeys: AppHotkeysSettingsModel
+    var files: FilesSettingsModel
 }
 
 /// Hosts `SettingsView` in a plain window. A SwiftUI `Settings` scene is awkward to open

@@ -6,6 +6,7 @@ enum SettingsTab: Hashable {
     case clipboard
     case ocr
     case appHotkeys
+    case files
     case permissions
     case about
 }
@@ -37,6 +38,9 @@ struct SettingsView: View {
             }
             Tab("App Hotkeys", systemImage: "app.badge", value: .appHotkeys) {
                 AppHotkeysSettingsView(model: dependencies.appHotkeys)
+            }
+            Tab("Files", systemImage: "doc.on.doc", value: .files) {
+                FilesSettingsView(model: dependencies.files)
             }
             Tab("Permissions", systemImage: "lock.shield", value: .permissions) {
                 PermissionsSettingsView(

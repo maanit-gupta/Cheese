@@ -61,6 +61,26 @@ final class FilesModule: CheeseModule {
         }
     }
 
+    /// Opens the tool a Finder extension job asks for, after checking the files still exist.
+    func openHandoff(_ url: URL) {
+        guard let id = FilesHandoff.jobID(from: url) else { return }
+        guard let container = FilesHandoff.container else {
+            Logger.files.error("No App Group container for the Finder job")
+            return
+        }
+        do {
+            let job = try FilesHandoff.consume(id, from: container)
+            let existing = job.fileURLs.filter { FileManager.default.fileExists(atPath: $0.path(percentEncoded: false)) }
+            guard isRunning else {
+                Toast.show("Files is turned off in Settings", systemImage: "exclamationmark.triangle.fill")
+                return
+            }
+            open(job.tool, files: existing)
+        } catch {
+            Logger.files.error("Couldn't read the Finder job: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
     func run(_ work: JobWork) {
         Task { await queue.enqueue(work) }
     }

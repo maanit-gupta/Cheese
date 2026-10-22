@@ -358,3 +358,24 @@ struct ConvertImageToolTests {
         #expect(ImageFormat.writable.contains(.png))
     }
 }
+
+struct FilesHandoffTests {
+    @Test func parsesOnlyJobURLs() throws {
+        let id = UUID()
+        let url = try #require(FilesHandoff.url(for: id))
+        #expect(url.absoluteString == "cheese://job/\(id.uuidString)")
+        #expect(FilesHandoff.jobID(from: url) == id)
+        #expect(FilesHandoff.jobID(from: URL(string: "cheese://other/\(id.uuidString)")!) == nil)
+        #expect(FilesHandoff.jobID(from: URL(string: "https://job/\(id.uuidString)")!) == nil)
+        #expect(FilesHandoff.jobID(from: URL(string: "cheese://job/not-a-uuid")!) == nil)
+        #expect(FilesHandoff.jobID(from: URL(string: "cheese://job/\(id.uuidString)/extra")!) == nil)
+    }
+
+    @Test func jobsAreReadOnceThenDeleted() throws {
+        let container = makeTemporaryDirectory()
+        let job = FilesHandoff.Job(tool: .mergePDFs, fileURLs: [URL(filePath: "/tmp/a.pdf"), URL(filePath: "/tmp/b.pdf")])
+        let id = try FilesHandoff.write(job, to: container)
+        #expect(try FilesHandoff.consume(id, from: container) == job)
+        #expect(throws: (any Error).self) { try FilesHandoff.consume(id, from: container) }
+    }
+}
