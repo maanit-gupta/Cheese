@@ -25,6 +25,8 @@ final class DrawOverlayWindow: NSPanel {
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
     }
 
-    // Keyboard shortcuts and text editing need key status.
-    override var canBecomeKey: Bool { true }
+    // Keyboard shortcuts and text editing need key status, except in pass-through, where the
+    // keyboard belongs to the app underneath.
+    override var canBecomeKey: Bool { !ignoresMouseEvents }
+    override var canBecomeMain: Bool { false }
 }

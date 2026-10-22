@@ -58,6 +58,8 @@ final class CanvasView: NSView, NSTextViewDelegate {
     private var isLiveInkDirty = false
     private var isLaserAnimating = false
     private var fadingLayers: [CALayer] = []
+    /// A ⌃-click in progress, handled as a right-click until the button comes up.
+    private var isControlClicking = false
 
     init(frame: CGRect, page: CanvasPageID, controller: DrawModeController) {
         self.page = page
@@ -108,6 +110,8 @@ final class CanvasView: NSView, NSTextViewDelegate {
         super.layout()
         CATransaction.begin()
         CATransaction.setDisableActions(true)
+        liveHost.matchFlippedCoordinates()
+        presenterHost.matchFlippedCoordinates()
         presenter.container.frame = presenterHost.bounds
         liveInkLayer.frame = liveHost.bounds
         vignette.frame = backgroundHost.bounds
@@ -117,8 +121,21 @@ final class CanvasView: NSView, NSTextViewDelegate {
 
     override func viewDidChangeBackingProperties() {
         super.viewDidChangeBackingProperties()
+        let scale = window?.backingScaleFactor ?? 2
+        for layer in [liveInkLayer, snapPreview] {
+            layer.contentsScale = scale
+        }
         refresh()
     }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        liveHost.matchFlippedCoordinates()
+        presenterHost.matchFlippedCoordinates()
+    }
+
+    /// Whether the live and presenter layers draw in the canvas's y-down coordinates. For tests.
+    var transientLayersDrawFlipped: Bool { liveHost.drawsFlipped && presenterHost.drawsFlipped }
 
     // MARK: Rendering
 
@@ -145,6 +162,8 @@ final class CanvasView: NSView, NSTextViewDelegate {
             for item in items {
                 bakedView.setNeedsDisplay(CanvasRenderer.paintedBounds(of: item))
             }
+            // Painted now, in the same transaction that clears the live stroke: no blank frame between them.
+            bakedView.displayIfNeeded()
         case .full:
             baked = target
             outlines.keep(only: Set(target.map(\.id)))
@@ -206,6 +225,10 @@ final class CanvasView: NSView, NSTextViewDelegate {
             updateFrameLink()
             return
         }
+        let startsStroke = liveInkLayer.path == nil
+        if startsStroke {
+            liveHost.matchFlippedCoordinates()
+        }
         let color = CanvasRenderer.nsColor(ink.color)
         liveInkLayer.fillColor = (ink.isNeon ? CanvasRenderer.neonCore(of: color) : color).cgColor
         liveInkLayer.shadowColor = color.cgColor
@@ -213,6 +236,10 @@ final class CanvasView: NSView, NSTextViewDelegate {
         liveInkLayer.shadowRadius = CanvasRenderer.neonBlur(width: ink.options.size) / 2
         liveInkLayer.shadowOffset = .zero
         isLiveInkDirty = true
+        // The first dot shows at once; after that the display link redraws once per frame.
+        if startsStroke {
+            flushLiveInk()
+        }
         updateFrameLink()
     }
 
@@ -229,16 +256,20 @@ final class CanvasView: NSView, NSTextViewDelegate {
     }
 
     @objc private func frameTick() {
-        if isLiveInkDirty, let ink = liveInk {
-            isLiveInkDirty = false
-            CATransaction.begin()
-            CATransaction.setDisableActions(true)
-            liveInkLayer.path = StrokeBuilder.path(points: ink.points, pressures: ink.pressures, options: ink.options)
-            CATransaction.commit()
-        }
+        flushLiveInk()
         if isLaserAnimating {
             presenter.updateLaser(at: CACurrentMediaTime())
         }
+    }
+
+    /// Rebuilds the live stroke's outline if it changed since the last frame.
+    func flushLiveInk() {
+        guard isLiveInkDirty, let ink = liveInk else { return }
+        isLiveInkDirty = false
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        liveInkLayer.path = StrokeBuilder.path(points: ink.points, pressures: ink.pressures, options: ink.options)
+        CATransaction.commit()
     }
 
     /// The magic pen's clean shape, morphing in over the rough stroke. Nil puts the stroke back.
@@ -281,6 +312,7 @@ final class CanvasView: NSView, NSTextViewDelegate {
     /// Disappearing ink: shows `item` for a few seconds, then fades it out. Never part of the document.
     func showDisappearing(_ item: CanvasItem) {
         let layer = CAShapeLayer()
+        layer.contentsScale = liveInkLayer.contentsScale
         layer.actions = ["path": NSNull(), "bounds": NSNull(), "position": NSNull(), "fillColor": NSNull()]
         guard configure(layer, toShow: item) else { return }
         liveHost.hostedLayer.insertSublayer(layer, below: liveInkLayer)
@@ -441,14 +473,32 @@ final class CanvasView: NSView, NSTextViewDelegate {
 
     override func mouseDown(with event: NSEvent) {
         window?.makeKey()
+        if window?.firstResponder !== self, !isEditingText {
+            window?.makeFirstResponder(self)
+        }
+        // ⌃-click is the Mac's other secondary click: it opens the radial menu like a right-click.
+        if controller?.isSecondaryClick(event) == true {
+            isControlClicking = true
+            rightMouseDown(with: event)
+            return
+        }
         controller?.mouseDown(on: page, at: location(of: event), event: event)
     }
 
     override func mouseDragged(with event: NSEvent) {
+        if isControlClicking {
+            rightMouseDragged(with: event)
+            return
+        }
         controller?.mouseDragged(on: page, at: location(of: event), event: event)
     }
 
     override func mouseUp(with event: NSEvent) {
+        if isControlClicking {
+            isControlClicking = false
+            rightMouseUp(with: event)
+            return
+        }
         controller?.mouseUp(on: page, at: location(of: event), event: event)
     }
 
@@ -536,13 +586,13 @@ private final class FloatingItemsView: NSView {
 }
 
 /// A transparent layer-hosting view that never takes clicks, for layers drawn above the canvas.
+/// Its sublayers use the canvas's coordinates: top-left origin, y down.
 final class LayerHostView: NSView {
     let hostedLayer = CALayer()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        hostedLayer.isGeometryFlipped = true
-        hostedLayer.actions = ["bounds": NSNull(), "position": NSNull()]
+        hostedLayer.actions = ["bounds": NSNull(), "position": NSNull(), "geometryFlipped": NSNull()]
         layer = hostedLayer
         wantsLayer = true
     }
@@ -552,7 +602,31 @@ final class LayerHostView: NSView {
         fatalError("init(coder:) is not supported")
     }
 
+    override var isFlipped: Bool { true }
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        matchFlippedCoordinates()
+    }
+
+    override func layout() {
+        super.layout()
+        matchFlippedCoordinates()
+    }
+
+    /// Flips the hosted layer only if the layers above it don't already. AppKit flips a flipped
+    /// view's own layer (the canvas's), so always flipping here too cancelled that out and drew the
+    /// live stroke, laser and radial menu mirrored top to bottom.
+    func matchFlippedCoordinates() {
+        let flipsAbove = hostedLayer.superlayer?.contentsAreFlipped() ?? false
+        if hostedLayer.isGeometryFlipped == flipsAbove {
+            hostedLayer.isGeometryFlipped = !flipsAbove
+        }
+    }
+
+    /// Whether sublayers draw y-down, like the canvas. Exposed for tests.
+    var drawsFlipped: Bool { hostedLayer.contentsAreFlipped() }
 }
 
 /// Stroke outlines are the costly part of painting ink; each is built once per item and reused

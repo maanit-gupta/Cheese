@@ -1037,6 +1037,12 @@ final class DrawModeController {
         cursor.set()
     }
 
+    /// A ⌃-click, which macOS treats as a right-click. Not while the draw hotkey (⌃⌥D) is held for
+    /// quick ink: its ⌃ is already down.
+    func isSecondaryClick(_ event: NSEvent) -> Bool {
+        effectiveModifiers(event.modifierFlags).contains(.control) && settings.tool != .passThrough
+    }
+
     private func cancelRadial() {
         radialTask?.cancel()
         radialTask = nil

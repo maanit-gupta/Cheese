@@ -689,4 +689,101 @@ struct CanvasPlacementTests {
         #expect(atLine.alphaComponent > 0.9 && atLine.redComponent > 0.8)
         #expect(mirrored.alphaComponent < 0.1)
     }
+
+    private func makeController() -> DrawModeController {
+        DrawModeController(services: DrawModeController.Services(
+            captureDisplay: { _, _ in throw CaptureError.displayNotFound },
+            openEditor: { _ in },
+            isScreenRecordingGranted: { false },
+            explainMissingScreenRecording: { _ in },
+            usesLetterKeys: { false }
+        ))
+    }
+
+    /// The live stroke must show under the brush while it's drawn, not mirrored top to bottom.
+    /// Rendered through the real window's layer tree, where AppKit's own flipping applies.
+    @Test func liveInkShowsWhereItIsDrawn() throws {
+        let screen = try #require(NSScreen.screens.first)
+        let window = DrawOverlayWindow(screen: screen, displayID: 9)
+        window.setFrame(CGRect(x: 0, y: 0, width: 200, height: 200), display: false)
+        let view = CanvasView(frame: CGRect(x: 0, y: 0, width: 200, height: 200), page: 9, controller: makeController())
+        view.showsVignette = false
+        window.contentView = view
+        // AppKit builds the layer tree once the window is on screen; invisible, it can't flash.
+        window.alphaValue = 0
+        window.orderFrontRegardless()
+        window.displayIfNeeded()
+        defer { window.close() }
+
+        #expect(view.transientLayersDrawFlipped)
+        let points = stride(from: 20.0, through: 180.0, by: 10.0).map { CGPoint(x: $0, y: 30) }
+        view.setLiveInk(LiveInk(
+            points: points, pressures: [], options: .pen(width: 12, simulatesPressure: false),
+            color: CanvasColor(red: 1, green: 0, blue: 0), isNeon: false
+        ))
+        view.flushLiveInk()
+
+        var root = try #require(view.layer)
+        while let parent = root.superlayer { root = parent }
+        let context = try #require(CGContext(
+            data: nil, width: 200, height: 200, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        root.render(in: context)
+        let rep = NSBitmapImageRep(cgImage: try #require(context.makeImage()))
+        // Bitmap rows count from the top, like the canvas.
+        let atLine = try #require(rep.colorAt(x: 100, y: 30))
+        let mirrored = try #require(rep.colorAt(x: 100, y: 170))
+        #expect(atLine.redComponent > 0.8 && atLine.greenComponent < 0.3)
+        #expect(mirrored.redComponent < 0.5 || mirrored.greenComponent > 0.3)
+    }
+
+    /// A pen stroke goes down, drags and lifts: exactly one undoable item, where it was drawn.
+    @Test func penStrokeCommitsOneUndoableItem() throws {
+        let page: CanvasPageID = 9
+        let controller = makeController()
+        controller.chooseTool(.pen)
+        let event = { (type: NSEvent.EventType, time: TimeInterval) in
+            NSEvent.mouseEvent(with: type, location: .zero, modifierFlags: [], timestamp: time, windowNumber: 0, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) ?? NSEvent()
+        }
+        controller.mouseDown(on: page, at: CGPoint(x: 20, y: 30), event: event(.leftMouseDown, 0))
+        for (index, x) in stride(from: 30.0, through: 180.0, by: 10.0).enumerated() {
+            controller.mouseDragged(on: page, at: CGPoint(x: x, y: 30), event: event(.leftMouseDragged, Double(index + 1) / 120))
+        }
+        controller.mouseUp(on: page, at: CGPoint(x: 180, y: 30), event: event(.leftMouseUp, 1))
+
+        let items = controller.document.items(on: page)
+        #expect(items.count == 1)
+        let bounds = try #require(items.first?.geometryBounds)
+        #expect(bounds.minY > 20 && bounds.maxY < 40)
+        #expect(bounds.minX < 30 && bounds.maxX > 170)
+        #expect(controller.settings.canUndo)
+
+        controller.undo()
+        #expect(controller.document.items(on: page).isEmpty)
+        controller.redo()
+        #expect(controller.document.items(on: page).count == 1)
+    }
+}
+
+// MARK: - Stroke outlines stay in the input's coordinates
+
+struct StrokeBuilderCoordinateTests {
+    /// The outline wraps the points it was built from: same place, y-down, never mirrored or shifted.
+    @Test func outlineSurroundsItsPoints() {
+        let points = stride(from: 20.0, through: 180.0, by: 5.0).map { CGPoint(x: $0, y: 30 + $0 / 10) }
+        let width: CGFloat = 8
+        let bounds = StrokeBuilder.path(points: points, options: .pen(width: width, simulatesPressure: false)).boundingBoxOfPath
+        #expect(bounds.minX >= 20 - width && bounds.minX <= 20 + width)
+        #expect(bounds.maxX >= 180 - width && bounds.maxX <= 180 + width)
+        #expect(bounds.minY >= 32 - width && bounds.minY <= 32 + width)
+        #expect(bounds.maxY >= 48 - width && bounds.maxY <= 48 + width)
+    }
+
+    @Test func singlePointMakesADotThere() {
+        let bounds = StrokeBuilder.path(points: [CGPoint(x: 50, y: 70)], options: .pen(width: 10, simulatesPressure: false)).boundingBoxOfPath
+        #expect(!bounds.isEmpty)
+        #expect(abs(bounds.midX - 50) < 2 && abs(bounds.midY - 70) < 2)
+    }
 }
