@@ -117,7 +117,7 @@ final class RegionSelectionView: NSView {
         )
         let text = "\(Int(pixels.width)) × \(Int(pixels.height))" as NSString
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium),
+            .font: DesignTokens.Overlay.badgeFont,
             .foregroundColor: NSColor.white,
         ]
         let size = text.size(withAttributes: attributes)
@@ -125,8 +125,8 @@ final class RegionSelectionView: NSView {
         if origin.y < bounds.minY + 2 { origin.y = selection.minY + 4 }
         origin.x = min(max(origin.x, bounds.minX + 2), bounds.maxX - size.width - 10)
         let background = CGRect(origin: origin, size: CGSize(width: size.width + 8, height: size.height + 4))
-        NSColor.black.withAlphaComponent(0.7).setFill()
-        NSBezierPath(roundedRect: background, xRadius: 4, yRadius: 4).fill()
+        DesignTokens.Overlay.badgeBackground.setFill()
+        NSBezierPath(roundedRect: background, xRadius: DesignTokens.Radius.small, yRadius: DesignTokens.Radius.small).fill()
         text.draw(at: CGPoint(x: origin.x + 4, y: origin.y + 2), withAttributes: attributes)
     }
 

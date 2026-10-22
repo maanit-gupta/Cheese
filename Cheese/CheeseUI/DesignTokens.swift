@@ -71,6 +71,24 @@ enum DesignTokens {
         NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency
     }
 
+    /// For overlays drawn with AppKit and Core Animation (capture overlay, radial menu), which can't
+    /// use SwiftUI materials.
+    enum Overlay {
+        /// Dark badges over screen content, like the selection size: opaque with Reduce Transparency.
+        @MainActor
+        static var badgeBackground: NSColor {
+            NSColor.black.withAlphaComponent(reducesTransparency ? 1 : 0.7)
+        }
+
+        @MainActor static var badgeFont: NSFont {
+            .monospacedDigitSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .medium)
+        }
+
+        @MainActor static var labelFont: NSFont {
+            .systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
+        }
+    }
+
     /// `seconds`, or 0 when the user asked for reduced motion.
     @MainActor
     static func duration(_ seconds: TimeInterval) -> TimeInterval {

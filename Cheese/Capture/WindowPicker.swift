@@ -148,9 +148,9 @@ final class WindowPickerView: NSView {
         guard let hovered = state.hovered else { return }
         let local = hovered.frame.offsetBy(dx: -screenFrame.minX, dy: -screenFrame.minY)
         guard local.intersects(bounds) else { return }
-        NSColor.systemBlue.withAlphaComponent(0.25).setFill()
+        NSColor.controlAccentColor.withAlphaComponent(DesignTokens.Opacity.activeTint).setFill()
         local.fill()
-        NSColor.systemBlue.setStroke()
+        NSColor.controlAccentColor.setStroke()
         let border = NSBezierPath(rect: local.insetBy(dx: 1.5, dy: 1.5))
         border.lineWidth = 3
         border.stroke()
