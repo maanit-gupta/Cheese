@@ -11,6 +11,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
     case keepAwake
     case appHotkeys
     case commandPalette
+    case files
 
     var id: Self { self }
 
@@ -26,6 +27,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .keepAwake: "Keep Awake"
         case .appHotkeys: "App Hotkeys"
         case .commandPalette: "Command Palette"
+        case .files: "Files"
         }
     }
 }

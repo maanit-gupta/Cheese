@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: SettingsWindowController?
     private var welcomeWindow: WelcomeWindowController?
     private var clipboard: ClipboardModule?
+    private var files: FilesModule?
     private let appHotkeyStore = AppHotkeyStore()
     private let installedApps = InstalledAppIndex()
     private var defaultsObserver: Task<Void, Never>?
@@ -44,7 +45,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let registry = makeRegistry()
         self.registry = registry
-        menuBar = MenuBarController(statusMenu: StatusMenu(registry: registry))
+        menuBar = MenuBarController(
+            statusMenu: StatusMenu(registry: registry) { [weak self] in self?.files?.progressMenuItems ?? [] },
+            dropMenu: { [weak self] urls in self?.files?.dropMenu(for: urls) }
+        )
         EditorShortcutVariant.sync()
         registry.refresh()
         observeDefaults()
@@ -69,6 +73,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             annotate: { image in editor.open(image) },
             recognizeText: { image in await ocr.copyText(fromTallImage: image) }
         ))
+        let files = FilesModule { [weak self] text in self?.menuBar?.setIndicator(text, for: .files) }
+        self.files = files
         let modules: [any CheeseModule] = [
             clipboard,
             ScreenshotsModule(capture: capture, editor: editor),
@@ -86,12 +92,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             )),
             QRModule(),
-            KeepAwakeModule { [weak self] text in self?.menuBar?.setIndicator(text) },
+            KeepAwakeModule { [weak self] text in self?.menuBar?.setIndicator(text, for: .keepAwake) },
             AppHotkeysModule(store: appHotkeyStore, index: installedApps),
             CommandPaletteModule(
                 availableActions: { [weak self] in self?.registry?.availableActions ?? [] },
                 perform: { [weak self] id, context in self?.registry?.perform(id, context: context) }
             ),
+            files,
         ]
         let preferences = Preferences()
         return ActionRegistry(

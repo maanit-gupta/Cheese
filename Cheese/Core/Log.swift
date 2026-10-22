@@ -18,4 +18,5 @@ extension Logger {
     static let appHotkeys = Logger(subsystem: subsystem, category: "AppHotkeys")
     static let palette = Logger(subsystem: subsystem, category: "Palette")
     static let draw = Logger(subsystem: subsystem, category: "Draw")
+    static let files = Logger(subsystem: subsystem, category: "Files")
 }

@@ -53,18 +53,25 @@ final class StatusMenu: NSObject {
 
     let menu = NSMenu()
     private let registry: ActionRegistry
+    /// Items for work in progress, like running Files jobs, shown at the top of the menu.
+    private let progressItems: () -> [NSMenuItem]
 
-    init(registry: ActionRegistry) {
+    init(registry: ActionRegistry, progressItems: @escaping () -> [NSMenuItem] = { [] }) {
         self.registry = registry
+        self.progressItems = progressItems
         super.init()
         rebuild()
     }
 
     func rebuild() {
         menu.removeAllItems()
+        let progress = progressItems()
+        for item in progress {
+            menu.addItem(item)
+        }
         let sections = Self.visibleSections(of: Self.layout) { registry.isAvailable($0) }
         for (index, section) in sections.enumerated() {
-            if index > 0 {
+            if index > 0 || !progress.isEmpty {
                 menu.addItem(.separator())
             }
             if let header = section.header {

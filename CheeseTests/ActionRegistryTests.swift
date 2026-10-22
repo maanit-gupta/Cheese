@@ -72,6 +72,7 @@ struct ActionCatalogueTests {
             KeepAwakeModule { _ in },
             AppHotkeysModule(store: AppHotkeyStore(defaults: UserDefaults(suiteName: "ActionCatalogueTests") ?? .standard), index: InstalledAppIndex(folders: [])),
             CommandPaletteModule(availableActions: { [] }, perform: { _, _ in }),
+            FilesModule { _ in },
         ]
     }
 
@@ -154,7 +155,16 @@ struct ActionCatalogueTests {
             case let .submenu(_, _, actions): inMenu.formUnion(actions)
             }
         }
-        #expect(Set(actions.map(\.id)).isSubset(of: inMenu))
+        // Files tools are reached by dropping files on the icon, from Finder and from the palette.
+        let menuActions = actions.filter { $0.module != .files }
+        #expect(Set(menuActions.map(\.id)).isSubset(of: inMenu))
+    }
+
+    @Test func filesToolsArePaletteActions() {
+        let files = actions.filter { $0.module == .files }
+        #expect(!files.isEmpty)
+        #expect(files.allSatisfy { $0.title.hasPrefix("Files: ") && $0.title.hasSuffix("…") })
+        #expect(action(.files(.convertImage))?.title == "Files: Convert Image Format…")
     }
 }
 

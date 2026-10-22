@@ -15,6 +15,13 @@ enum PreferenceKey {
     static func moduleEnabled(_ module: ModuleID) -> String {
         "moduleEnabled_\(module.rawValue)"
     }
+
+    static let filesNativeFallback = "filesNativeFallback"
+
+    /// Last-used options of a Files tool, as JSON.
+    static func fileToolOptions(_ tool: ToolID) -> String {
+        "fileToolOptions_\(tool.rawValue)"
+    }
 }
 
 enum OCRLineBreakMode: String, CaseIterable, Sendable {
