@@ -364,17 +364,18 @@ final class HTTPServer {
     var isRunning: Bool { listener != nil }
 
     /// Starts listening on `address` and returns the port: `preferredPort` when it's free,
-    /// otherwise any. Already running on that address, it just returns the port.
-    func start(on address: String, preferredPort: UInt16? = nil) async throws -> UInt16 {
+    /// otherwise any. With `identity`, it speaks HTTPS with that certificate. Already running on
+    /// that address, it just returns the port.
+    func start(on address: String, preferredPort: UInt16? = nil, identity: sec_identity_t? = nil) async throws -> UInt16 {
         if listener != nil, self.address == address, let port {
             return port
         }
         stop()
         if let preferredPort, let port = NWEndpoint.Port(rawValue: preferredPort),
-           let bound = try? await listen(on: address, port: port) {
+           let bound = try? await listen(on: address, port: port, identity: identity) {
             return bound
         }
-        return try await listen(on: address, port: .any)
+        return try await listen(on: address, port: .any, identity: identity)
     }
 
     func stop() {
@@ -390,8 +391,16 @@ final class HTTPServer {
         connections.removeAll()
     }
 
-    private func listen(on address: String, port: NWEndpoint.Port) async throws -> UInt16 {
-        let parameters = NWParameters.tcp
+    private func listen(on address: String, port: NWEndpoint.Port, identity: sec_identity_t?) async throws -> UInt16 {
+        let parameters: NWParameters
+        if let identity {
+            let tls = NWProtocolTLS.Options()
+            sec_protocol_options_set_local_identity(tls.securityProtocolOptions, identity)
+            sec_protocol_options_set_min_tls_protocol_version(tls.securityProtocolOptions, .TLSv12)
+            parameters = NWParameters(tls: tls)
+        } else {
+            parameters = .tcp
+        }
         parameters.requiredLocalEndpoint = .hostPort(host: NWEndpoint.Host(address), port: port)
         let listener: NWListener
         do {

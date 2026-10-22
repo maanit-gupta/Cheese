@@ -47,6 +47,7 @@ enum HTTPClient {
         headers: [(String, String)] = [],
         body: HTTPResponse.Body = .empty,
         timeout: Duration = .seconds(30),
+        identity: ShareIdentity? = nil,
         onProgress: @escaping @Sendable (Int64) -> Void = { _ in }
     ) async throws -> HTTPClientResponse {
         let fingerprint = Mutex<String?>(nil)
@@ -62,6 +63,10 @@ enum HTTPClient {
                 // Self-signed by design; identity is the fingerprint, checked by the caller.
                 complete(true)
             }, .global())
+            // Present our certificate too, so the device can tell who's sending.
+            if let local = identity?.secIdentity {
+                sec_protocol_options_set_local_identity(tls.securityProtocolOptions, local)
+            }
             parameters = NWParameters(tls: tls)
         } else {
             parameters = .tcp

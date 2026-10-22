@@ -165,7 +165,8 @@ private struct SharePanelView: View {
     private var statusLine: String {
         switch model.service.listening {
         case .stopped, .starting: "Starting…"
-        case .listening: "Visible as \(Preferences().shareDeviceName) · unencrypted (LocalSend HTTP mode)"
+        case .listening:
+            "Visible as \(Preferences().shareDeviceName)" + (model.service.isEncrypted ? " · encrypted" : " · unencrypted")
         case let .unavailable(message): message
         }
     }

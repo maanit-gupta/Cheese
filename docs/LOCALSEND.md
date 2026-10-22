@@ -28,16 +28,17 @@ from that README.
 | 4.1–4.3 the same calls against a peer (sending) | ✅ | `LocalSendSender` |
 | Text messages (a single `text/plain` file with its content in `preview`, answered with `204`) | ✅ both ways | `FileInfo.isMessage` |
 | 6.1 `GET /info` | ✅ | `ShareService.route` |
-| HTTPS peers: sending to devices in LocalSend's default HTTPS mode, checking their certificate's SHA-256 against the announced fingerprint | ✅ | `HTTPClient`, `TLSIdentity.matches` |
+| 2. Fingerprint / HTTPS mode: Cheese serves the API over HTTPS with its own certificate, and its fingerprint is that certificate's SHA-256 | ✅ | `TLSIdentity`, `SelfSignedCertificate` |
+| HTTPS peers: sending to devices in HTTPS mode, presenting Cheese's certificate as the client certificate and checking theirs against the announced fingerprint | ✅ | `HTTPClient`, `TLSIdentity.matches` |
 
 ## Not implemented
 
-- **HTTPS for Cheese's own server.** LocalSend's HTTPS mode needs a self-signed certificate. Making one
-  needs `swift-certificates` + `swift-crypto`, which needs the author's approval first. Until then Cheese
-  runs **HTTP mode**: it announces `"protocol": "http"`, its fingerprint is a random string kept in
-  UserDefaults (`shareFingerprint`), and Settings → Share labels transfers **unencrypted**. LocalSend
-  devices talk HTTP to a device that announces HTTP. "Always accept" is then keyed by the fingerprint
-  the sender *reports*, which another device on the network could copy.
+- **Client certificates on incoming connections.** In HTTPS mode LocalSend derives a sender's fingerprint
+  from its client certificate. Network.framework on macOS can only *require* a client certificate, not
+  request one optionally, and requiring it would refuse senders that don't present one. So Cheese
+  doesn't ask, and **Always Accept** is keyed by the fingerprint the sender *reports* in
+  `prepare-upload`. Transfers are still encrypted; a device on the network could copy another's
+  reported fingerprint to skip the prompt.
 - **3.2 HTTP legacy discovery** (scanning every address on the subnet). Multicast plus `register` finds
   devices on normal home and office networks; the legacy scan is slow and noisy.
 - **5. Reverse transfer / download API** (`prepare-download`, `download`). Cheese announces
@@ -45,9 +46,21 @@ from that README.
 - **PINs** (`?pin=`). Cheese asks the user to accept each transfer instead, or trusts the device.
 - **Folders.** Cheese sends files, text and links only.
 
+## Cheese's certificate
+
+Made on first use and kept in the Keychain under the label "Cheese Share": a self-signed ECDSA P-256
+certificate (SHA-256 signature), valid for ten years, usable for TLS server and client auth. It's
+written by `SelfSignedCertificate`, a small DER encoder signed with CryptoKit, rather than with
+`swift-certificates`: that package worked but added 6.9 MB to the app, against v3's 2 MB budget, so the
+author chose to hand-write the one certificate Cheese needs. Its fingerprint (SHA-256 of the DER,
+lowercase hex) is shown in Settings → Share. If the Keychain won't store it, Cheese falls back to HTTP
+mode with a random fingerprint and Settings says the connection is unencrypted.
+
 ## Cheese's browser page (not part of LocalSend)
 
-The Phone (scan QR) tile serves `http://<mac-ip>:<port>/<128-bit token>/` from the same server:
+The Phone (scan QR) tile serves `http://<mac-ip>:<port>/<128-bit token>/` from a second, plain-HTTP
+listener on its own port, because phone browsers refuse self-signed certificates (the spec's section 5
+notes the same):
 
 | Route | Does |
 |---|---|

@@ -40,6 +40,10 @@ final class ShareService {
     static let idleLifetime: Duration = .seconds(10 * 60)
 
     private(set) var listening = Listening.stopped
+    /// LocalSend transfers use HTTPS (false only when the Keychain wouldn't hold a certificate).
+    private(set) var isEncrypted = false
+    /// The plain-HTTP port of the Phone tile's page; browsers refuse self-signed certificates.
+    private(set) var browserPort: UInt16?
     private(set) var peers: [LocalSendPeer] = []
     private(set) var discoveryProblem: String?
     private(set) var transfers: [LocalSendPeer.ID: Transfer] = [:]
@@ -51,6 +55,7 @@ final class ShareService {
     @ObservationIgnored private var transferTasks: [LocalSendPeer.ID: Task<Void, Never>] = [:]
     @ObservationIgnored private var idleTask: Task<Void, Never>?
     @ObservationIgnored private let discovery = LocalSendDiscovery()
+    @ObservationIgnored private var identity: ShareIdentity?
     @ObservationIgnored private lazy var receiver = LocalSendReceiver(hooks: LocalSendReceiver.Hooks(
         destination: { Preferences().shareDestination },
         maxBytes: { Preferences().shareMaxBytes },
@@ -66,16 +71,23 @@ final class ShareService {
         onText: { [hooks] text in hooks.receivedText(text, "your phone") },
         onFileReceived: { file in Self.notifyReceived([file], from: "your phone") }
     ))
-    @ObservationIgnored private lazy var server: HTTPServer = {
-        let server = HTTPServer { [weak self] request, body in
-            await self?.route(request, body: body) ?? .status(404)
-        }
+    /// LocalSend's API, over HTTPS when there's a certificate.
+    @ObservationIgnored private lazy var server: HTTPServer = makeServer { [weak self] request, body in
+        await self?.routeLocalSend(request, body: body) ?? .status(404)
+    }
+    /// The Phone tile's page, over plain HTTP.
+    @ObservationIgnored private lazy var browserServer: HTTPServer = makeServer { [weak self] request, body in
+        await self?.routeBrowser(request, body: body) ?? .status(404)
+    }
+
+    private func makeServer(_ handler: @escaping HTTPServer.Handler) -> HTTPServer {
+        let server = HTTPServer(handler: handler)
         server.onFailure = { [weak self] reason in
             self?.stop()
             self?.listening = .unavailable(reason)
         }
         return server
-    }()
+    }
 
     init(hooks: Hooks) {
         self.hooks = hooks
@@ -96,8 +108,8 @@ final class ShareService {
 
     /// The Phone tile's link.
     var browserURL: URL? {
-        guard case let .listening(address, port) = listening else { return nil }
-        return browser.url(address: address, port: port)
+        guard case let .listening(address, _) = listening, let browserPort else { return nil }
+        return browser.url(address: address, port: browserPort)
     }
 
     /// What this Mac tells LocalSend devices about itself.
@@ -108,9 +120,9 @@ final class ShareService {
             version: LocalSend.protocolVersion,
             deviceModel: TLSIdentity.deviceModel,
             deviceType: .desktop,
-            fingerprint: TLSIdentity.fingerprint(),
+            fingerprint: identity?.fingerprint ?? TLSIdentity.fingerprint(),
             port: port,
-            transport: TLSIdentity.transport,
+            transport: identity == nil ? .http : .https,
             download: false
         )
     }
@@ -150,8 +162,14 @@ final class ShareService {
             return
         }
         listening = .starting
+        if identity == nil {
+            identity = TLSIdentity.loadOrCreate()
+        }
+        isEncrypted = identity != nil
+        discovery.identity = identity
         do {
-            let port = try await server.start(on: address, preferredPort: LocalSend.port)
+            let port = try await server.start(on: address, preferredPort: LocalSend.port, identity: identity?.secIdentity)
+            browserPort = try await browserServer.start(on: address)
             listening = .listening(address: address, port: port)
             hooks.setListening(true)
             discovery.start { [weak self] in self?.deviceInfo ?? LocalSend.DeviceInfo(alias: "", version: "", fingerprint: "") }
@@ -173,6 +191,8 @@ final class ShareService {
         receiver.stop()
         discovery.stop()
         server.stop()
+        browserServer.stop()
+        browserPort = nil
         browser.reset()
         peers.removeAll()
         listening = .stopped
@@ -197,9 +217,10 @@ final class ShareService {
         guard !items.isEmpty, transferTasks[peer.id] == nil else { return }
         transfers[peer.id] = Transfer(state: .waiting, itemCount: items.count)
         let info = deviceInfo
+        let identity = identity
         transferTasks[peer.id] = Task { [weak self] in
             do {
-                try await LocalSendSender.send(items, to: peer, as: info) { fraction in
+                try await LocalSendSender.send(items, to: peer, as: info, identity: identity) { fraction in
                     Task { @MainActor in self?.progress(fraction, for: peer.id) }
                 }
                 self?.finished(peer, error: nil)
@@ -259,7 +280,11 @@ final class ShareService {
 
     // MARK: Routing
 
-    private func route(_ request: HTTPRequest, body: HTTPRequestBody) async -> HTTPResponse {
+    private func routeBrowser(_ request: HTTPRequest, body: HTTPRequestBody) async -> HTTPResponse {
+        browser.handles(request.path) ? await browser.handle(request, body: body) : .status(404)
+    }
+
+    private func routeLocalSend(_ request: HTTPRequest, body: HTTPRequestBody) async -> HTTPResponse {
         let api = LocalSend.apiPrefix
         switch request.path {
         case api + "/register":
@@ -283,9 +308,6 @@ final class ShareService {
         case api + "/cancel":
             return receiver.cancel(request)
         default:
-            if browser.handles(request.path) {
-                return await browser.handle(request, body: body)
-            }
             return .status(404)
         }
     }

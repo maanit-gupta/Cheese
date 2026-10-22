@@ -528,3 +528,113 @@ struct ShareHandoffTests {
         #expect(!FileManager.default.fileExists(atPath: folder.path(percentEncoded: false)))
     }
 }
+
+// MARK: - TLS
+
+struct TLSCertificateTests {
+    @Test func makesASelfSignedP256CertificateMacOSAccepts() throws {
+        let key = P256.Signing.PrivateKey()
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let der = try TLSIdentity.makeCertificate(key: key, now: now)
+        let certificate = try #require(SecCertificateCreateWithData(nil, der as CFData))
+        #expect(SecCertificateCopySubjectSummary(certificate) as String? == "Cheese Share")
+        let publicKey = try #require(SecCertificateCopyKey(certificate))
+        let exported = try #require(SecKeyCopyExternalRepresentation(publicKey, nil) as Data?)
+        #expect(exported == key.publicKey.x963Representation)
+        // The fingerprint is the SHA-256 of exactly these bytes, as LocalSend computes it.
+        #expect(TLSIdentity.fingerprint(ofCertificate: der) == SHA256.hash(data: der).map { String(format: "%02x", $0) }.joined())
+    }
+
+    @Test func macOSVerifiesItsSignatureAsATrustedAnchor() throws {
+        let der = try TLSIdentity.makeCertificate(key: P256.Signing.PrivateKey())
+        let certificate = try #require(SecCertificateCreateWithData(nil, der as CFData))
+        var trust: SecTrust?
+        #expect(SecTrustCreateWithCertificates(certificate, SecPolicyCreateBasicX509(), &trust) == errSecSuccess)
+        let evaluated = try #require(trust)
+        SecTrustSetAnchorCertificates(evaluated, [certificate] as CFArray)
+        SecTrustSetAnchorCertificatesOnly(evaluated, true)
+        var error: CFError?
+        #expect(SecTrustEvaluateWithError(evaluated, &error), "\(String(describing: error))")
+    }
+
+    @Test func eachKeyGetsItsOwnCertificate() throws {
+        let first = try TLSIdentity.makeCertificate(key: P256.Signing.PrivateKey())
+        let second = try TLSIdentity.makeCertificate(key: P256.Signing.PrivateKey())
+        #expect(TLSIdentity.fingerprint(ofCertificate: first) != TLSIdentity.fingerprint(ofCertificate: second))
+    }
+}
+
+/// Real HTTPS between two LocalSend endpoints, with a Keychain identity made the way the app makes
+/// its own. Opt-in (`SHARE_KEYCHAIN=1`) since it touches the Keychain; it uses its own label and
+/// deletes it afterwards, so the app's identity is left alone.
+@MainActor
+struct ShareHTTPSTests {
+    private nonisolated static var enabled: Bool {
+        ProcessInfo.processInfo.environment["SHARE_KEYCHAIN"] == "1"
+    }
+
+    @Test(.enabled(if: enabled)) func localSendOverHTTPSChecksTheFingerprint() async throws {
+        let label = "Cheese Share Test \(UUID().uuidString)"
+        defer { TLSIdentity.remove(label: label) }
+        let identity = try #require(TLSIdentity.loadOrCreate(label: label))
+        var texts: [String] = []
+        let receiver = LocalSendReceiver(hooks: LocalSendReceiver.Hooks(
+            destination: { FileManager.default.temporaryDirectory },
+            maxBytes: { 1_000 },
+            ask: { _, _ in .accept },
+            trustStore: TrustStore(defaults: UserDefaults(suiteName: "HTTPS-\(UUID().uuidString)") ?? .standard),
+            onText: { text, _ in texts.append(text) },
+            onFilesReceived: { _, _ in }, onProblem: { _ in }
+        ))
+        let server = HTTPServer { [receiver] request, body in await receiver.prepareUpload(request, body: body) }
+        let port = try await server.start(on: "127.0.0.1", identity: identity.secIdentity)
+        defer { server.stop() }
+        let me = LocalSend.DeviceInfo(alias: "Me", version: "2.2", fingerprint: identity.fingerprint, transport: .https)
+
+        let honest = try #require(LocalSendPeer(
+            info: LocalSend.DeviceInfo(alias: "Mac", version: "2.2", fingerprint: identity.fingerprint, port: Int(port), transport: .https),
+            address: "127.0.0.1"
+        ))
+        try await LocalSendSender.send([.text("secret")], to: honest, as: me, identity: identity) { _ in }
+        try await LocalSendSender.send([.text("again")], to: honest, as: me, identity: identity) { _ in }
+        #expect(texts == ["secret", "again"])
+
+        let impostor = try #require(LocalSendPeer(
+            info: LocalSend.DeviceInfo(alias: "Mac", version: "2.2", fingerprint: String(repeating: "0", count: 64), port: Int(port), transport: .https),
+            address: "127.0.0.1"
+        ))
+        await #expect(throws: SendError.identityMismatch) {
+            try await LocalSendSender.send([.text("leak")], to: impostor, as: me, identity: identity) { _ in }
+        }
+    }
+}
+
+struct DERTests {
+    @Test func lengths() {
+        #expect(DER.length(0) == [0x00])
+        #expect(DER.length(127) == [0x7F])
+        #expect(DER.length(128) == [0x81, 0x80])
+        #expect(DER.length(300) == [0x82, 0x01, 0x2C])
+    }
+
+    @Test func objectIdentifiers() {
+        // ecdsa-with-SHA256 and the common-name attribute, as every certificate encodes them.
+        #expect(DER.oid("1.2.840.10045.4.3.2") == [0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x04, 0x03, 0x02])
+        #expect(DER.oid("2.5.4.3") == [0x06, 0x03, 0x55, 0x04, 0x03])
+    }
+
+    @Test func integersStayPositive() {
+        #expect(DER.integer([0x00, 0x00, 0x05]) == [0x02, 0x01, 0x05])
+        #expect(DER.integer([0x80]) == [0x02, 0x02, 0x00, 0x80])
+        #expect(DER.integer([]) == [0x02, 0x01, 0x00])
+    }
+
+    @Test func timesSwitchToGeneralizedIn2050() {
+        let utc = DER.time(Date(timeIntervalSince1970: 1_800_000_000))
+        #expect(utc.first == 0x17)
+        #expect(String(decoding: utc.dropFirst(2), as: UTF8.self) == "270115080000Z")
+        let generalized = DER.time(Date(timeIntervalSince1970: 2_600_000_000))
+        #expect(generalized.first == 0x18)
+        #expect(String(decoding: generalized.dropFirst(2), as: UTF8.self).hasPrefix("2052"))
+    }
+}

@@ -86,6 +86,7 @@ enum LocalSendSender {
         _ items: [OutgoingItem],
         to peer: LocalSendPeer,
         as info: LocalSend.DeviceInfo,
+        identity: ShareIdentity? = nil,
         onProgress: @escaping @Sendable (Double) -> Void
     ) async throws {
         guard !items.isEmpty else { throw SendError.nothingToSend }
@@ -95,7 +96,8 @@ enum LocalSendSender {
             "POST", to: peer.endpoint, target: LocalSend.apiPrefix + "/prepare-upload",
             headers: [("Content-Type", "application/json")], body: .data(LocalSend.encode(request)),
             // The device waits for its user to accept.
-            timeout: .seconds(120)
+            timeout: .seconds(120),
+            identity: identity
         )
         if peer.transport == .https, !TLSIdentity.matches(prepared.peerFingerprint, announced: peer.fingerprint) {
             throw SendError.identityMismatch
@@ -130,7 +132,7 @@ enum LocalSendSender {
                 let base = done
                 let uploaded = try await HTTPClient.send(
                     "POST", to: peer.endpoint, target: target,
-                    headers: [("Content-Type", item.mimeType)], body: body, timeout: .seconds(60)
+                    headers: [("Content-Type", item.mimeType)], body: body, timeout: .seconds(60), identity: identity
                 ) { sent in
                     onProgress(Double(base + sent) / Double(total))
                 }
@@ -141,7 +143,8 @@ enum LocalSendSender {
         } catch {
             // Tell the device, so it doesn't wait for files that won't come.
             _ = try? await HTTPClient.send(
-                "POST", to: peer.endpoint, target: LocalSend.apiPrefix + "/cancel?" + query(["sessionId": response.sessionId]), timeout: .seconds(5)
+                "POST", to: peer.endpoint, target: LocalSend.apiPrefix + "/cancel?" + query(["sessionId": response.sessionId]),
+                timeout: .seconds(5), identity: identity
             )
             throw error
         }

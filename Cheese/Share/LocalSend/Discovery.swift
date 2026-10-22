@@ -54,6 +54,8 @@ final class LocalSendDiscovery {
 
     var onPeer: (LocalSendPeer) -> Void = { _ in }
     var onStatus: (Status) -> Void = { _ in }
+    /// Presented when registering with HTTPS devices.
+    var identity: ShareIdentity?
     private var group: NWConnectionGroup?
     private var info: () -> LocalSend.DeviceInfo = { LocalSend.DeviceInfo(alias: "", version: LocalSend.protocolVersion, fingerprint: "") }
 
@@ -146,11 +148,12 @@ final class LocalSendDiscovery {
         var answer = ours
         answer.announce = nil
         let body = LocalSend.encode(answer)
+        let identity = identity
         Task { [weak self] in
             do {
                 _ = try await HTTPClient.send(
                     "POST", to: peer.endpoint, target: LocalSend.apiPrefix + "/register",
-                    headers: [("Content-Type", "application/json")], body: .data(body), timeout: .seconds(5)
+                    headers: [("Content-Type", "application/json")], body: .data(body), timeout: .seconds(5), identity: identity
                 )
             } catch {
                 var multicastAnswer = ours

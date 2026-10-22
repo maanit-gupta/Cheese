@@ -53,7 +53,7 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - **LocalSend:** devices running the free [LocalSend](https://localsend.org) app (Android, iPhone, Windows, Linux, Mac) on the same network show up as tiles. Drop files on a tile, click it to send what's ready, or use its menu for **Send Clipboard**. They can send to Cheese too: you're asked first, with **Always Accept from This Device** for your own devices (manage them in **Settings → Share**).
 - Received files go to **Downloads** (configurable) and a notification offers **Show in Finder**. Received text and links land on the clipboard, and in clipboard history.
 - **Nothing listens until you open the Share panel.** Cheese Share stops 10 minutes after you close it; **Share** shows next to the menu bar icon meanwhile (click it to reopen the panel). Turning the Share module off stops it at once.
-- Transfers are **unencrypted** for now (LocalSend's HTTP mode), so use it on networks you trust. Details: [LOCALSEND.md](LOCALSEND.md).
+- LocalSend transfers are **encrypted** with a certificate Cheese makes for your Mac and keeps in the Keychain (its fingerprint is in **Settings → Share**). The Phone page uses plain HTTP, because phone browsers refuse self-signed certificates, so use it on networks you trust. Details: [LOCALSEND.md](LOCALSEND.md).
 - The first time, macOS asks to let Cheese find devices on your **Local Network**. If you said no, turn Cheese on in **System Settings → Privacy & Security → Local Network**. If the macOS firewall is on, allow incoming connections for Cheese too.
 
 ## Control: windows and apps

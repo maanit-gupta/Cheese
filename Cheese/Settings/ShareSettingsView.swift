@@ -7,6 +7,7 @@ struct ShareSettingsView: View {
     @AppStorage(PreferenceKey.shareDestination) private var destinationPath = Preferences.defaultShareDestination.path(percentEncoded: false)
     @AppStorage(PreferenceKey.shareMaxGigabytes) private var maxGigabytes = Preferences.defaultShareMaxGigabytes
     @State private var trusted = TrustStore().devices
+    @State private var fingerprint = TLSIdentity.existing()?.fingerprint
 
     var body: some View {
         Form {
@@ -33,8 +34,21 @@ struct ShareSettingsView: View {
 
             Section {
                 LabeledContent("Encryption") {
-                    Label("Off (unencrypted)", systemImage: "lock.open")
-                        .foregroundStyle(.orange)
+                    if fingerprint != nil {
+                        Label("On (HTTPS)", systemImage: "lock.fill")
+                            .foregroundStyle(.green)
+                    } else {
+                        Label("Set up the first time you open Share", systemImage: "lock")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                if let fingerprint {
+                    LabeledContent("Certificate fingerprint") {
+                        Text(fingerprint.prefix(16).uppercased() + "…")
+                            .font(.system(.caption, design: .monospaced))
+                            .textSelection(.enabled)
+                            .help(fingerprint)
+                    }
                 }
                 LabeledContent("Local Network") {
                     Button("Open System Settings…") {
@@ -46,7 +60,7 @@ struct ShareSettingsView: View {
             } header: {
                 Text("LocalSend")
             } footer: {
-                Text("Cheese talks to LocalSend apps in LocalSend's HTTP mode, so transfers on your network aren't encrypted. Cheese only listens while the Share panel is open and for 10 minutes after.")
+                Text("Transfers with LocalSend apps are encrypted with a certificate Cheese makes for this Mac and keeps in your Keychain; its fingerprint is how other devices recognize this Mac. The Phone page uses plain HTTP, because phone browsers refuse self-signed certificates. Cheese only listens while the Share panel is open and for 10 minutes after.")
                     .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }
@@ -76,7 +90,10 @@ struct ShareSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .onAppear { trusted = TrustStore().devices }
+        .onAppear {
+            trusted = TrustStore().devices
+            fingerprint = TLSIdentity.existing()?.fingerprint
+        }
     }
 
     private func chooseDestination() {
