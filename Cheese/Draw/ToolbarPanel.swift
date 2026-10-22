@@ -187,9 +187,9 @@ private struct ToolbarView: View {
                 .font(.system(size: 14))
             BrushDot(color: settings.color, width: settings.width)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 6)
-        .background(.regularMaterial, in: Capsule())
+        .padding(.vertical, DesignTokens.Spacing.small)
+        .padding(.horizontal, DesignTokens.Spacing.xSmall)
+        .cheeseSurface(in: Capsule())
         .help("\(settings.tool.title) · \(Int(settings.width)) pt")
     }
 
@@ -246,9 +246,9 @@ private struct ToolbarView: View {
                 actions.snapshot(NSEvent.modifierFlags.contains(.shift))
             }
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 4)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(.vertical, DesignTokens.Spacing.xSmall)
+        .padding(.horizontal, DesignTokens.Spacing.xxSmall)
+        .cheeseSurface(in: RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
     }
 
     @ViewBuilder
@@ -287,7 +287,8 @@ private struct RailButton: View {
             Image(systemName: symbol)
                 .font(.system(size: 15))
                 .frame(width: 32, height: 27)
-                .background(isActive ? Color.accentColor.opacity(0.28) : .clear, in: RoundedRectangle(cornerRadius: 7))
+                // Touch-sized for a drawing tool, so a little larger than CheeseIconButton.
+                .background(isActive ? Color.accentColor.opacity(DesignTokens.Opacity.activeTint) : .clear, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.small))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -336,9 +337,9 @@ private struct ToolFlyout: View {
                 }
             }
         }
-        .padding(12)
+        .padding(DesignTokens.Spacing.large)
         .frame(width: 180, alignment: .leading)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .cheeseSurface(in: RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
     }
 
     private var stampPicker: some View {
@@ -350,7 +351,7 @@ private struct ToolFlyout: View {
                 } label: {
                     Image(systemName: kind.symbol)
                         .frame(width: 26, height: 26)
-                        .background(settings.stampKind == kind ? Color.accentColor.opacity(0.25) : .clear, in: RoundedRectangle(cornerRadius: 6))
+                        .background(settings.stampKind == kind ? Color.accentColor.opacity(DesignTokens.Opacity.activeTint) : .clear, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.small))
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -372,7 +373,7 @@ private struct ToolFlyout: View {
                         Circle()
                             .frame(width: width + 4, height: width + 4)
                             .frame(width: 28, height: 28)
-                            .background(settings.width == width ? Color.accentColor.opacity(0.25) : .clear, in: Circle())
+                            .background(settings.width == width ? Color.accentColor.opacity(DesignTokens.Opacity.activeTint) : .clear, in: Circle())
                             .contentShape(Circle())
                     }
                     .buttonStyle(.plain)
