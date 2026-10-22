@@ -4,8 +4,9 @@
 #
 #   scripts/check-size.sh
 #
-# The baseline (scripts/size-baseline.txt) is the Release bundle of v2.5 (commit 5976986), the last
-# build before v3, in bytes. Raise it only on purpose, with a note in the commit message.
+# The baseline (scripts/size-baseline.txt) is the Release bundle of v3.5 (commit ca96744), in bytes.
+# It was the v2.5 bundle (commit 5976986, 10653602 bytes) until v3 and v3.5 used up that budget.
+# Raise it only on purpose, with a note in the commit message.
 set -euo pipefail
 
 cd "${0:A:h}/.."
