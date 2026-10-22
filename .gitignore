@@ -10,3 +10,15 @@ dist/
 Design/promo/frames/
 Design/promo/stills/
 node_modules/
+
+# Notes and specs for AI coding agents, kept locally only
+*.md
+!/README.md
+!/docs/**/*.md
+!/Cheese/Resources/Renderers/VENDORED.md
+CLAUDE*.md
+AGENTS.md
+.claude/
+.cursor/
+.aider*
+.codex/

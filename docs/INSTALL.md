@@ -103,9 +103,11 @@ Sign with a stable identity rather than ad hoc. macOS ties Screen Recording and 
 
 ## First launch
 
+When Cheese starts, a prompt offers to turn on **Accessibility** access and **Open Cheese automatically when you log in**, whichever is still off. Click **Turn On** and System Settings opens on the Accessibility list, where you switch on **Cheese**. Untick what you don't want, click **Not Now** to be asked next launch, or tick **Don't ask again**.
+
 ### 1. The welcome guide
 
-The first time Cheese opens, a short welcome guide appears:
+The first time Cheese opens, a short welcome guide appears after that prompt:
 
 | Page | What it's for |
 |---|---|

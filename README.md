@@ -110,6 +110,7 @@ Every tool is also in the menu bar menu, so shortcuts are optional.
 ## 🎨 Draw on screen
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> puts a transparent canvas over every display, including full-screen apps, with a Miro-style tool rail on the left (drag it anywhere).
 - Pen, highlighter, eraser, rectangle, ellipse, line, arrow, text and sticky notes. Hold <kbd>⇧</kbd> for squares, circles and 45° lines.
+- With a shape tool, press on something you've drawn to move, resize or delete it, with no need to switch to Select. Press on empty space (or inside an outline) to draw.
 - Presenting? **Laser pointer**, **spotlight** and **zoom** (scroll to resize or magnify), plus a whiteboard or blackboard behind your drawings.
 - **Pass-through** (<kbd>M</kbd>) lets you click and type in the apps underneath while drawings stay visible.
 - **Snapshot** (<kbd>⌘</kbd><kbd>⇧</kbd><kbd>S</kbd>) copies the screen with your drawings; Shift-click it to annotate instead.
@@ -202,7 +203,9 @@ Set `DEVELOPMENT_TEAM` in `project.yml` to your own Apple team ID first. A free 
 
 ## First launch
 
-Cheese opens a short **welcome guide** the first time it runs:
+When Cheese starts, it asks to turn on **Accessibility** access and **Open Cheese automatically when you log in**, whichever is still off. Untick either, click **Not Now**, or tick **Don't ask again**.
+
+The first time it runs, Cheese also opens a short **welcome guide**:
 
 1. **What Cheese does**, with the shortcut for each tool.
 2. **Permissions.** Cheese needs two, and both are granted in System Settings → Privacy & Security:
@@ -393,7 +396,7 @@ make run        # build and launch
 make release    # Release build → dist/Cheese.zip + SHA-256
 ```
 
-The Xcode project is generated, so edit `project.yml` rather than `Cheese.xcodeproj`. The code is organised by feature (`Clipboard/`, `Capture/`, `OCR/`, `ScrollCapture/`, `Windows/`, `Editor/`, `Draw/`, `QR/`, `KeepAwake/`, `AppHotkeys/`, `Palette/`, `Files/`, `Welcome/`, `Settings/`), with the wiring in `App/`: every action lives once in an `ActionRegistry` that the menu, hotkeys and command palette all read, and each feature is a `CheeseModule` that can be switched off. Pure logic (fuzzy matching, stitching, sticky-header detection, snap geometry, display coordinate conversion, canvas history, stroke smoothing, hit-testing, QR payload planning, share-link rules, keep-awake scheduling, hotkey suggestions, palette ranking, and the Files tools' applicability, output naming, page ranges, split and compression planning, layout analysis, table detection and resize math) has no AppKit dependencies and is covered by unit tests. [`CLAUDE.md`](CLAUDE.md), [`CLAUDE-V2.md`](CLAUDE-V2.md) and [`CLAUDE-V2.5.md`](CLAUDE-V2.5.md) have the full spec and architecture notes.
+The Xcode project is generated, so edit `project.yml` rather than `Cheese.xcodeproj`. The code is organised by feature (`Clipboard/`, `Capture/`, `OCR/`, `ScrollCapture/`, `Windows/`, `Editor/`, `Draw/`, `QR/`, `KeepAwake/`, `AppHotkeys/`, `Palette/`, `Files/`, `Welcome/`, `Settings/`), with the wiring in `App/`: every action lives once in an `ActionRegistry` that the menu, hotkeys and command palette all read, and each feature is a `CheeseModule` that can be switched off. Pure logic (fuzzy matching, stitching, sticky-header detection, snap geometry, display coordinate conversion, canvas history, stroke smoothing, hit-testing, QR payload planning, share-link rules, keep-awake scheduling, hotkey suggestions, palette ranking, and the Files tools' applicability, output naming, page ranges, split and compression planning, layout analysis, table detection and resize math) has no AppKit dependencies and is covered by unit tests.
 
 The Finder submenu is a separate, sandboxed `CheeseFinderExtension` target that only builds the menu and hands jobs to the app through the App Group. The vendored JavaScript renderers live in `Cheese/Resources/Renderers/` with exact versions, licenses and the reasons for each choice in [`VENDORED.md`](Cheese/Resources/Renderers/VENDORED.md); a test keeps them under 3 MB. The Files test fixtures are all self-made by `Design/make-files-fixtures.swift` and `.mjs`.
 
