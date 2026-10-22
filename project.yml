@@ -16,6 +16,9 @@ settings:
     # Cheese has no App Intents; skip Xcode's metadata extraction step, which otherwise
     # warns "Metadata extraction skipped, no AppIntents.framework dependency found".
     LM_SKIP_METADATA_EXTRACTION: YES
+    # One version for the app and its Finder extension, which must match.
+    MARKETING_VERSION: 0.1.1
+    CURRENT_PROJECT_VERSION: 2
     # Stable signing keeps Screen Recording / Accessibility grants across rebuilds.
     # The author's personal team: the OU of the Apple Development certificate (not the ID in its name).
     DEVELOPMENT_TEAM: 8H5274FWRC
@@ -46,6 +49,8 @@ targets:
     info:
       path: Cheese/Info.plist
       properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleURLTypes:
           - CFBundleURLName: com.maanitgupta.cheese
             CFBundleURLSchemes: [cheese]
@@ -59,8 +64,6 @@ targets:
       base:
         PRODUCT_NAME: Cheese
         PRODUCT_BUNDLE_IDENTIFIER: com.maanitgupta.cheese
-        MARKETING_VERSION: 0.1.1
-        CURRENT_PROJECT_VERSION: 2
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
         GENERATE_INFOPLIST_FILE: YES
@@ -88,6 +91,8 @@ targets:
       path: CheeseFinderExtension/Info.plist
       properties:
         CFBundleDisplayName: Cheese
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true
         CheeseAppGroup: $(TeamIdentifierPrefix)com.maanitgupta.cheese
         NSExtension:
@@ -102,8 +107,6 @@ targets:
       base:
         PRODUCT_NAME: CheeseFinderExtension
         PRODUCT_BUNDLE_IDENTIFIER: com.maanitgupta.cheese.FinderExtension
-        MARKETING_VERSION: 0.1.1
-        CURRENT_PROJECT_VERSION: 2
         GENERATE_INFOPLIST_FILE: YES
         ENABLE_APP_SANDBOX: YES
         ENABLE_HARDENED_RUNTIME: NO
