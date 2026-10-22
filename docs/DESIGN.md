@@ -48,7 +48,8 @@ new UI uses CheeseUI components and system SF Symbols only, with no one-off styl
 | Radius | small 6 (keycaps, swatches) · medium 8 (rows, thumbnails) · large 12 (cards, HUDs, rail) · panel 16 |
 | Typography | panelTitle `.title3.semibold` · pageTitle `.title.bold` · heading `.headline` · body · secondary `.callout` · caption · keycap rounded `.callout` · numeric monospaced `.callout` |
 | Material | `.regularMaterial`; with Reduce Transparency, `windowBackgroundColor` |
-| Opacity | active tint 0.25 · hover tint 0.12 |
+| Opacity | active tint 0.25 · selected row tint 0.18 · hover tint 0.12 |
+| Size | icon button 28×26 · row icon 22 · thumbnail row 44 with a 28 pt thumbnail · selection bar 2 · empty-state symbol 40 |
 | Duration | quick 0.12 s · standard 0.15 s · gentle 0.25 s; zero with Reduce Motion |
 
 ## Components
@@ -74,6 +75,11 @@ Every screen in the audit above now uses CheeseUI: tokens and components for Swi
 overlays (capture overlay, window picker, radial menu). Each move is its own commit listing what
 visibly changed. The new v3 screens (welcome, Shelf, Share panel, receive prompt, Settings → Share)
 were built on CheeseUI from the start.
+
+The clipboard popover was reworked after that (fix pass): a fixed 680×460 split with a 280 pt list
+column (search field in a `.quaternary` capsule, 44 pt rows, 28 pt thumbnails cropped to their square,
+selection as a 0.18 accent tint with a 2 pt accent bar) and a preview pane with a header, clipped
+content and a shortcut footer.
 
 ## Rules
 1. v3 UI uses only CheeseUI components and SF Symbols.

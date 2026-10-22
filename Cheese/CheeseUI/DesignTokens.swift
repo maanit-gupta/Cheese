@@ -46,11 +46,18 @@ enum DesignTokens {
         static let iconButton = CGSize(width: 28, height: 26)
         static let rowIcon: CGFloat = 22
         static let emptyStateSymbol: CGFloat = 40
+        /// A row that shows a thumbnail, like clipboard history: fixed so keyboard scrolling stays even.
+        static let thumbnailRow: CGFloat = 44
+        static let rowThumbnail: CGFloat = 28
+        /// The accent bar on the leading edge of a tinted selected row.
+        static let selectionBar: CGFloat = 2
     }
 
     enum Opacity {
         /// The accent tint behind an active tool or selected thumbnail.
         static let activeTint = 0.25
+        /// A selected row that keeps its text colors, paired with the leading selection bar.
+        static let selectedRowTint = 0.18
         static let hoverTint = 0.12
     }
 

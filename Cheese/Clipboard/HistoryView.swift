@@ -1,9 +1,11 @@
 import AppKit
+import ImageIO
 import SwiftUI
 
-/// The history panel: search field on top, list on the left, preview on the right.
+/// The history panel: search and list on the left, preview of the selected item on the right.
 struct HistoryView: View {
-    static let size = CGSize(width: 720, height: 460)
+    static let size = CGSize(width: 680, height: 460)
+    static let listWidth: CGFloat = 280
 
     @Bindable var model: HistoryViewModel
     @FocusState private var isSearchFocused: Bool
@@ -12,22 +14,25 @@ struct HistoryView: View {
         let items = model.visibleItems
         let selected = model.selection(in: items)
 
-        VStack(spacing: 0) {
-            searchField
-            Divider()
-            HStack(spacing: 0) {
+        HStack(spacing: 0) {
+            VStack(spacing: 0) {
+                searchField
                 list(items, selectedID: selected?.id)
-                    .frame(width: 300)
-                Divider()
-                Group {
-                    if let selected {
-                        HistoryPreview(item: selected, imageURL: model.imageURL(for: selected))
-                    } else {
-                        emptyState
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            .frame(width: Self.listWidth)
+            Rectangle()
+                .fill(Color(nsColor: .separatorColor))
+                .frame(width: 1)
+            Group {
+                if let selected {
+                    HistoryPreview(item: selected, imageURL: model.imageURL(for: selected))
+                } else {
+                    emptyState
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipped()
         }
         .frame(width: Self.size.width, height: Self.size.height)
         .onAppear { isSearchFocused = true }
@@ -38,19 +43,24 @@ struct HistoryView: View {
         HStack(spacing: DesignTokens.Spacing.xSmall) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-            TextField("Search clipboard history", text: $model.query)
+            TextField("Search", text: $model.query)
                 .textFieldStyle(.plain)
-                .font(.title3)
                 .focused($isSearchFocused)
+            CheeseKeycap(text: "⌘1…9")
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(.secondary)
+                .help("Paste one of the first nine items")
         }
-        .padding(.horizontal, DesignTokens.Spacing.large)
-        .padding(.vertical, DesignTokens.Spacing.medium)
+        .padding(.horizontal, DesignTokens.Spacing.small)
+        .padding(.vertical, DesignTokens.Spacing.xSmall)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        .padding(DesignTokens.Spacing.medium)
     }
 
     private func list(_ items: [ClipItem], selectedID: UUID?) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: DesignTokens.Spacing.hairline) {
+                LazyVStack(spacing: DesignTokens.Spacing.xxSmall) {
                     ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                         HistoryRow(
                             item: item,
@@ -69,11 +79,18 @@ struct HistoryView: View {
                         .contextMenu { contextMenu(for: item) }
                     }
                 }
-                .padding(DesignTokens.Spacing.xSmall)
+                .padding(.horizontal, DesignTokens.Spacing.small)
+                .padding(.bottom, DesignTokens.Spacing.small)
             }
+            .scrollIndicators(.automatic)
+            .clipped()
             .onChange(of: selectedID) { _, id in
                 guard let id else { return }
                 proxy.scrollTo(id)
+            }
+            .onChange(of: model.query) {
+                guard let first = items.first else { return }
+                proxy.scrollTo(first.id, anchor: .top)
             }
         }
     }
@@ -95,7 +112,8 @@ struct HistoryView: View {
     private var emptyState: some View {
         CheeseEmptyState(
             symbol: model.query.isEmpty ? "doc.on.clipboard" : "magnifyingglass",
-            title: model.query.isEmpty ? "Nothing copied yet" : "No matches"
+            title: model.query.isEmpty ? "Nothing copied yet" : "No matches",
+            detail: model.query.isEmpty ? "Copy something and it shows up here." : "Try a different search."
         )
     }
 }
@@ -109,57 +127,126 @@ private struct HistoryRow: View {
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.small) {
             HistoryItemIcon(item: item, imageURL: imageURL)
-                .frame(width: 20, height: 20)
-            Text(item.title.isEmpty ? " " : item.title)
+            Text(displayTitle)
                 .lineLimit(1)
                 .truncationMode(.tail)
-            Spacer(minLength: DesignTokens.Spacing.xxSmall)
+                .frame(maxWidth: .infinity, alignment: .leading)
             if item.isPinned {
                 Image(systemName: "pin.fill")
                     .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(Color.accentColor)
                     .accessibilityLabel("Pinned")
             }
             if let number {
                 Text("⌘\(number)")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(isSelected ? .primary : .secondary)
+                    .frame(minWidth: 22, alignment: .trailing)
             }
         }
         .padding(.horizontal, DesignTokens.Spacing.small)
-        .padding(.vertical, 5)
-        .foregroundStyle(isSelected ? Color.white : Color.primary)
-        .background(
-            RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
-                .fill(isSelected ? Color.accentColor : Color.clear)
-        )
+        .frame(height: DesignTokens.Size.thumbnailRow)
+        .background {
+            if isSelected {
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
+                    .fill(Color.accentColor.opacity(DesignTokens.Opacity.selectedRowTint))
+                    .overlay(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.accentColor)
+                            .frame(width: DesignTokens.Size.selectionBar)
+                            .padding(.vertical, DesignTokens.Spacing.small)
+                    }
+            }
+        }
+    }
+
+    /// The title on one line: no surrounding whitespace, inner line breaks and tabs as spaces.
+    private var displayTitle: String {
+        let title = item.title
+            .components(separatedBy: .newlines).joined(separator: " ")
+            .replacingOccurrences(of: "\t", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return title.isEmpty ? " " : title
     }
 }
 
+/// A 28 pt square: a thumbnail for images and files, a symbol for text.
 private struct HistoryItemIcon: View {
     let item: ClipItem
     let imageURL: URL?
 
+    private static let side = DesignTokens.Size.rowThumbnail
+
     var body: some View {
-        switch item.kind {
-        case .text:
-            Image(systemName: "text.alignleft")
-        case .richText:
-            Image(systemName: "doc.richtext")
-        case .image:
-            AsyncImage(url: imageURL) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
-                Image(systemName: "photo")
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 3))
-        case .files:
-            if let path = item.filePaths.first {
-                Image(nsImage: NSWorkspace.shared.icon(forFile: path))
-                    .resizable()
-                    .scaledToFit()
-            } else {
-                Image(systemName: "doc")
+        Group {
+            switch item.kind {
+            case .text:
+                symbol("text.alignleft")
+            case .richText:
+                symbol("doc.richtext")
+            case .image:
+                ClipThumbnail(url: imageURL, side: Self.side)
+            case .files:
+                if let path = item.filePaths.first {
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: path))
+                        .resizable()
+                        .scaledToFit()
+                } else {
+                    symbol("doc")
+                }
             }
         }
+        .frame(width: Self.side, height: Self.side)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small))
+    }
+
+    private func symbol(_ name: String) -> some View {
+        Image(systemName: name)
+            .foregroundStyle(.secondary)
+            .frame(width: Self.side, height: Self.side)
+    }
+}
+
+/// A small, square-cropped thumbnail of an image file, decoded off the main actor at the size shown
+/// rather than at full resolution.
+struct ClipThumbnail: View {
+    let url: URL?
+    let side: CGFloat
+    @Environment(\.displayScale) private var displayScale
+    @State private var image: CGImage?
+
+    var body: some View {
+        ZStack {
+            Rectangle().fill(.quaternary)
+            if let image {
+                Image(decorative: image, scale: displayScale)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: side, height: side)
+            } else {
+                Image(systemName: "photo")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(width: side, height: side)
+        .clipped()
+        .task(id: url) {
+            guard let url else { image = nil; return }
+            // Room for a wide image to still fill the square once cropped.
+            let pixels = Int(side * displayScale * 4)
+            image = await Task.detached(priority: .userInitiated) {
+                Self.thumbnail(of: url, maxPixelSize: pixels)
+            }.value
+        }
+    }
+
+    nonisolated private static func thumbnail(of url: URL, maxPixelSize: Int) -> CGImage? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+        ]
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
     }
 }
