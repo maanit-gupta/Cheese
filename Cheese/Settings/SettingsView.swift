@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 enum SettingsTab: Hashable {
@@ -7,6 +8,7 @@ enum SettingsTab: Hashable {
     case ocr
     case appHotkeys
     case files
+    case share
     case permissions
     case about
 }
@@ -42,6 +44,9 @@ struct SettingsView: View {
             Tab("Files", systemImage: "doc.on.doc", value: .files) {
                 FilesSettingsView(model: dependencies.files)
             }
+            Tab("Share", systemImage: "dot.radiowaves.left.and.right", value: .share) {
+                ShareSettingsView()
+            }
             Tab("Permissions", systemImage: "lock.shield", value: .permissions) {
                 PermissionsSettingsView(
                     permissions: dependencies.permissions,
@@ -49,9 +54,34 @@ struct SettingsView: View {
                 )
             }
             Tab("About", systemImage: "info.circle", value: .about) {
-                AboutSettingsView()
+                AboutView()
             }
         }
-        .frame(width: 520, height: 440)
+        .tabViewStyle(.sidebarAdaptable)
+        .tabViewSidebarHeader {
+            SettingsSidebarHeader()
+        }
+        .frame(width: 720, height: 500)
+    }
+}
+
+/// Icon and tagline at the top of the Settings sidebar.
+private struct SettingsSidebarHeader: View {
+    var body: some View {
+        HStack(spacing: DesignTokens.Spacing.small) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 32, height: 32)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(Brand.name)
+                    .font(DesignTokens.Typography.heading)
+                Text(Brand.tagline)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, DesignTokens.Spacing.small)
     }
 }

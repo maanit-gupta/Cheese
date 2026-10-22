@@ -9,7 +9,6 @@ final class FilesModule: CheeseModule {
     let id = ModuleID.files
     let registry: FileToolRegistry
     private let panel = OptionsPanelController()
-    private let notifications = JobNotifications()
     private let setIndicator: (String?) -> Void
     private var statuses: [JobQueue.Status] = []
     private(set) var isRunning = false
@@ -155,7 +154,7 @@ final class FilesModule: CheeseModule {
             CheeseToast.show("Cancelled \(JobTitles.subject(report.inputs))", systemImage: "xmark.circle.fill")
             return
         }
-        notifications.post(report)
+        CheeseNotifications.shared.post(report)
     }
 }
 

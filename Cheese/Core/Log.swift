@@ -19,4 +19,6 @@ extension Logger {
     static let palette = Logger(subsystem: subsystem, category: "Palette")
     static let draw = Logger(subsystem: subsystem, category: "Draw")
     static let files = Logger(subsystem: subsystem, category: "Files")
+    static let shelf = Logger(subsystem: subsystem, category: "Shelf")
+    static let share = Logger(subsystem: subsystem, category: "Share")
 }

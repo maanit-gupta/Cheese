@@ -1,0 +1,297 @@
+import AppKit
+import Foundation
+import os
+
+/// Runs Cheese Share while it's wanted: the HTTP server (LocalSend API and the browser page),
+/// LocalSend discovery, and outgoing transfers. Nothing listens until the Share panel opens; it all
+/// stops `idleLifetime` after the panel closes, or right away when the module is turned off.
+@MainActor
+@Observable
+final class ShareService {
+    enum Listening: Equatable {
+        case stopped
+        case starting
+        case listening(address: String, port: UInt16)
+        case unavailable(String)
+    }
+
+    /// One device's outgoing transfer.
+    struct Transfer: Equatable {
+        enum State: Equatable {
+            case waiting
+            case sending(Double)
+            case done
+            case failed(String)
+        }
+
+        var state: State
+        var itemCount: Int
+    }
+
+    struct Hooks {
+        /// Asks whether to accept a LocalSend device's files.
+        var ask: @MainActor (_ summary: String, _ sender: LocalSend.DeviceInfo) async -> ReceiveAnswer
+        /// Received text: into clipboard history (or just the clipboard), with a toast.
+        var receivedText: @MainActor (_ text: String, _ from: String) -> Void
+        /// Shows or clears the menu bar indicator.
+        var setListening: @MainActor (Bool) -> Void
+    }
+
+    static let idleLifetime: Duration = .seconds(10 * 60)
+
+    private(set) var listening = Listening.stopped
+    private(set) var peers: [LocalSendPeer] = []
+    private(set) var discoveryProblem: String?
+    private(set) var transfers: [LocalSendPeer.ID: Transfer] = [:]
+    /// Handed in from the Shelf, the clipboard or the macOS Share menu; sent by clicking a device.
+    var ready: [OutgoingItem] = []
+
+    @ObservationIgnored private let hooks: Hooks
+    @ObservationIgnored private let trustStore = TrustStore()
+    @ObservationIgnored private var transferTasks: [LocalSendPeer.ID: Task<Void, Never>] = [:]
+    @ObservationIgnored private var idleTask: Task<Void, Never>?
+    @ObservationIgnored private let discovery = LocalSendDiscovery()
+    @ObservationIgnored private lazy var receiver = LocalSendReceiver(hooks: LocalSendReceiver.Hooks(
+        destination: { Preferences().shareDestination },
+        maxBytes: { Preferences().shareMaxBytes },
+        ask: { [hooks] summary, sender in await hooks.ask(summary, sender) },
+        trustStore: trustStore,
+        onText: { [hooks] text, from in hooks.receivedText(text, from) },
+        onFilesReceived: { files, from in Self.notifyReceived(files, from: from) },
+        onProblem: { message in CheeseToast.show(message, systemImage: "exclamationmark.triangle.fill") }
+    ))
+    @ObservationIgnored private(set) lazy var browser = BrowserTransfer(hooks: BrowserTransfer.Hooks(
+        destination: { Preferences().shareDestination },
+        maxBytes: { Preferences().shareMaxBytes },
+        onText: { [hooks] text in hooks.receivedText(text, "your phone") },
+        onFileReceived: { file in Self.notifyReceived([file], from: "your phone") }
+    ))
+    @ObservationIgnored private lazy var server: HTTPServer = {
+        let server = HTTPServer { [weak self] request, body in
+            await self?.route(request, body: body) ?? .status(404)
+        }
+        server.onFailure = { [weak self] reason in
+            self?.stop()
+            self?.listening = .unavailable(reason)
+        }
+        return server
+    }()
+
+    init(hooks: Hooks) {
+        self.hooks = hooks
+        discovery.onPeer = { [weak self] peer in self?.found(peer) }
+        discovery.onStatus = { [weak self] status in
+            if case let .unavailable(message) = status {
+                self?.discoveryProblem = message
+            } else {
+                self?.discoveryProblem = nil
+            }
+        }
+    }
+
+    var isListening: Bool {
+        if case .listening = listening { return true }
+        return false
+    }
+
+    /// The Phone tile's link.
+    var browserURL: URL? {
+        guard case let .listening(address, port) = listening else { return nil }
+        return browser.url(address: address, port: port)
+    }
+
+    /// What this Mac tells LocalSend devices about itself.
+    var deviceInfo: LocalSend.DeviceInfo {
+        let port = if case let .listening(_, port) = listening { Int(port) } else { Int(LocalSend.port) }
+        return LocalSend.DeviceInfo(
+            alias: Preferences().shareDeviceName,
+            version: LocalSend.protocolVersion,
+            deviceModel: TLSIdentity.deviceModel,
+            deviceType: .desktop,
+            fingerprint: TLSIdentity.fingerprint(),
+            port: port,
+            transport: TLSIdentity.transport,
+            download: false
+        )
+    }
+
+    // MARK: Lifetime
+
+    /// The panel opened: start listening (if needed) and keep going until it closes.
+    func panelOpened() {
+        idleTask?.cancel()
+        idleTask = nil
+        if isListening {
+            discovery.announce()
+            return
+        }
+        Task { await start() }
+    }
+
+    /// The panel closed: stop after `idleLifetime` unless it opens again, or something is still moving.
+    func panelClosed() {
+        idleTask?.cancel()
+        idleTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.idleLifetime)
+            guard !Task.isCancelled, let self else { return }
+            if self.receiver.isReceiving || !self.transferTasks.isEmpty {
+                // Finish what's moving first; check again later.
+                self.panelClosed()
+            } else {
+                self.stop()
+            }
+        }
+    }
+
+    private func start() async {
+        guard listening == .stopped || { if case .unavailable = listening { return true } else { return false } }() else { return }
+        guard let address = LANAddress.current() else {
+            listening = .unavailable("Not on a local network. Connect to Wi-Fi to share with nearby devices.")
+            return
+        }
+        listening = .starting
+        do {
+            let port = try await server.start(on: address, preferredPort: LocalSend.port)
+            listening = .listening(address: address, port: port)
+            hooks.setListening(true)
+            discovery.start { [weak self] in self?.deviceInfo ?? LocalSend.DeviceInfo(alias: "", version: "", fingerprint: "") }
+            Logger.share.info("Cheese Share listening on port \(port)")
+        } catch {
+            listening = .unavailable(error.localizedDescription)
+        }
+    }
+
+    /// Stops listening, discovery and transfers. The browser link stops working.
+    func stop() {
+        idleTask?.cancel()
+        idleTask = nil
+        for task in transferTasks.values {
+            task.cancel()
+        }
+        transferTasks.removeAll()
+        transfers.removeAll()
+        receiver.stop()
+        discovery.stop()
+        server.stop()
+        browser.reset()
+        peers.removeAll()
+        listening = .stopped
+        hooks.setListening(false)
+        Logger.share.info("Cheese Share stopped")
+    }
+
+    // MARK: Devices
+
+    private func found(_ peer: LocalSendPeer) {
+        if let index = peers.firstIndex(where: { $0.id == peer.id }) {
+            peers[index] = peer
+        } else {
+            peers.append(peer)
+            peers.sort { $0.alias.localizedStandardCompare($1.alias) == .orderedAscending }
+        }
+    }
+
+    // MARK: Sending
+
+    func send(_ items: [OutgoingItem], to peer: LocalSendPeer) {
+        guard !items.isEmpty, transferTasks[peer.id] == nil else { return }
+        transfers[peer.id] = Transfer(state: .waiting, itemCount: items.count)
+        let info = deviceInfo
+        transferTasks[peer.id] = Task { [weak self] in
+            do {
+                try await LocalSendSender.send(items, to: peer, as: info) { fraction in
+                    Task { @MainActor in self?.progress(fraction, for: peer.id) }
+                }
+                self?.finished(peer, error: nil)
+            } catch is CancellationError {
+                self?.finished(peer, error: CancellationError())
+            } catch {
+                self?.finished(peer, error: error)
+            }
+        }
+    }
+
+    func cancelTransfer(to peer: LocalSendPeer) {
+        transferTasks[peer.id]?.cancel()
+    }
+
+    private func progress(_ fraction: Double, for id: LocalSendPeer.ID) {
+        guard transferTasks[id] != nil else { return }
+        transfers[id]?.state = .sending(min(max(fraction, 0), 1))
+    }
+
+    private func finished(_ peer: LocalSendPeer, error: (any Error)?) {
+        transferTasks[peer.id] = nil
+        switch error {
+        case nil:
+            transfers[peer.id]?.state = .done
+            CheeseToast.show("Sent to \(peer.alias)", systemImage: "checkmark.circle.fill")
+        case is CancellationError:
+            transfers[peer.id] = nil
+            return
+        case let error?:
+            Logger.share.error("Sending failed: \(error.localizedDescription, privacy: .public)")
+            transfers[peer.id]?.state = .failed(error.localizedDescription)
+        }
+        // Clear the tile's status after a moment.
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(4))
+            if self?.transferTasks[peer.id] == nil {
+                self?.transfers[peer.id] = nil
+            }
+        }
+    }
+
+    /// Offers items on the Phone tile's page for download.
+    func offerToPhone(_ items: [OutgoingItem]) {
+        browser.offer(items)
+    }
+
+    var phoneItems: [OutgoingItem] { browser.offered }
+
+    func withdrawFromPhone(_ id: OutgoingItem.ID) {
+        browser.withdraw(id)
+    }
+
+    // MARK: Trust
+
+    var trustedDevices: [TrustedDevice] { trustStore.devices }
+
+    // MARK: Routing
+
+    private func route(_ request: HTTPRequest, body: HTTPRequestBody) async -> HTTPResponse {
+        let api = LocalSend.apiPrefix
+        switch request.path {
+        case api + "/register":
+            guard request.method == "POST" else { return .status(405) }
+            guard let data = try? await body.collect(limit: 16_384),
+                  let info = LocalSend.decode(LocalSend.DeviceInfo.self, from: data),
+                  let address = request.remoteAddress
+            else { return .status(400) }
+            discovery.registered(info, from: address)
+            var answer = deviceInfo
+            answer.announce = nil
+            return .json(answer)
+        case api + "/info":
+            var answer = deviceInfo
+            answer.announce = nil
+            return .json(answer)
+        case api + "/prepare-upload":
+            return await receiver.prepareUpload(request, body: body)
+        case api + "/upload":
+            return await receiver.upload(request, body: body)
+        case api + "/cancel":
+            return receiver.cancel(request)
+        default:
+            if browser.handles(request.path) {
+                return await browser.handle(request, body: body)
+            }
+            return .status(404)
+        }
+    }
+
+    private static func notifyReceived(_ files: [URL], from sender: String) {
+        let title = files.count == 1 ? "Received \(files[0].lastPathComponent)" : "Received \(files.count) files"
+        CheeseNotifications.shared.post(title: title, body: "From \(sender), in \(files[0].deletingLastPathComponent().lastPathComponent)", reveal: files)
+    }
+}

@@ -103,9 +103,17 @@ enum HTTPMessage {
     static func reason(for status: Int) -> String {
         switch status {
         case 200: "OK"
+        case 204: "No Content"
         case 400: "Bad Request"
+        case 401: "Unauthorized"
+        case 403: "Forbidden"
         case 404: "Not Found"
         case 405: "Method Not Allowed"
+        case 409: "Conflict"
+        case 413: "Payload Too Large"
+        case 422: "Unprocessable Content"
+        case 429: "Too Many Requests"
+        case 500: "Internal Server Error"
         default: "Error"
         }
     }

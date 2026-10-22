@@ -1,0 +1,34 @@
+{
+  "info": {
+    "alias": "Nice Orange",
+    "version": "2.0",
+    "deviceModel": "Samsung",
+    "deviceType": "mobile",
+    "fingerprint": "random string",
+    "port": 53317,
+    "protocol": "https",
+    "download": true
+  },
+  "files": {
+    "some file id": {
+      "id": "some file id",
+      "fileName": "my image.png",
+      "size": 324242,
+      "fileType": "image/jpeg",
+      "sha256": "*sha256 hash*",
+      "preview": "*preview data*",
+      "metadata": {
+        "modified": "2021-01-01T12:34:56Z",
+        "accessed": "2021-01-01T12:34:56Z"
+      }
+    },
+    "another file id": {
+      "id": "another file id",
+      "fileName": "another image.jpg",
+      "size": 1234,
+      "fileType": "image/jpeg",
+      "sha256": "*sha256 hash*",
+      "preview": "*preview data*"
+    }
+  }
+}

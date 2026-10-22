@@ -4,11 +4,13 @@ import AppKit
 /// Undo and Select All shortcuts from the main menu, and windows only close with Cmd+W through it.
 @MainActor
 enum MainMenu {
-    static func install() {
+    static func install(showAbout: @escaping @MainActor @Sendable () -> Void = {}) {
         let main = NSMenu()
 
         let appItem = NSMenuItem()
         let appMenu = NSMenu(title: "Cheese")
+        appMenu.addItem(ClosureMenuItem(title: "About Cheese", handler: showAbout))
+        appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Quit Cheese", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu
         main.addItem(appItem)

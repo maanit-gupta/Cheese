@@ -21,9 +21,13 @@ struct HotkeyTests {
             .restoreWindow: .delete,
             .drawOnScreen: .d,
             .commandPalette: .return,
+            .toggleShelf: .f,
         ]
-        #expect(expected.count == Hotkey.allCases.count)
-        for hotkey in Hotkey.allCases {
+        // Share has no default shortcut; the user can assign one.
+        let unbound: Set<Hotkey> = [.showShare]
+        #expect(unbound.allSatisfy { $0.name.initialShortcut == nil })
+        #expect(expected.count + unbound.count == Hotkey.allCases.count)
+        for hotkey in Hotkey.allCases where !unbound.contains(hotkey) {
             let key = expected[hotkey]
             #expect(key != nil, "No expected default for \(hotkey)")
             if let key {
@@ -34,7 +38,7 @@ struct HotkeyTests {
 
     @Test func defaultsAreUnique() {
         let shortcuts = Hotkey.allCases.compactMap(\.name.initialShortcut)
-        #expect(shortcuts.count == Hotkey.allCases.count)
+        #expect(shortcuts.count == Hotkey.allCases.count - 1)
         #expect(Set(shortcuts).count == shortcuts.count)
     }
 

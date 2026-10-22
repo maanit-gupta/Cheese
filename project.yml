@@ -73,6 +73,8 @@ targets:
         INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 Maanit Gupta. MIT License."
         # Asked once, when the command palette uses the current Finder selection for a Files tool.
         INFOPLIST_KEY_NSAppleEventsUsageDescription: "Cheese reads the files selected in Finder so Files tools can work on them. Office apps are asked to save as PDF only if you turn that on in Settings."
+        # Asked the first time Cheese Share looks for nearby devices.
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Cheese Share finds phones and computers on your network running LocalSend, and lets them send files and text to this Mac."
         # Not sandboxed: Accessibility and posted CGEvents don't work inside the sandbox.
         ENABLE_APP_SANDBOX: NO
         ENABLE_HARDENED_RUNTIME: NO

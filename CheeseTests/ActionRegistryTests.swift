@@ -73,6 +73,8 @@ struct ActionCatalogueTests {
             AppHotkeysModule(store: AppHotkeyStore(defaults: UserDefaults(suiteName: "ActionCatalogueTests") ?? .standard), index: InstalledAppIndex(folders: [])),
             CommandPaletteModule(availableActions: { [] }, perform: { _, _ in }),
             FilesModule { _ in },
+            ShelfModule(services: ShelfServices()),
+            ShareModule { _ in },
         ]
     }
 
@@ -149,8 +151,9 @@ struct ActionCatalogueTests {
 
     @Test func everyModuleActionIsInTheMenu() {
         let inMenu = Set(MenuLayout.actionIDs(in: MenuLayout.standard))
-        // The palette is a keyboard tool; it isn't opened from the menu.
-        let menuActions = actions.filter { $0.module != nil && $0.id != .commandPalette }
+        // The palette is a keyboard tool, and these few live only in it.
+        let paletteOnly: Set<ActionID> = [.commandPalette, .clearShelf, .sendClipboard]
+        let menuActions = actions.filter { $0.module != nil && !paletteOnly.contains($0.id) }
         #expect(Set(menuActions.map(\.id)).isSubset(of: inMenu))
     }
 

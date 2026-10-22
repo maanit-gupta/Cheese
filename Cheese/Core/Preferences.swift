@@ -19,6 +19,9 @@ enum PreferenceKey {
 
     static let filesNativeFallback = "filesNativeFallback"
     static let drawLetterKeys = "drawLetterKeys"
+    static let shareDeviceName = "shareDeviceName"
+    static let shareDestination = "shareDestination"
+    static let shareMaxGigabytes = "shareMaxGigabytes"
 
     /// Last-used options of a Files tool, as JSON.
     static func fileToolOptions(_ tool: ToolID) -> String {
@@ -107,6 +110,29 @@ struct Preferences {
     /// Single-letter tool keys in draw mode (P, H, E…). Off unless the user turns them on.
     var usesDrawLetterKeys: Bool {
         defaults.bool(forKey: PreferenceKey.drawLetterKeys)
+    }
+
+    static let defaultShareMaxGigabytes = 10
+    static var defaultShareDestination: URL { .downloadsDirectory }
+
+    /// What Cheese Share calls this Mac: the computer name unless the user renamed it.
+    var shareDeviceName: String {
+        let stored = defaults.string(forKey: PreferenceKey.shareDeviceName)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return stored.isEmpty ? (Host.current().localizedName ?? "Mac") : stored
+    }
+
+    /// Where received files go (Downloads unless changed).
+    var shareDestination: URL {
+        guard let path = defaults.string(forKey: PreferenceKey.shareDestination), !path.isEmpty else {
+            return Self.defaultShareDestination
+        }
+        return URL(filePath: path, directoryHint: .isDirectory)
+    }
+
+    /// The largest transfer Cheese Share accepts, in bytes.
+    var shareMaxBytes: Int64 {
+        let stored = defaults.object(forKey: PreferenceKey.shareMaxGigabytes) as? Int ?? Self.defaultShareMaxGigabytes
+        return Int64(min(max(stored, 1), 1000)) * 1_000_000_000
     }
 
     func isModuleEnabled(_ module: ModuleID) -> Bool {

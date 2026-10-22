@@ -46,61 +46,11 @@ struct JobSummary: Equatable {
     }
 }
 
-/// Posts a notification when a job finishes, asking permission the first time.
-/// "Show in Finder" (or clicking the notification) reveals the outputs.
-@MainActor
-final class JobNotifications: NSObject, UNUserNotificationCenterDelegate {
-    private nonisolated static let categoryID = "filesJobDone"
-    private nonisolated static let showInFinderID = "showInFinder"
-    private nonisolated static let outputsKey = "outputs"
-    private var isConfigured = false
-
+extension CheeseNotifications {
+    /// A finished Files job: what was made and what failed. Cancelled jobs post nothing.
     func post(_ report: JobReport) {
         guard !report.wasCancelled else { return }
-        let center = UNUserNotificationCenter.current()
-        configure(center)
         let summary = JobSummary(report: report)
-        let content = UNMutableNotificationContent()
-        content.title = summary.title
-        content.body = summary.body
-        content.categoryIdentifier = Self.categoryID
-        content.userInfo = [Self.outputsKey: report.outputs.map { $0.path(percentEncoded: false) }]
-        let request = UNNotificationRequest(identifier: report.id.uuidString, content: content, trigger: nil)
-        Task {
-            do {
-                // Asks only while the status is undetermined, which makes this the first finished job.
-                let settings = await center.notificationSettings()
-                if settings.authorizationStatus == .notDetermined {
-                    _ = try await center.requestAuthorization(options: [.alert, .sound])
-                }
-                try await center.add(request)
-            } catch {
-                Logger.files.error("Couldn't post the job notification: \(error.localizedDescription, privacy: .public)")
-            }
-        }
-    }
-
-    private func configure(_ center: UNUserNotificationCenter) {
-        guard !isConfigured else { return }
-        isConfigured = true
-        center.delegate = self
-        let show = UNNotificationAction(identifier: Self.showInFinderID, title: "Show in Finder")
-        center.setNotificationCategories([UNNotificationCategory(identifier: Self.categoryID, actions: [show], intentIdentifiers: [])])
-    }
-
-    nonisolated func userNotificationCenter(
-        _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification
-    ) async -> UNNotificationPresentationOptions {
-        [.banner, .list, .sound]
-    }
-
-    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-        let paths = response.notification.request.content.userInfo[Self.outputsKey] as? [String] ?? []
-        let action = response.actionIdentifier
-        guard action == Self.showInFinderID || action == UNNotificationDefaultActionIdentifier, !paths.isEmpty else { return }
-        await MainActor.run {
-            NSWorkspace.shared.activateFileViewerSelecting(paths.map { URL(filePath: $0) })
-        }
+        post(id: report.id.uuidString, title: summary.title, body: summary.body, reveal: report.outputs)
     }
 }

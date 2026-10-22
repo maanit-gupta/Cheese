@@ -16,6 +16,8 @@ enum Hotkey: CaseIterable, Sendable {
     case restoreWindow
     case drawOnScreen
     case commandPalette
+    case toggleShelf
+    case showShare
 
     var name: KeyboardShortcuts.Name {
         switch self {
@@ -32,6 +34,8 @@ enum Hotkey: CaseIterable, Sendable {
         case .restoreWindow: .restoreWindow
         case .drawOnScreen: .drawOnScreen
         case .commandPalette: .commandPalette
+        case .toggleShelf: .toggleShelf
+        case .showShare: .showShare
         }
     }
 
@@ -50,6 +54,8 @@ enum Hotkey: CaseIterable, Sendable {
         case .restoreWindow: "Restore window"
         case .drawOnScreen: "Toggle draw on screen"
         case .commandPalette: "Command palette"
+        case .toggleShelf: "Show or hide the shelf"
+        case .showShare: "Open Cheese Share"
         }
     }
 }
@@ -70,6 +76,9 @@ extension KeyboardShortcuts.Name {
     static let restoreWindow = Self("restoreWindow", initial: .init(.delete, modifiers: modifiers))
     static let drawOnScreen = Self("drawOnScreen", initial: .init(.d, modifiers: modifiers))
     static let commandPalette = Self("commandPalette", initial: .init(.return, modifiers: modifiers))
+    static let toggleShelf = Self("toggleShelf", initial: .init(.f, modifiers: modifiers))
+    /// No default: Share is reached from the menu and the palette unless the user assigns one.
+    static let showShare = Self("showShare")
 }
 
 extension KeyboardShortcuts.Name {

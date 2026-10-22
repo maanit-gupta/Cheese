@@ -54,10 +54,12 @@ enum Acknowledgements {
     }
 }
 
-struct AboutSettingsView: View {
+/// Icon, name, tagline, version, license, acknowledgements and the GitHub link. Shown in the About
+/// window and in Settings → About.
+struct AboutView: View {
     private let acknowledgements = Acknowledgements.load()
 
-    private var version: String {
+    static var version: String {
         let info = Bundle.main.infoDictionary
         let short = info?["CFBundleShortVersionString"] as? String ?? "?"
         let build = info?["CFBundleVersion"] as? String ?? "?"
@@ -67,16 +69,27 @@ struct AboutSettingsView: View {
     var body: some View {
         Form {
             Section {
-                HStack(spacing: 14) {
+                HStack(spacing: DesignTokens.Spacing.xLarge) {
                     Image(nsImage: NSApp.applicationIconImage)
                         .resizable()
-                        .frame(width: 56, height: 56)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Cheese").font(.title2.weight(.semibold))
-                        Text(version).foregroundStyle(.secondary)
-                        Text("Open source under the MIT License.").font(.caption).foregroundStyle(.secondary)
+                        .frame(width: 64, height: 64)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.hairline) {
+                        Text(Brand.name).font(.title2.weight(.semibold))
+                        Text(Brand.tagline)
+                        Text(Self.version).font(DesignTokens.Typography.caption).foregroundStyle(.secondary)
+                        Text("Open source under the MIT License.").font(DesignTokens.Typography.caption).foregroundStyle(.secondary)
                     }
                 }
+                if let repository = Brand.repository {
+                    Link(destination: repository) {
+                        Label("Cheese on GitHub", systemImage: "arrow.up.right.square")
+                    }
+                }
+            } footer: {
+                Text(Brand.privacy)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section {

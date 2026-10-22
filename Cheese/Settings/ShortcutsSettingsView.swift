@@ -7,6 +7,7 @@ struct ShortcutsSettingsView: View {
         ("Capture", [.captureRegion, .captureFullScreen, .captureWindow, .ocrRegion, .scrollingCapture]),
         ("Windows", [.snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow]),
         ("Tools", [.drawOnScreen, .commandPalette]),
+        ("Share", [.toggleShelf, .showShare]),
     ]
 
     var body: some View {

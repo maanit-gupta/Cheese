@@ -61,7 +61,7 @@ struct GeneralSettingsView: View {
             }
 
             Section {
-                Button("Show Welcome Guide…") {
+                Button("Show Welcome…") {
                     showWelcome()
                 }
             }
@@ -104,16 +104,25 @@ struct GeneralSettingsView: View {
 }
 
 /// One module's on/off switch. Cheese picks the change up from UserDefaults and applies it immediately.
-private struct ModuleToggle: View {
+/// Shared by Settings and the welcome tool picker.
+struct ModuleToggle<Label: View>: View {
     let module: ModuleID
+    @ViewBuilder var label: Label
     @AppStorage private var isOn: Bool
 
-    init(module: ModuleID) {
+    init(module: ModuleID, @ViewBuilder label: () -> Label) {
         self.module = module
+        self.label = label()
         _isOn = AppStorage(wrappedValue: Preferences.defaultModuleEnabled, PreferenceKey.moduleEnabled(module))
     }
 
     var body: some View {
-        Toggle(module.title, isOn: $isOn)
+        Toggle(isOn: $isOn) { label }
+    }
+}
+
+extension ModuleToggle where Label == Text {
+    init(module: ModuleID) {
+        self.init(module: module) { Text(module.title) }
     }
 }

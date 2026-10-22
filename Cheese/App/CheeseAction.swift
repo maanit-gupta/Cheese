@@ -27,6 +27,7 @@ extension ActionID {
     static let editShortcuts = Self(rawValue: "editShortcuts")
     static let openSettings = Self(rawValue: "openSettings")
     static let showWelcome = Self(rawValue: "showWelcome")
+    static let about = Self(rawValue: "about")
     static let quit = Self(rawValue: "quit")
     static let keepAwakeIndefinitely = Self(rawValue: "keepAwakeIndefinitely")
     static let keepAwakeUntil = Self(rawValue: "keepAwakeUntil")

@@ -1,23 +1,30 @@
 import AppKit
 import KeyboardShortcuts
 import SwiftUI
-import os
 
+/// The welcome flow's three screens in one panel: who Cheese is, the tool picker, and the permissions
+/// the chosen tools need. Everything is skippable.
 struct WelcomeView: View {
-    let permissions: any PermissionChecking
-    let openSystemSettings: @MainActor (Permission) -> Void
     let finish: @MainActor () -> Void
-
     @State private var step = WelcomeStep.intro
+    @State private var status: PermissionStatus
+
+    init(
+        permissions: any PermissionChecking,
+        openSystemSettings: @escaping @MainActor (Permission) -> Void,
+        finish: @escaping @MainActor () -> Void
+    ) {
+        self.finish = finish
+        _status = State(initialValue: PermissionStatus(permissions: permissions, openPermissionSettings: openSystemSettings))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             Group {
                 switch step {
-                case .intro: IntroPage()
-                case .permissions: PermissionsPage(permissions: permissions, openSystemSettings: openSystemSettings)
-                case .shortcuts: ShortcutsPage()
-                case .finish: FinishPage()
+                case .intro: IntroScreen()
+                case .tools: ToolPickerScreen()
+                case .permissions: PermissionsScreen(status: status)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -25,12 +32,13 @@ struct WelcomeView: View {
             Divider()
             footer
         }
-        .frame(width: 620, height: 580)
+        .frame(width: 660, height: 580)
+        .cheesePanelBackground()
     }
 
     private var footer: some View {
-        HStack {
-            HStack(spacing: 6) {
+        CheeseToolbar {
+            HStack(spacing: DesignTokens.Spacing.xSmall) {
                 ForEach(WelcomeStep.allCases, id: \.self) { page in
                     Circle()
                         .fill(page == step ? Color.accentColor : Color.secondary.opacity(0.3))
@@ -38,13 +46,12 @@ struct WelcomeView: View {
                 }
             }
             .accessibilityElement()
-            .accessibilityLabel("Page \(step.rawValue + 1) of \(WelcomeStep.allCases.count)")
-
-            Spacer()
-
-            if let previous = step.previous {
+            .accessibilityLabel("Screen \(step.rawValue + 1) of \(WelcomeStep.allCases.count)")
+        } trailing: {
+            if step.isFirst {
+                Button("Skip") { finish() }
+            } else if let previous = step.previous {
                 Button("Back") { step = previous }
-                    .keyboardShortcut(.cancelAction)
             }
             Button(step.isLast ? "Start Using Cheese" : "Continue") {
                 if let next = step.next {
@@ -56,181 +63,183 @@ struct WelcomeView: View {
             .buttonStyle(.borderedProminent)
             .keyboardShortcut(.defaultAction)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
+        .controlSize(.regular)
+        .padding(.vertical, DesignTokens.Spacing.small)
     }
 }
 
-// MARK: - Pages
+// MARK: - Screens
 
-private struct PageHeader: View {
+private struct ScreenHeader: View {
     let title: String
     let subtitle: String
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: DesignTokens.Spacing.xSmall) {
             Text(title)
-                .font(.title.bold())
+                .font(DesignTokens.Typography.pageTitle)
             Text(subtitle)
-                .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 40)
+        .padding(.horizontal, DesignTokens.Spacing.xxxLarge)
     }
 }
 
-private struct IntroPage: View {
-    private static let features: [(symbol: String, title: String, detail: String, hotkey: Hotkey)] = [
-        ("doc.on.clipboard", "Clipboard history", "Everything you copy, searchable and one keystroke from pasting.", .openHistory),
-        ("camera.viewfinder", "Screenshots", "Region, window or full screen, straight to the clipboard. Hold Shift to annotate.", .captureRegion),
-        ("text.viewfinder", "Copy text from anything", "OCR any part of the screen. QR codes and barcodes too.", .ocrRegion),
-        ("rectangle.expand.vertical", "Scrolling capture", "Cheese scrolls the page for you and stitches one tall image.", .scrollingCapture),
-        ("rectangle.split.2x1", "Window snapping", "Halves, maximize and multi-display moves from the keyboard.", .snapLeft),
-        ("pencil.and.scribble", "Draw on screen", "Smooth ink, magic shapes and a laser pointer over everything. Hold the right button for tools.", .drawOnScreen),
-        ("command", "Command palette", "Search every Cheese action, plus QR sharing and Keep Awake.", .commandPalette),
-    ]
-
+private struct IntroScreen: View {
     var body: some View {
-        VStack(spacing: 22) {
-            VStack(spacing: 10) {
-                Image(nsImage: NSApp.applicationIconImage)
-                    .resizable()
-                    .frame(width: 72, height: 72)
-                    .accessibilityHidden(true)
-                PageHeader(title: "Welcome to Cheese", subtitle: "Everyday tools that live in your menu bar.")
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(Self.features, id: \.title) { feature in
-                    HStack(spacing: 14) {
-                        Image(systemName: feature.symbol)
-                            .font(.title2)
-                            .foregroundStyle(.tint)
-                            .frame(width: 32)
-                            .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(feature.title).font(.headline)
-                            Text(feature.detail)
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer(minLength: 12)
-                        if let shortcut = KeyboardShortcuts.getShortcut(for: feature.hotkey.name) {
-                            Text(shortcut.description)
-                                .font(.callout.monospaced())
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(.quaternary, in: .rect(cornerRadius: 6))
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, 48)
-        }
-        .padding(.top, 28)
-    }
-}
-
-private struct PermissionsPage: View {
-    let permissions: any PermissionChecking
-    let openSystemSettings: @MainActor (Permission) -> Void
-
-    var body: some View {
-        VStack(spacing: 8) {
-            PageHeader(
-                title: "Two quick permissions",
-                subtitle: "macOS asks you to approve these yourself. You can skip this step: Cheese asks again the first time a feature needs one."
-            )
-            .padding(.top, 36)
-
-            // Poll so the status updates live while the user flips switches in System Settings.
-            TimelineView(.periodic(from: .now, by: 1)) { _ in
-                Form {
-                    Section {
-                        ForEach(Permission.allCases) { permission in
-                            PermissionRow(
-                                permission: permission,
-                                isGranted: permissions.isGranted(permission),
-                                openSystemSettings: openSystemSettings
-                            )
-                        }
-                    } footer: {
-                        Text("After turning on Screen Recording, macOS may ask you to quit and reopen Cheese.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .formStyle(.grouped)
-                .scrollDisabled(true)
-            }
-        }
-    }
-}
-
-private struct ShortcutsPage: View {
-    var body: some View {
-        VStack(spacing: 4) {
-            PageHeader(
-                title: "Make the shortcuts yours",
-                subtitle: "These are the defaults. Change any of them now or later from the menu bar icon → Keyboard Shortcuts…"
-            )
-            .padding(.top, 36)
-            ShortcutsSettingsView()
-        }
-    }
-}
-
-private struct FinishPage: View {
-    @State private var launchAtLogin = LaunchAtLogin.isEnabled
-    @State private var launchAtLoginMessage: String?
-
-    var body: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(.green)
+        VStack(spacing: DesignTokens.Spacing.xLarge) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 128, height: 128)
                 .accessibilityHidden(true)
-
-            PageHeader(title: "You're all set", subtitle: "Cheese is running in your menu bar. Look for the cheese wedge near the clock.")
-
-            VStack(alignment: .leading, spacing: 12) {
-                Label("Click the icon for every tool, starting with Clipboard History.", systemImage: "cursorarrow.click")
-                Label("Change any shortcut from Keyboard Shortcuts… in that menu.", systemImage: "keyboard")
-                Label("Hold Shift as you finish a screenshot to annotate it.", systemImage: "shift")
+            Text(Brand.name)
+                .font(.largeTitle.bold())
+            VStack(spacing: DesignTokens.Spacing.xSmall) {
+                Text(Brand.tagline)
+                    .font(.title2.weight(.medium))
+                Text(Brand.subline)
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
             }
-            .font(.callout)
-
-            VStack(spacing: 4) {
-                Toggle("Open Cheese automatically when you log in", isOn: $launchAtLogin)
-                    .toggleStyle(.switch)
-                    .onChange(of: launchAtLogin) { _, enabled in
-                        setLaunchAtLogin(enabled)
-                    }
-                if let launchAtLoginMessage {
-                    Text(launchAtLoginMessage)
-                        .font(.caption)
+            .multilineTextAlignment(.center)
+            HStack(spacing: DesignTokens.Spacing.large) {
+                ForEach(Verb.allCases) { verb in
+                    Label(verb.title, systemImage: verb.symbol)
+                        .font(DesignTokens.Typography.secondary)
                         .foregroundStyle(.secondary)
                 }
             }
-            .padding(.top, 8)
+            .padding(.top, DesignTokens.Spacing.small)
         }
-        .padding(.horizontal, 48)
+        .padding(DesignTokens.Spacing.xxxLarge)
+    }
+}
+
+private struct ToolPickerScreen: View {
+    private let columns = [GridItem(.flexible(), spacing: DesignTokens.Spacing.large), GridItem(.flexible())]
+
+    var body: some View {
+        VStack(spacing: DesignTokens.Spacing.large) {
+            ScreenHeader(
+                title: "Pick your tools",
+                subtitle: "Keep what you'll use. A tool that's off has no shortcuts and runs nothing. Change this any time in Settings."
+            )
+            .padding(.top, DesignTokens.Spacing.xxLarge)
+            ScrollView {
+                LazyVGrid(columns: columns, alignment: .leading, spacing: DesignTokens.Spacing.large) {
+                    ForEach(Verb.allCases) { verb in
+                        VerbCard(verb: verb)
+                    }
+                }
+                .padding(.horizontal, DesignTokens.Spacing.xxLarge)
+                .padding(.bottom, DesignTokens.Spacing.large)
+            }
+        }
+    }
+}
+
+private struct VerbCard: View {
+    let verb: Verb
+
+    var body: some View {
+        CheeseCard {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                CheeseSectionHeader(verb.title, symbol: verb.symbol)
+                ForEach(verb.modules) { module in
+                    ModuleToggle(module: module) {
+                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.hairline) {
+                            HStack(spacing: DesignTokens.Spacing.xSmall) {
+                                Text(module.title)
+                                if let hotkey = module.mainHotkey, let shortcut = KeyboardShortcuts.getShortcut(for: hotkey.name) {
+                                    CheeseKeycap(text: shortcut.description)
+                                }
+                            }
+                            Text(module.blurb)
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+private struct PermissionsScreen: View {
+    let status: PermissionStatus
+
+    private var enabled: Set<ModuleID> {
+        let preferences = Preferences()
+        return Set(ModuleID.allCases.filter(preferences.isModuleEnabled))
     }
 
-    private func setLaunchAtLogin(_ enabled: Bool) {
-        // Reverting the toggle after a failure re-enters here; the status already matches, so stop.
-        guard enabled != LaunchAtLogin.isEnabled else { return }
-        do {
-            try LaunchAtLogin.setEnabled(enabled)
-        } catch {
-            Logger.welcome.error("Launch at login change failed: \(error.localizedDescription, privacy: .public)")
-            launchAtLoginMessage = "Couldn't change this: \(error.localizedDescription)"
+    var body: some View {
+        let enabled = enabled
+        let plan = PermissionPlan.plan(for: enabled)
+        VStack(spacing: DesignTokens.Spacing.large) {
+            ScreenHeader(
+                title: plan.isEmpty ? "No permissions needed" : "Permissions for your tools",
+                subtitle: plan.isEmpty
+                    ? "The tools you picked work without asking macOS for anything."
+                    : "Only what your tools need. You can skip this: Cheese asks again the first time a tool needs one."
+            )
+            .padding(.top, DesignTokens.Spacing.xxLarge)
+            VStack(spacing: DesignTokens.Spacing.small) {
+                ForEach(plan) { need in
+                    PermissionNeedRow(
+                        need: need,
+                        usedBy: PermissionPlan.tools(needing: need, among: enabled),
+                        state: status.state(of: need),
+                        grant: { status.grant(need) }
+                    )
+                }
+            }
+            .padding(.horizontal, DesignTokens.Spacing.xxLarge)
+            Spacer(minLength: 0)
         }
-        launchAtLogin = LaunchAtLogin.isEnabled
-        if LaunchAtLogin.requiresApproval {
-            launchAtLoginMessage = "Approve Cheese in System Settings → General → Login Items."
+        .task { await status.poll() }
+    }
+}
+
+/// One permission with the tools that need it, its live status and a Grant button.
+struct PermissionNeedRow: View {
+    let need: PermissionNeed
+    let usedBy: [ModuleID]
+    let state: PermissionStatus.State
+    let grant: () -> Void
+
+    var body: some View {
+        CheeseCard {
+            HStack(spacing: DesignTokens.Spacing.medium) {
+                Image(systemName: need.symbol)
+                    .font(.title3)
+                    .frame(width: DesignTokens.Size.rowIcon + 6)
+                    .foregroundStyle(.tint)
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.hairline) {
+                    Text(need.title)
+                        .font(DesignTokens.Typography.heading)
+                    Text("For " + ListFormatter.localizedString(byJoining: usedBy.map(\.title)))
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                switch state {
+                case .granted:
+                    Label("Granted", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                case .missing:
+                    Button("Grant…", action: grant)
+                case .unknown:
+                    Text("Asked on first use")
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(.secondary)
+                    Button("Settings…", action: grant)
+                }
+            }
         }
     }
 }

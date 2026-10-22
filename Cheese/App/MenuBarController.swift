@@ -5,6 +5,7 @@ import KeyboardShortcuts
 enum IndicatorSource: CaseIterable {
     case keepAwake
     case files
+    case share
 
     /// Every source's text, in order, joined with " · ": `∞ · 3/10`. Nil when none has any.
     static func joined(_ texts: [IndicatorSource: String]) -> String? {
@@ -22,19 +23,25 @@ final class MenuBarController: NSObject, NSMenuDelegate, NSWindowDelegate, NSDra
     private var indicators: [IndicatorSource: String] = [:]
     /// The menu for dropped files, or nil when they can't be dropped (the Files module is off).
     private let dropMenu: ([URL]) -> NSMenu?
+    /// Clicking the Share indicator reopens the Share panel.
+    private let openShare: () -> Void
 
     /// The view popovers anchor to, so they appear under the menu bar icon.
     var anchorView: NSView? { statusItem.button }
 
-    init(statusMenu: StatusMenu, dropMenu: @escaping ([URL]) -> NSMenu? = { _ in nil }) {
+    init(statusMenu: StatusMenu, dropMenu: @escaping ([URL]) -> NSMenu? = { _ in nil }, openShare: @escaping () -> Void = {}) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         self.statusMenu = statusMenu
         self.dropMenu = dropMenu
+        self.openShare = openShare
         super.init()
 
         statusMenu.menu.delegate = self
-        statusItem.menu = statusMenu.menu
         if let button = statusItem.button {
+            // Clicks open the menu, except on the Share indicator, which reopens the Share panel.
+            button.target = self
+            button.action = #selector(buttonClicked(_:))
+            button.sendAction(on: [.leftMouseDown, .rightMouseDown])
             // Template image from the asset catalog, so it tints for light/dark menu bars.
             let icon = NSImage(resource: .menuBarIcon)
             icon.accessibilityDescription = "Cheese"
@@ -61,6 +68,25 @@ final class MenuBarController: NSObject, NSMenuDelegate, NSWindowDelegate, NSDra
             button.imagePosition = .imageOnly
             statusItem.length = NSStatusItem.squareLength
         }
+    }
+
+    @objc private func buttonClicked(_ sender: NSStatusBarButton) {
+        if let event = NSApp.currentEvent, event.type == .leftMouseDown, isOnShareIndicator(event, in: sender) {
+            openShare()
+            return
+        }
+        // Attaching the menu only for this click keeps the button's action for the next one.
+        statusItem.menu = statusMenu.menu
+        sender.performClick(nil)
+        statusItem.menu = nil
+    }
+
+    /// The Share indicator is the last piece of the title, at the button's trailing edge.
+    private func isOnShareIndicator(_ event: NSEvent, in button: NSStatusBarButton) -> Bool {
+        guard let share = indicators[.share], let font = button.font else { return false }
+        let point = button.convert(event.locationInWindow, from: nil)
+        let width = (share as NSString).size(withAttributes: [.font: font]).width + 8
+        return point.x >= button.bounds.maxX - width
     }
 
     // MARK: NSMenuDelegate
