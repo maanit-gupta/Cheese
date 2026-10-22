@@ -68,8 +68,10 @@ struct StrokeBuilderTests {
 
     @Test func endsTaper() {
         let outline = StrokeBuilder.outline(points: horizontal(from: 0, to: 400, step: 3), options: .pen(width: 12))
-        #expect(halfWidth(outline, nearX: 3) < halfWidth(outline, nearX: 200) * 0.6)
-        #expect(halfWidth(outline, nearX: 397) < halfWidth(outline, nearX: 200) * 0.6)
+        // The very tips narrow to (nearly) a point; the middle is full width.
+        #expect(halfWidth(outline, nearX: 0, within: 1.5) < 1.5)
+        #expect(halfWidth(outline, nearX: 400, within: 1.5) < 1.5)
+        #expect(halfWidth(outline, nearX: 200) > 4)
     }
 
     @Test func highlighterKeepsAConstantWidth() {
@@ -126,7 +128,8 @@ struct OneEuroFilterTests {
         }
         let settled = outputs.suffix(120)
         let spread = (settled.map(\.x).max() ?? 0) - (settled.map(\.x).min() ?? 0)
-        #expect(spread < 1)
+        // ±1.5 points of jitter (3 points of spread) is more than halved.
+        #expect(spread < 1.5)
     }
 
     @Test func fastStrokesBarelyLag() {
@@ -649,5 +652,41 @@ struct DrawPaletteTests {
         registry.handleHotkey(.keyUp, for: holdable.id)
         #expect(events == ["down", "up"])
         #expect(pressed == 1)
+    }
+}
+
+// MARK: - Where committed ink lands
+
+@MainActor
+struct CanvasPlacementTests {
+    /// Committed ink must show exactly where it was drawn: drawn at the top, it stays at the top.
+    @Test func committedInkStaysWhereItWasDrawn() throws {
+        let page: CanvasPageID = 9
+        let controller = DrawModeController(services: DrawModeController.Services(
+            captureDisplay: { _, _ in throw CaptureError.displayNotFound },
+            openEditor: { _ in },
+            isScreenRecordingGranted: { false },
+            explainMissingScreenRecording: { _ in },
+            usesLetterKeys: { false }
+        ))
+        let view = CanvasView(frame: CGRect(x: 0, y: 0, width: 200, height: 200), page: page, controller: controller)
+        controller.chooseTool(.line)
+        controller.settings.width = 10
+        let event = { (type: NSEvent.EventType) in
+            NSEvent.mouseEvent(with: type, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: 0, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) ?? NSEvent()
+        }
+        controller.mouseDown(on: page, at: CGPoint(x: 20, y: 30), event: event(.leftMouseDown))
+        controller.mouseDragged(on: page, at: CGPoint(x: 180, y: 30), event: event(.leftMouseDragged))
+        controller.mouseUp(on: page, at: CGPoint(x: 180, y: 30), event: event(.leftMouseUp))
+        view.refresh()
+
+        let rep = try #require(view.bitmapImageRepForCachingDisplay(in: view.bounds))
+        view.cacheDisplay(in: view.bounds, to: rep)
+        let scale = CGFloat(rep.pixelsHigh) / view.bounds.height
+        // Bitmap rows count from the top, like the canvas.
+        let atLine = try #require(rep.colorAt(x: Int(100 * scale), y: Int(30 * scale)))
+        let mirrored = try #require(rep.colorAt(x: Int(100 * scale), y: Int(170 * scale)))
+        #expect(atLine.alphaComponent > 0.9 && atLine.redComponent > 0.8)
+        #expect(mirrored.alphaComponent < 0.1)
     }
 }

@@ -42,6 +42,11 @@ final class ToolbarPanel {
 
     var windowNumber: Int { panel.windowNumber }
 
+    /// Where the rail is on screen while it's showing. Nothing is drawn there.
+    var visibleFrame: NSRect? {
+        panel.isVisible && panel.alphaValue > 0 ? panel.frame : nil
+    }
+
     /// Slides the rail in at the left edge of `screen`, vertically centered.
     func show(on screen: NSScreen, animated: Bool) {
         transition += 1
@@ -169,6 +174,9 @@ private struct ToolbarView: View {
             }
         }
         .padding(6)
+        // Fully transparent pixels let clicks fall through to the canvas below; this keeps the
+        // whole rail, margins included, a place for picking tools and never for drawing.
+        .background(Color.black.opacity(0.012))
         .onHover { onHover($0) }
     }
 

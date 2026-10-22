@@ -12,8 +12,9 @@ enum StrokeBuilder {
         var thinning: CGFloat = 0.5
         /// How much the outline's own corners are softened.
         var smoothing: CGFloat = 0.5
-        /// How strongly points are eased toward the input: 0 follows it exactly.
-        var streamline: CGFloat = 0.35
+        /// How strongly points are eased toward the input: 0 follows it exactly. Kept low: easing
+        /// makes the ink trail the pointer, and the 1€ filter already removes jitter.
+        var streamline: CGFloat = 0.1
         /// Derive pressure from speed, for devices that don't report it (mice, most trackpads).
         var simulatesPressure = true
         /// Distances, in points, over which the start and end narrow to a point. 0 rounds them.

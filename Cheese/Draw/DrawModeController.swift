@@ -431,6 +431,8 @@ final class DrawModeController {
     // MARK: Mouse
 
     func mouseDown(on page: CanvasPageID, at point: CGPoint, event: NSEvent) {
+        // The tool rail and the radial menu are for picking, never for drawing.
+        guard radial == nil, !isOverToolbar(point, on: page) else { return }
         let flags = effectiveModifiers(event.modifierFlags)
         modifiers = event.modifierFlags
         if editing != nil {
@@ -493,6 +495,13 @@ final class DrawModeController {
         case .passThrough, .spotlight, .zoom:
             break
         }
+    }
+
+    /// Whether `point` on `page` lies under the tool rail (including its flyout and margins).
+    private func isOverToolbar(_ point: CGPoint, on page: CanvasPageID) -> Bool {
+        guard isActive, let view = view(page), let window = view.window, let toolbarFrame = toolbar.visibleFrame else { return false }
+        let screenPoint = window.convertPoint(toScreen: view.convert(point, to: nil))
+        return toolbarFrame.contains(screenPoint)
     }
 
     /// The resize handle under `point` when exactly one item is selected on `page`.
@@ -703,10 +712,14 @@ final class DrawModeController {
         }
         let pressures = samples.map(\.pressure)
         let analog = StrokeBuilder.hasAnalogPressure(pressures)
+        var options = inkOptions(ink, pressures: analog ? pressures : [])
+        // The end tapers only once the pen lifts; while drawing, the ink stays full width right up
+        // to the cursor so it never looks like it's lagging.
+        options.taperEnd = 0
         view.setLiveInk(LiveInk(
             points: samples.map(\.point),
             pressures: analog ? pressures : [],
-            options: inkOptions(ink, pressures: analog ? pressures : []),
+            options: options,
             color: ink.isHighlighter ? ink.style.color.withAlpha(CanvasItem.highlighterAlpha) : ink.style.color,
             isNeon: ink.style.isNeon
         ))
@@ -978,7 +991,7 @@ final class DrawModeController {
     // MARK: Radial menu
 
     func radialBegan(on page: CanvasPageID, at point: CGPoint, time: TimeInterval) {
-        guard settings.tool != .passThrough else { return }
+        guard settings.tool != .passThrough, !isOverToolbar(point, on: page) else { return }
         endTextEditing()
         finishInteraction(constrained: false)
         cancelRadial()

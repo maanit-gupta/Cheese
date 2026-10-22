@@ -39,12 +39,11 @@ final class CanvasView: NSView, NSTextViewDelegate {
 
     private let backgroundHost = LayerHostView()
     private let vignette = CAGradientLayer()
-    private let bakedHost = LayerHostView()
-    private let bakedLayer = CALayer()
+    private let bakedView = BakedItemsView()
     private let floatingView = FloatingItemsView()
     private let liveHost = LayerHostView()
     private let liveInkLayer = CAShapeLayer()
-    private let snapPreview = CALayer()
+    private let snapPreview = CAShapeLayer()
     private let presenterHost = LayerHostView()
     let presenter = PresenterLayers()
     let radialMenu = RadialMenuLayer()
@@ -53,8 +52,6 @@ final class CanvasView: NSView, NSTextViewDelegate {
 
     /// What the bitmap currently shows, in draw order.
     private var baked: [CanvasItem] = []
-    private var bakedContext: CGContext?
-    private var bakedPixelSize = CGSize.zero
     private let outlines = InkOutlineCache()
     private var frameLink: CADisplayLink?
     private var liveInk: LiveInk?
@@ -77,14 +74,13 @@ final class CanvasView: NSView, NSTextViewDelegate {
         backgroundHost.hostedLayer.addSublayer(vignette)
         backgroundHost.hostedLayer.actions = ["backgroundColor": NSNull()]
 
-        bakedLayer.contentsGravity = .resize
-        bakedLayer.actions = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull()]
-        bakedHost.hostedLayer.addSublayer(bakedLayer)
+        bakedView.canvas = self
+        bakedView.layerContentsRedrawPolicy = .onSetNeedsDisplay
 
         liveInkLayer.fillRule = .nonZero
         liveInkLayer.actions = ["path": NSNull(), "fillColor": NSNull(), "shadowColor": NSNull(), "shadowOpacity": NSNull(), "opacity": NSNull()]
         liveHost.hostedLayer.addSublayer(liveInkLayer)
-        snapPreview.actions = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull(), "hidden": NSNull()]
+        snapPreview.actions = ["path": NSNull(), "bounds": NSNull(), "position": NSNull(), "hidden": NSNull(), "fillColor": NSNull()]
         snapPreview.isHidden = true
         liveHost.hostedLayer.addSublayer(snapPreview)
 
@@ -92,7 +88,7 @@ final class CanvasView: NSView, NSTextViewDelegate {
         presenterHost.hostedLayer.addSublayer(radialMenu.container)
 
         floatingView.canvas = self
-        for subview in [backgroundHost, bakedHost, floatingView, liveHost, presenterHost] {
+        for subview in [backgroundHost, bakedView, floatingView, liveHost, presenterHost] {
             subview.frame = bounds
             subview.autoresizingMask = [.width, .height]
             addSubview(subview)
@@ -115,7 +111,6 @@ final class CanvasView: NSView, NSTextViewDelegate {
         presenter.container.frame = presenterHost.bounds
         liveInkLayer.frame = liveHost.bounds
         vignette.frame = backgroundHost.bounds
-        bakedLayer.frame = bakedHost.bounds
         CATransaction.commit()
         refresh()
     }
@@ -125,14 +120,10 @@ final class CanvasView: NSView, NSTextViewDelegate {
         refresh()
     }
 
-    private var backingScale: CGFloat {
-        window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
-    }
-
     // MARK: Rendering
 
     /// Brings every layer up to date with the controller's state. Only what changed is redrawn:
-    /// a newly committed item is painted on top of the bitmap; anything else repaints it.
+    /// a newly committed item repaints just its own area; anything else repaints every item once.
     func refresh() {
         guard let state = controller?.renderState(for: page) else { return }
         backgroundHost.hostedLayer.backgroundColor = switch state.board {
@@ -145,52 +136,28 @@ final class CanvasView: NSView, NSTextViewDelegate {
     }
 
     private func bake(_ target: [CanvasItem]) {
-        let scale = backingScale
-        let pixelSize = CGSize(width: (bounds.width * scale).rounded(), height: (bounds.height * scale).rounded())
-        guard pixelSize.width > 0, pixelSize.height > 0 else { return }
-
-        var update = CanvasRaster.update(from: baked, to: target)
-        if bakedContext == nil || pixelSize != bakedPixelSize {
-            update = .full
-        }
-        let toDraw: [CanvasItem]
-        switch update {
+        switch CanvasRaster.update(from: baked, to: target) {
         case .none:
             return
         case let .append(items):
-            toDraw = items
+            baked = target
+            // The view keeps what it drew before; only the new items' area is painted again.
+            for item in items {
+                bakedView.setNeedsDisplay(CanvasRenderer.paintedBounds(of: item))
+            }
         case .full:
+            baked = target
             outlines.keep(only: Set(target.map(\.id)))
-            if bakedContext == nil || pixelSize != bakedPixelSize {
-                bakedContext = Self.makeContext(pixelSize: pixelSize, scale: scale)
-                bakedPixelSize = pixelSize
-            }
-            bakedContext?.clear(CGRect(origin: .zero, size: bounds.size))
-            toDraw = target
+            bakedView.needsDisplay = true
         }
-        guard let context = bakedContext else { return }
-        CanvasRenderer.withGraphicsContext(context) {
-            for item in toDraw {
-                CanvasRenderer.draw(item, in: context, outlines: outlines)
-            }
-        }
-        baked = target
-        bakedLayer.contentsScale = scale
-        bakedLayer.contents = target.isEmpty ? nil : context.makeImage()
     }
 
-    /// A bitmap context drawn in view points with y down.
-    private static func makeContext(pixelSize: CGSize, scale: CGFloat) -> CGContext? {
-        guard let context = CGContext(
-            data: nil, width: Int(pixelSize.width), height: Int(pixelSize.height), bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
-        ) else { return nil }
-        context.translateBy(x: 0, y: pixelSize.height)
-        context.scaleBy(x: scale, y: -scale)
-        context.setShouldAntialias(true)
-        context.interpolationQuality = .high
-        return context
+    /// Committed items, drawn by `BakedItemsView` into its own retained backing store. Drawing
+    /// through a flipped view (not as an image in a layer) keeps them exactly where they were drawn.
+    fileprivate func drawBaked(in context: CGContext, dirtyRect: CGRect) {
+        for item in baked where CanvasRenderer.paintedBounds(of: item).intersects(dirtyRect) {
+            CanvasRenderer.draw(item, in: context, outlines: outlines)
+        }
     }
 
     /// Floating items and the selection, drawn by `FloatingItemsView`.
@@ -276,22 +243,20 @@ final class CanvasView: NSView, NSTextViewDelegate {
 
     /// The magic pen's clean shape, morphing in over the rough stroke. Nil puts the stroke back.
     func setSnapPreview(_ item: CanvasItem?) {
-        guard let item, let (image, frame) = CanvasRenderer.image(of: item, scale: backingScale, outlines: outlines) else {
+        guard let item, configure(snapPreview, toShow: item) else {
             snapPreview.isHidden = true
-            snapPreview.contents = nil
+            snapPreview.path = nil
             liveInkLayer.opacity = 1
             return
         }
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        snapPreview.contents = image
-        snapPreview.contentsScale = backingScale
-        snapPreview.frame = frame
         snapPreview.isHidden = false
         liveInkLayer.opacity = 0
         CATransaction.commit()
 
-        let duration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0.08 : 0.18
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let duration = reduceMotion ? 0.08 : 0.18
         let fadeIn = CABasicAnimation(keyPath: "opacity")
         fadeIn.fromValue = 0
         fadeIn.toValue = 1
@@ -302,7 +267,7 @@ final class CanvasView: NSView, NSTextViewDelegate {
         fadeOut.toValue = 0
         fadeOut.duration = duration
         liveInkLayer.add(fadeOut, forKey: "morph")
-        if !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+        if !reduceMotion {
             let settle = CASpringAnimation(keyPath: "transform.scale")
             settle.fromValue = 0.92
             settle.toValue = 1
@@ -315,12 +280,9 @@ final class CanvasView: NSView, NSTextViewDelegate {
 
     /// Disappearing ink: shows `item` for a few seconds, then fades it out. Never part of the document.
     func showDisappearing(_ item: CanvasItem) {
-        guard let (image, frame) = CanvasRenderer.image(of: item, scale: backingScale, outlines: outlines) else { return }
-        let layer = CALayer()
-        layer.actions = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull()]
-        layer.contents = image
-        layer.contentsScale = backingScale
-        layer.frame = frame
+        let layer = CAShapeLayer()
+        layer.actions = ["path": NSNull(), "bounds": NSNull(), "position": NSNull(), "fillColor": NSNull()]
+        guard configure(layer, toShow: item) else { return }
         liveHost.hostedLayer.insertSublayer(layer, below: liveInkLayer)
         fadingLayers.append(layer)
         Task { @MainActor [weak self, weak layer] in
@@ -341,6 +303,28 @@ final class CanvasView: NSView, NSTextViewDelegate {
             layer.add(fade, forKey: "fade")
             CATransaction.commit()
         }
+    }
+
+    /// Sets up a shape layer to show an ink item (a stroke, line, shape or arrow) as one filled
+    /// outline, framed around the item so it can scale in place. Shape layers draw paths in the
+    /// same coordinates as the live stroke, so the item appears exactly where it was drawn.
+    private func configure(_ layer: CAShapeLayer, toShow item: CanvasItem) -> Bool {
+        guard let outline = CanvasRenderer.filledOutline(of: item, outlines: outlines) else { return false }
+        let frame = CanvasRenderer.paintedBounds(of: item)
+        var shift = CGAffineTransform(translationX: -frame.minX, y: -frame.minY)
+        let color = CanvasRenderer.nsColor(item.isHighlighter ? item.style.color.withAlpha(CanvasItem.highlighterAlpha) : item.style.color)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layer.frame = frame
+        layer.path = outline.copy(using: &shift)
+        layer.fillColor = (item.style.isNeon ? CanvasRenderer.neonCore(of: color) : color).cgColor
+        layer.fillRule = .nonZero
+        layer.shadowColor = color.cgColor
+        layer.shadowOpacity = item.style.isNeon ? 1 : 0
+        layer.shadowRadius = CanvasRenderer.neonBlur(width: item.style.width) / 2
+        layer.shadowOffset = .zero
+        CATransaction.commit()
+        return true
     }
 
     /// Removes every transient layer: live ink, snap preview, fading ink, presenters and the radial menu.
@@ -524,7 +508,21 @@ final class CanvasView: NSView, NSTextViewDelegate {
     }
 }
 
-/// Draws a canvas's floating items and selection above its bitmap. Never takes clicks.
+/// Draws a canvas's committed items. Never takes clicks.
+private final class BakedItemsView: NSView {
+    weak var canvas: CanvasView?
+
+    override var isFlipped: Bool { true }
+    override var isOpaque: Bool { false }
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let context = NSGraphicsContext.current?.cgContext else { return }
+        canvas?.drawBaked(in: context, dirtyRect: dirtyRect)
+    }
+}
+
+/// Draws a canvas's floating items and selection above its committed items. Never takes clicks.
 private final class FloatingItemsView: NSView {
     weak var canvas: CanvasView?
 
@@ -612,14 +610,6 @@ enum CanvasRenderer {
         return CGSize(width: rect.width.rounded(.up), height: rect.height.rounded(.up))
     }
 
-    /// Runs `body` with `context` as AppKit's current context, so text can be drawn into it.
-    static func withGraphicsContext(_ context: CGContext, _ body: () -> Void) {
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: true)
-        body()
-        NSGraphicsContext.restoreGraphicsState()
-    }
-
     /// The ink outline of a stroke item.
     static func strokeOutline(_ item: CanvasItem) -> CGPath {
         guard case let .stroke(points, pressures, isHighlighter) = item.kind else { return CGMutablePath() }
@@ -629,25 +619,60 @@ enum CanvasRenderer {
         return StrokeBuilder.path(points: points, pressures: pressures, options: options)
     }
 
-    /// `item` alone as an image, with the frame (in view points) it covers.
-    static func image(of item: CanvasItem, scale: CGFloat, outlines: InkOutlineCache) -> (CGImage, CGRect)? {
-        let pad = item.style.isNeon ? neonBlur(width: item.style.width) * 1.5 : 4
-        let frame = item.bounds.insetBy(dx: -pad, dy: -pad).integral
-        let width = Int((frame.width * scale).rounded(.up))
-        let height = Int((frame.height * scale).rounded(.up))
-        guard width > 0, height > 0, let context = CGContext(
-            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
-        ) else { return nil }
-        context.translateBy(x: 0, y: CGFloat(height))
-        context.scaleBy(x: scale, y: -scale)
-        context.translateBy(x: -frame.minX, y: -frame.minY)
-        withGraphicsContext(context) {
-            draw(item, in: context, outlines: outlines)
+    /// Everything drawing `item` can touch: its bounds plus glow or shadow.
+    static func paintedBounds(of item: CanvasItem) -> CGRect {
+        let pad: CGFloat = if item.style.isNeon {
+            neonBlur(width: item.style.width) * 1.5
+        } else if case .sticky = item.kind {
+            16
+        } else {
+            3
         }
-        guard let image = context.makeImage() else { return nil }
-        return (image, frame)
+        return item.bounds.insetBy(dx: -pad, dy: -pad).integral
+    }
+
+    /// Ink-like items (strokes, lines, shapes, polygons, arrows) as one fillable outline, for
+    /// shape layers. Nil for text, notes and stamps.
+    static func filledOutline(of item: CanvasItem, outlines: InkOutlineCache? = nil) -> CGPath? {
+        func stroked(_ path: CGPath) -> CGPath {
+            path.copy(strokingWithWidth: item.renderedWidth, lineCap: .round, lineJoin: .round, miterLimit: 10)
+        }
+        switch item.kind {
+        case .stroke:
+            return outlines?.path(for: item) { strokeOutline(item) } ?? strokeOutline(item)
+        case let .line(from, to):
+            let path = CGMutablePath()
+            path.addLines(between: [from, to])
+            return stroked(path)
+        case let .shape(kind, rect):
+            let rect = rect.standardized
+            return stroked(kind == .rectangle ? CGPath(rect: rect, transform: nil) : CGPath(ellipseIn: rect, transform: nil))
+        case let .polygon(points):
+            let path = CGMutablePath()
+            path.addLines(between: points)
+            path.closeSubpath()
+            return stroked(path)
+        case let .arrow(from, to):
+            let length = hypot(to.x - from.x, to.y - from.y)
+            guard length > 0 else { return nil }
+            let headLength = min(max(14, item.style.width * 4), length)
+            let ux = (to.x - from.x) / length
+            let uy = (to.y - from.y) / length
+            let base = CGPoint(x: to.x - ux * headLength, y: to.y - uy * headLength)
+            let shaft = CGMutablePath()
+            shaft.addLines(between: [from, CGPoint(x: base.x + ux, y: base.y + uy)])
+            let path = CGMutablePath()
+            path.addPath(stroked(shaft))
+            path.addLines(between: [
+                to,
+                CGPoint(x: base.x - uy * headLength * 0.5, y: base.y + ux * headLength * 0.5),
+                CGPoint(x: base.x + uy * headLength * 0.5, y: base.y - ux * headLength * 0.5),
+            ])
+            path.closeSubpath()
+            return path
+        case .text, .sticky, .stamp:
+            return nil
+        }
     }
 
     static func draw(_ item: CanvasItem, in context: CGContext, outlines: InkOutlineCache? = nil) {

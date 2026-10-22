@@ -5,10 +5,11 @@ import Foundation
 /// pointer is slow, where jitter shows, and barely at all while it's fast, where lag would show.
 /// Works on points and seconds.
 struct OneEuroFilter: Sendable {
-    /// The cutoff frequency, in Hz, at rest. Lower removes more jitter from slow strokes.
-    var minimumCutoff: Double = 3
+    /// The cutoff frequency, in Hz, at rest. Lower removes more jitter from slow strokes, but the
+    /// ink trails the pointer by about 1 / (2π × cutoff) seconds.
+    var minimumCutoff: Double = 10
     /// How fast the cutoff rises with speed (per point/second). Higher keeps fast strokes tighter.
-    var beta: Double = 0.02
+    var beta: Double = 0.05
     /// The cutoff for smoothing the speed itself.
     var derivativeCutoff: Double = 1
 
@@ -17,7 +18,7 @@ struct OneEuroFilter: Sendable {
     /// The interval assumed when two samples share a timestamp: one 120 Hz frame.
     static let fallbackInterval: TimeInterval = 1.0 / 120
 
-    init(minimumCutoff: Double = 3, beta: Double = 0.02, derivativeCutoff: Double = 1) {
+    init(minimumCutoff: Double = 10, beta: Double = 0.05, derivativeCutoff: Double = 1) {
         self.minimumCutoff = minimumCutoff
         self.beta = beta
         self.derivativeCutoff = derivativeCutoff

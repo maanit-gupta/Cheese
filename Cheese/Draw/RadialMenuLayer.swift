@@ -9,7 +9,7 @@ final class RadialMenuLayer {
     let geometry = RadialMenuGeometry()
     private let disc = CAShapeLayer()
     private var slices: [CAShapeLayer] = []
-    private var icons: [CALayer] = []
+    private var icons: [SymbolLayer] = []
     private var swatches: [CAShapeLayer] = []
     private let brush = CAShapeLayer()
     private let label = CATextLayer()
@@ -37,12 +37,11 @@ final class RadialMenuLayer {
             container.addSublayer(slice)
             slices.append(slice)
 
-            let icon = CALayer()
+            let icon = SymbolLayer()
             let center = geometry.center(ofSlice: index)
             icon.frame = CGRect(x: center.dx - 13, y: center.dy - 13, width: 26, height: 26)
-            icon.contentsGravity = .resizeAspect
             if let slice = RadialSlice(rawValue: index) {
-                icon.contents = Self.symbolImage(slice.tool.symbol)
+                icon.symbol = Self.symbolImage(slice.tool.symbol)
             }
             container.addSublayer(icon)
             icons.append(icon)
@@ -89,6 +88,10 @@ final class RadialMenuLayer {
         CATransaction.setDisableActions(true)
         container.position = center
         label.contentsScale = scale
+        for icon in icons where icon.contentsScale != scale {
+            icon.contentsScale = scale
+            icon.setNeedsDisplay()
+        }
         updateBrush(color: color, width: width)
         highlight(nil)
         container.isHidden = false
@@ -161,11 +164,28 @@ final class RadialMenuLayer {
         return path
     }
 
-    private static func symbolImage(_ name: String) -> CGImage? {
+    private static func symbolImage(_ name: String) -> NSImage? {
         let configuration = NSImage.SymbolConfiguration(pointSize: 18, weight: .semibold)
             .applying(NSImage.SymbolConfiguration(paletteColors: [.white]))
-        guard let symbol = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(configuration) else { return nil }
-        var rect = CGRect(origin: .zero, size: CGSize(width: symbol.size.width * 2, height: symbol.size.height * 2))
-        return symbol.cgImage(forProposedRect: &rect, context: nil, hints: nil)
+        return NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(configuration)
+    }
+}
+
+/// An SF Symbol that draws itself. Drawing (rather than an image set as contents) lets Core
+/// Animation hand over a context that matches the canvas's flipped layers, so it's never upside down.
+private final class SymbolLayer: CALayer {
+    var symbol: NSImage? {
+        didSet { setNeedsDisplay() }
+    }
+
+    override func draw(in context: CGContext) {
+        guard let symbol, symbol.size.width > 0, symbol.size.height > 0 else { return }
+        let scale = min(bounds.width / symbol.size.width, bounds.height / symbol.size.height)
+        let size = CGSize(width: symbol.size.width * scale, height: symbol.size.height * scale)
+        let rect = CGRect(x: bounds.midX - size.width / 2, y: bounds.midY - size.height / 2, width: size.width, height: size.height)
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: contentsAreFlipped())
+        symbol.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
+        NSGraphicsContext.restoreGraphicsState()
     }
 }
