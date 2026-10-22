@@ -33,6 +33,7 @@ extension ActionID {
     static let keepAwakeOff = Self(rawValue: "keepAwakeOff")
     static let showClipboardQR = Self(rawValue: "showClipboardQR")
     static let commandPalette = Self(rawValue: "commandPalette")
+    static let drawOnScreen = Self(rawValue: "drawOnScreen")
     static let settingsGeneral = Self(rawValue: "settingsGeneral")
     static let settingsShortcuts = Self(rawValue: "settingsShortcuts")
     static let settingsClipboard = Self(rawValue: "settingsClipboard")

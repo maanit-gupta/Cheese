@@ -77,6 +77,20 @@ final class CaptureService: ScreenCapturing {
         return try await capture(filter)
     }
 
+    /// The whole display with the given Cheese windows included and every other Cheese window left
+    /// out. Draw mode's snapshot uses this to keep the drawings but drop the toolbar.
+    func captureDisplay(_ displayID: CGDirectDisplayID, includingCheeseWindows windowIDs: [CGWindowID]) async throws -> CapturedImage {
+        let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+        guard let display = content.displays.first(where: { $0.displayID == displayID }) else {
+            throw CaptureError.displayNotFound
+        }
+        let ownProcess = ProcessInfo.processInfo.processIdentifier
+        let cheese = content.applications.filter { $0.processID == ownProcess }
+        let included = content.windows.filter { windowIDs.contains($0.windowID) }
+        let filter = SCContentFilter(display: display, excludingApplications: cheese, exceptingWindows: included)
+        return try await capture(filter)
+    }
+
     func captureWindow(_ windowID: CGWindowID) async throws -> CapturedImage {
         let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
         guard let window = content.windows.first(where: { $0.windowID == windowID }) else {

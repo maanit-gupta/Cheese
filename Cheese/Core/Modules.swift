@@ -6,6 +6,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
     case ocr
     case scrollingCapture
     case windowSnapping
+    case drawOnScreen
     case qr
     case keepAwake
     case appHotkeys
@@ -20,6 +21,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .ocr: "OCR"
         case .scrollingCapture: "Scrolling Capture"
         case .windowSnapping: "Window Snapping"
+        case .drawOnScreen: "Draw on Screen"
         case .qr: "QR"
         case .keepAwake: "Keep Awake"
         case .appHotkeys: "App Hotkeys"

@@ -57,7 +57,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func makeRegistry() -> ActionRegistry {
-        let capture = CaptureController(capturer: CaptureService())
+        let captureService = CaptureService()
+        let capture = CaptureController(capturer: captureService)
         let editor = AnnotationEditor()
         let clipboard = ClipboardModule(permissions: permissions, permissionPrompter: permissionPrompter) { [weak self] in
             self?.menuBar?.anchorView
@@ -74,6 +75,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ocr,
             scrollCapture,
             WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager())),
+            DrawModule(services: DrawModeController.Services(
+                captureDisplay: { displayID, overlay in
+                    try await captureService.captureDisplay(displayID, includingCheeseWindows: [overlay])
+                },
+                openEditor: { image in editor.open(image) },
+                isScreenRecordingGranted: { [permissions] in permissions.isGranted(.screenRecording) },
+                explainMissingScreenRecording: { [permissionPrompter] feature in
+                    permissionPrompter.presentAlert(for: .screenRecording, feature: feature)
+                }
+            )),
             QRModule(),
             KeepAwakeModule { [weak self] text in self?.menuBar?.setIndicator(text) },
             AppHotkeysModule(store: appHotkeyStore, index: installedApps),

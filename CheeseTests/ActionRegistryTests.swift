@@ -62,6 +62,12 @@ struct ActionCatalogueTests {
             OCRModule(capture: capture),
             ScrollCaptureModule(capture: capture, previewActions: ScrollPreviewWindow.Actions(annotate: { _ in }, recognizeText: { _ in })),
             WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager())),
+            DrawModule(services: DrawModeController.Services(
+                captureDisplay: { _, _ in throw CaptureError.displayNotFound },
+                openEditor: { _ in },
+                isScreenRecordingGranted: { true },
+                explainMissingScreenRecording: { _ in }
+            )),
             QRModule(),
             KeepAwakeModule { _ in },
             AppHotkeysModule(store: AppHotkeyStore(defaults: UserDefaults(suiteName: "ActionCatalogueTests") ?? .standard), index: InstalledAppIndex(folders: [])),
