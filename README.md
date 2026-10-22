@@ -28,7 +28,7 @@
 
 <p align="center">
   <a href="https://github.com/maanit-gupta/Cheese/raw/main/docs/media/cheese-promo.mp4">
-    <img src="docs/media/cheese-promo.gif" width="880" alt="Cheese promo: clipboard history, screenshots, OCR, scrolling capture and window snapping">
+    <img src="docs/media/cheese-promo.gif" width="880" alt="Cheese promo: clipboard history, screenshots, OCR, scrolling capture, window snapping, draw on screen, the command palette, PDF and file tools, QR codes and app hotkeys">
   </a>
   <br>
   <sub>▶︎ <a href="https://github.com/maanit-gupta/Cheese/raw/main/docs/media/cheese-promo.mp4">Watch the full-quality video (MP4)</a></sub>

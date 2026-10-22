@@ -60,9 +60,10 @@
   .menubar { position: absolute; left: 0; right: 0; top: 0; height: 30px; background: rgba(30,20,40,.35); backdrop-filter: blur(20px); display: flex; align-items: center; padding: 0 16px; font-size: 14px; font-weight: 500; color: #fff; gap: 20px; z-index: 50; }
   .menubar .sp { flex: 1; }
   .menubar b { font-weight: 700; }
-  .mb-cheese { width: 26px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 5px; }
+  .mb-cheese { min-width: 28px; height: 22px; padding: 0 4px; display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: 5px; }
   .mb-cheese.on { background: rgba(255,255,255,.3); }
   .mb-cheese svg { width: 20px; height: 20px; color: #fff; }
+  #mbText { font: 600 13px "SF Mono", Menlo, monospace; display: none; }
 
   .win { position: absolute; background: var(--paper); border-radius: 12px; box-shadow: 0 0 0 1px rgba(0,0,0,.12), 0 22px 50px rgba(0,0,0,.35); overflow: hidden; color: var(--ink); }
   .win .tb { height: 38px; background: #ecebe8; border-bottom: 1px solid #dddcd8; display: flex; align-items: center; padding: 0 14px; gap: 8px; font-size: 14px; font-weight: 600; color: #4a4a4e; }
@@ -145,6 +146,58 @@
   .mi.on { background: #0a64d8; color: #fff; }
   .mi.on span:last-child { color: rgba(255,255,255,.8); }
   .msep { height: 1px; background: #dddcd8; margin: 5px 8px; }
+  .mh { font-size: 11px; font-weight: 700; color: #8a8a8e; padding: 6px 10px 2px; letter-spacing: .3px; }
+
+  /* draw on screen */
+  .rail { position: absolute; left: 18px; top: 70px; width: 46px; padding: 7px 5px; border-radius: 14px; background: rgba(28,26,34,.92); box-shadow: 0 12px 34px rgba(0,0,0,.4); display: flex; flex-direction: column; gap: 2px; z-index: 66; opacity: 0; }
+  .rail .rt { height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; color: #e9e6ee; }
+  .rail .rt.on { background: var(--cheese); color: #2a1d00; }
+  .rail .rs { height: 1px; background: rgba(255,255,255,.16); margin: 3px 4px; }
+  .sticky { position: absolute; width: 180px; height: 170px; background: #ffe066; box-shadow: 0 12px 26px rgba(0,0,0,.28); padding: 18px; font: 700 24px "Marker Felt", "Chalkboard SE", sans-serif; line-height: 1.3; color: #3a2c00; z-index: 64; opacity: 0; transform-origin: 0 0; }
+  .laser { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #ff2d55; z-index: 67; opacity: 0; }
+
+  /* command palette */
+  .palette { position: absolute; left: 250px; top: 130px; width: 600px; border-radius: 16px; background: #f7f6f3; box-shadow: 0 0 0 1px rgba(0,0,0,.12), 0 30px 80px rgba(0,0,0,.45); color: var(--ink); overflow: hidden; z-index: 70; opacity: 0; padding-bottom: 6px; }
+  .palette .pq { height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 20px; font-size: 22px; border-bottom: 1px solid #e3e1dc; margin-bottom: 4px; }
+  .palette .pq .ph { color: #9a9a9e; }
+  .prow { display: flex; align-items: center; gap: 12px; padding: 9px 14px; margin: 2px 8px; border-radius: 9px; font-size: 17px; white-space: nowrap; }
+  .prow .pi { width: 26px; text-align: center; font-size: 17px; }
+  .prow .pm { color: #9a9a9e; font-size: 13px; }
+  .prow .pk { margin-left: auto; color: #8a8a8e; font-size: 15px; }
+  .prow.on { background: #0a64d8; color: #fff; }
+  .prow.on .pm, .prow.on .pk { color: rgba(255,255,255,.78); }
+
+  /* files */
+  .ficon { position: absolute; width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 13px; color: #333; text-align: center; }
+  .doc-ic { width: 60px; height: 76px; border-radius: 6px; background: #fff; box-shadow: 0 0 0 1px #d8d5ce, 0 4px 10px rgba(0,0,0,.12); position: relative; }
+  .doc-ic b { position: absolute; left: 9px; right: 9px; bottom: 10px; border-radius: 3px; color: #fff; font: 700 11px -apple-system, sans-serif; text-align: center; padding: 2px 0; background: #e5352b; }
+  .doc-ic i { position: absolute; left: 10px; right: 10px; height: 4px; border-radius: 2px; background: #e6e3dc; }
+  .ficon .nm { padding: 1px 6px; border-radius: 5px; }
+  .ficon.pick .nm { background: #0a64d8; color: #fff; }
+  .ficon.pick .doc-ic { box-shadow: 0 0 0 3px rgba(10,100,216,.35), 0 0 0 1px #d8d5ce; }
+  .ghost { position: absolute; z-index: 85; opacity: 0; pointer-events: none; }
+  .ghost .badge { position: absolute; right: -10px; top: -10px; width: 26px; height: 26px; border-radius: 50%; background: #e5352b; color: #fff; font: 700 14px -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; }
+  .frow { display: flex; align-items: center; gap: 12px; padding: 9px 12px; font-size: 15px; border-bottom: 1px solid #ebe9e4; }
+  .frow:last-child { border-bottom: none; }
+  .frow .h { color: #b0ada6; font-size: 16px; }
+  .frow .pg { margin-left: auto; color: #9a9a9e; font-size: 13px; }
+  .notif { position: absolute; right: 14px; top: 40px; width: 360px; border-radius: 18px; background: rgba(246,245,242,.96); box-shadow: 0 14px 40px rgba(0,0,0,.35); color: var(--ink); padding: 14px 16px; display: flex; gap: 12px; align-items: center; z-index: 72; opacity: 0; font-size: 14px; line-height: 1.35; }
+  .notif .app { width: 38px; height: 38px; border-radius: 9px; flex: none; }
+
+  /* QR + app hotkeys */
+  .qrpanel { position: absolute; left: 330px; top: 90px; width: 400px; padding: 30px 30px 24px; border-radius: 22px; background: #1c1a22; box-shadow: 0 30px 80px rgba(0,0,0,.5); display: flex; flex-direction: column; align-items: center; gap: 16px; z-index: 70; opacity: 0; color: #fff; }
+  .qrpanel .qw { padding: 22px; background: #fff; border-radius: 14px; }
+  .qrpanel .qp { font-size: 15px; color: #d6d3dc; }
+  .qrpanel .qh { font-size: 13px; color: #8a8792; }
+  .phone { position: absolute; left: 820px; top: 230px; width: 190px; height: 390px; border-radius: 34px; background: #0b0b0d; border: 3px solid #3a3a40; box-shadow: 0 30px 60px rgba(0,0,0,.5); overflow: hidden; z-index: 71; opacity: 0; }
+  .phone .cam { position: absolute; inset: 8px; border-radius: 26px; background: linear-gradient(160deg, #3b3a40, #1c1b20); display: flex; align-items: center; justify-content: center; }
+  .phone .bn { position: absolute; left: 14px; right: 14px; top: 26px; border-radius: 14px; background: rgba(250,248,243,.96); color: #1d1d1f; padding: 10px 12px; font-size: 12px; line-height: 1.35; opacity: 0; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 16px 20px; font-size: 14px; color: #555; text-align: center; }
+  .cal span { padding: 6px 0; border-radius: 8px; }
+  .cal .today { background: #e5352b; color: #fff; font-weight: 700; }
+  .cal .ev { background: rgba(10,100,216,.12); color: #0a64d8; font-weight: 600; }
+  .chip { position: absolute; padding: 8px 14px; border-radius: 12px; background: rgba(20,18,26,.85); color: #fff; font-size: 16px; font-weight: 600; z-index: 75; opacity: 0; white-space: nowrap; }
+  .chip span { color: var(--cheese); margin-left: 8px; }
 </style>
 </head>
 <body>
@@ -155,7 +208,10 @@
     <div class="center-col">
       <img class="big-icon" id="introIcon" src="../../Cheese/Resources/Assets.xcassets/AppIcon.appiconset/icon_512x512@2x.png">
       <div class="wordmark" id="introWord">Cheese</div>
-      <div class="tagline" id="introTag">Five everyday Mac tools. One tiny menu bar app.</div>
+      <div class="tagline" id="introTag">Eleven everyday Mac tools. One tiny menu bar app.</div>
+      <div class="pills" id="introPills" style="flex-wrap:wrap;justify-content:center;max-width:1500px;gap:12px;margin-top:36px">
+        <div class="pill">Clipboard history</div><div class="pill">Screenshots</div><div class="pill">OCR</div><div class="pill">Scrolling capture</div><div class="pill">Window snapping</div><div class="pill">Draw on screen</div><div class="pill">Command palette</div><div class="pill y">PDF &amp; file tools</div><div class="pill">Clipboard as QR</div><div class="pill">App hotkeys</div><div class="pill">Keep awake</div>
+      </div>
     </div>
   </div>
 
@@ -167,7 +223,7 @@
     <div class="menubar">
       <b></b><b>Finder</b><span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Window</span>
       <span class="sp"></span>
-      <span class="mb-cheese" id="mbCheese"><svg viewBox="0 0 18 18"><path fill-rule="evenodd" fill="currentColor" d="M 3.2 13.5 C 2.6 13.5 2.2 12.9 2.4 12.3 L 5.1 4.5 C 5.3 3.9 6.0 3.5 6.6 3.6 L 14.8 5.2 C 15.5 5.3 15.9 6.0 15.7 6.7 L 14.3 12.5 C 14.1 13.1 13.5 13.5 12.9 13.5 Z M 6.8 7.2 A 1.2 1.2 0 1 0 6.8 9.6 A 1.2 1.2 0 1 0 6.8 7.2 Z M 11.2 6.5 A 1.0 1.0 0 1 0 11.2 8.5 A 1.0 1.0 0 1 0 11.2 6.5 Z M 10.5 10.2 A 1.4 1.4 0 1 0 10.5 13.0 A 1.4 1.4 0 1 0 10.5 10.2 Z"/></svg></span>
+      <span class="mb-cheese" id="mbCheese"><svg viewBox="0 0 18 18"><path fill-rule="evenodd" fill="currentColor" d="M 1.4 7.5 L 10.1 2.6 Q 11.3 1.9 12.5 2.4 Q 16.6 4.3 16.6 7.5 Z M 11.7 4.1 A 0.85 0.85 0 1 0 11.7 5.8 A 0.85 0.85 0 1 0 11.7 4.1 Z"/><path fill-rule="evenodd" fill="currentColor" d="M 3 8.9 H 15 A 1.6 1.6 0 0 1 16.6 10.5 V 14.4 A 1.6 1.6 0 0 1 15 16 H 13.9 A 1.35 1.35 0 0 0 11.2 16 H 3 A 1.6 1.6 0 0 1 1.4 14.4 V 10.5 A 1.6 1.6 0 0 1 3 8.9 Z M 5.3 10.9 A 1.75 1.75 0 1 0 5.3 14.4 A 1.75 1.75 0 1 0 5.3 10.9 Z M 10.4 10.4 A 1.0 1.0 0 1 0 10.4 12.4 A 1.0 1.0 0 1 0 10.4 10.4 Z"/></svg><span id="mbText"></span></span>
       <span>Wed 22 Oct&nbsp;&nbsp;11:30</span>
     </div>
     <div id="scenes"></div>
@@ -182,8 +238,9 @@
       <img class="big-icon" id="outroIcon" src="../../Cheese/Resources/Assets.xcassets/AppIcon.appiconset/icon_512x512@2x.png" style="width:220px;height:220px">
       <div class="wordmark" style="font-size:110px">Cheese</div>
       <div class="pills">
-        <div class="pill y">Free &amp; open source</div>
-        <div class="pill">MIT licensed</div>
+        <div class="pill y">11 tools, one app</div>
+        <div class="pill">Free &amp; open source</div>
+        <div class="pill">Works offline</div>
         <div class="pill">macOS 27</div>
       </div>
       <div class="term"><span class="p">$</span> curl -fsSL https://raw.githubusercontent.com/maanit-gupta/Cheese/main/install.sh | bash</div>
@@ -240,6 +297,22 @@ function toast(el, lt, a, b) {
   el.style.opacity = v;
   el.style.transform = `translateX(-50%) translateY(${(1 - eo(prog(lt, a, a + .3))) * 30}px)`;
 }
+// Point inside an element, in mock-screen coordinates (for cursor targets that depend on layout).
+function at(el, fx = .5, fy = .5) {
+  const r = el.getBoundingClientRect(), s = $('screen').getBoundingClientRect();
+  return [r.left - s.left + r.width * fx, r.top - s.top + r.height * fy];
+}
+// Text beside the menu bar icon, like the keep-awake countdown or Files progress.
+function setIndicator(text) {
+  const el = $('mbText');
+  if (el.textContent !== text) el.textContent = text;
+  el.style.display = text ? 'inline' : 'none';
+}
+function popIn(el, lt, a, b, f = .3) {
+  const o = win(lt, a, b, f);
+  el.style.opacity = o;
+  el.style.transform = `scale(${lerp(.93, 1, back(prog(lt, a, a + f)))})`;
+}
 
 // ---------- scenes ----------
 const scenes = [];
@@ -264,7 +337,7 @@ const CLIPS = [
   { i: '¶', t: 'Road trip packing list', full: 'Road trip packing list<br>• Chargers • Snacks • Playlist', meta: 'Text · copied yesterday' },
 ];
 scene({
-  id: 'clip', start: 4.0, end: 12.2, num: '01 — CLIPBOARD', title: 'Clipboard history', keys: ['⌃', '⌥', 'V'],
+  id: 'clip', start: 5.0, end: 13.2, num: '01 — CLIPBOARD', title: 'Clipboard history', keys: ['⌃', '⌥', 'V'],
   desc: 'Everything you copy — text, rich text, images and files — searchable and one keystroke from pasting.',
   html: `
     <div class="win" style="left:60px;top:90px;width:560px;height:440px">
@@ -309,7 +382,7 @@ const BAR_COLORS = ['#ffc83d', '#f29e1f', '#e0702f', '#8a3d6b', '#5a4bb5', '#3a7
 const BAR_H = [45, 70, 55, 92, 66, 80];
 const barsHTML = (h = 230) => `<div class="bars" style="height:${h}px">${BAR_H.map((v, i) => `<div style="height:${v}%;background:${BAR_COLORS[i]}"></div>`).join('')}</div>`;
 scene({
-  id: 'shot', start: 11.8, end: 19.6, num: '02 — SCREENSHOTS', title: 'Screenshots', keys: ['⌃', '⌥', '4'],
+  id: 'shot', start: 12.8, end: 20.6, num: '02 — SCREENSHOTS', title: 'Screenshots', keys: ['⌃', '⌥', '4'],
   desc: 'Region, window or full screen, straight to your clipboard. Hold ⇧ as you finish to annotate.',
   html: `
     <div class="win" style="left:70px;top:70px;width:960px;height:600px">
@@ -377,7 +450,7 @@ function qrHTML() {
   return `<div style="position:relative;width:168px;height:168px">${h}</div>`;
 }
 scene({
-  id: 'ocr', start: 19.2, end: 26.4, num: '03 — OCR', title: 'Copy text from anything', keys: ['⌃', '⌥', 'T'],
+  id: 'ocr', start: 20.2, end: 27.4, num: '03 — OCR', title: 'Copy text from anything', keys: ['⌃', '⌥', 'T'],
   desc: 'Drag over any part of the screen to copy the words in it. English and Hindi. QR codes and barcodes too.',
   html: `
     <div class="win" style="left:70px;top:70px;width:960px;height:600px">
@@ -427,7 +500,7 @@ const pageHTML = () => `<div class="navbar"><div class="logo"></div>cheese.dev<s
   CARD_COLORS.map((c, i) => `<div class="card" style="background:${c};height:${120 + (i % 3) * 30}px">Section ${i + 1}<div class="l" style="width:${60 + (i * 13) % 30}%"></div><div class="l" style="width:${40 + (i * 7) % 30}%"></div></div>`).join('');
 const VIEW_H = 520, SCROLL_MAX = 1260;
 scene({
-  id: 'scroll', start: 26.0, end: 33.4, num: '04 — SCROLLING CAPTURE', title: 'Scrolling capture', keys: ['⌃', '⌥', 'S'],
+  id: 'scroll', start: 27.0, end: 34.4, num: '04 — SCROLLING CAPTURE', title: 'Scrolling capture', keys: ['⌃', '⌥', 'S'],
   desc: 'Cheese scrolls the page for you and stitches one tall image. Sticky headers are kept once, not repeated.',
   html: `
     <div class="win" style="left:60px;top:70px;width:560px;height:600px">
@@ -468,7 +541,7 @@ scene({
 // 5. Window snapping ---------------------------------------------------------
 const FULL = [0, 30, 1100, 690];
 scene({
-  id: 'snap', start: 33.0, end: 40.0, num: '05 — WINDOWS', title: 'Window snapping', keys: ['⌃', '⌥', '← → ↑ ↓'],
+  id: 'snap', start: 34.0, end: 41.0, num: '05 — WINDOWS', title: 'Window snapping', keys: ['⌃', '⌥', '← → ↑ ↓'],
   desc: 'Halves and maximize from the keyboard. Press again to hop to the next display. ⌃⌥⌫ puts it back.',
   html: `
     <div class="win" id="wa" style="z-index:2"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Notes</div>
@@ -491,18 +564,241 @@ scene({
   }
 });
 
-// 6. Shortcuts ---------------------------------------------------------------
+// 6. Draw on screen ----------------------------------------------------------
+const RAIL = ['↖', '☝︎', '|', '✎', '▍', '⌫', '|', '▢', '◯', '╱', '↗', '|', 'T', '▤', '|', '✦', '◐', '⌕', '|', '▣', '|', '↶', '↷'];
+const laserAt = p => [230 + 470 * p, 420 - 70 * Math.sin(p * Math.PI * 3)];
+scene({
+  id: 'draw', start: 40.6, end: 48.6, num: '06 — DRAW ON SCREEN', title: 'Draw on screen', keys: ['⌃', '⌥', 'D'],
+  desc: 'Pens, shapes, arrows and sticky notes over any app. Laser pointer, spotlight and zoom for presenting.',
+  html: `
+    <div class="win" style="left:110px;top:60px;width:920px;height:610px">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div>Keynote — Launch Plan.key</div>
+      <div class="abs" style="left:60px;top:66px;font-size:34px;font-weight:800;letter-spacing:-1px">Launch plan</div>
+      <div class="abs" style="left:60px;top:112px;color:#888;font-size:17px">Weekly sign-ups since the beta</div>
+      <div class="abs" style="left:60px;top:168px;width:560px">${barsHTML(300)}</div>
+      <div class="abs" style="left:680px;top:120px;width:200px">
+        <div style="font-size:15px;color:#888;font-weight:600">SIGN-UPS</div>
+        <div style="font-size:54px;font-weight:800;letter-spacing:-2px;color:#2f9e74">+38%</div>
+        <div class="line" style="width:90%"></div><div class="line" style="width:70%"></div>
+      </div>
+    </div>
+    <svg class="abs" style="left:0;top:0;width:1100px;height:720px;z-index:63" viewBox="0 0 1100 720">
+      <path id="pen" d="M 560 250 C 562 212, 440 200, 424 240 C 408 284, 474 306, 522 298 C 570 290, 584 252, 546 226" fill="none" stroke="#e5352b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="arr" d="M 778 222 C 720 205, 640 220, 588 254" fill="none" stroke="#0a64d8" stroke-width="6" stroke-linecap="round"/>
+      <path id="arrHead" d="M 599 233 L 588 254 L 612 253" fill="none" stroke="#0a64d8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="sticky" id="sticky" style="left:800px;top:340px"><span id="stickyText"></span></div>
+    <div id="laser"></div>
+    <div class="rail" id="rail">${RAIL.map(g => g === '|' ? '<div class="rs"></div>' : `<div class="rt" data-g="${g}">${g}</div>`).join('')}</div>`,
+  init(s) {
+    for (const id of ['#pen', '#arr']) { const el = s.q(id); const L = el.getTotalLength(); el.style.strokeDasharray = L; el.dataset.L = L; }
+    s.q('#laser').innerHTML = Array.from({ length: 16 }, () => '<div class="laser"></div>').join('');
+  },
+  update(lt, s) {
+    setHud(lt, [[.3, 1.1, ['⌃', '⌥', 'D']], [1.15, 1.7, ['P']], [2.55, 3.1, ['A']], [3.75, 4.3, ['N']], [5.15, 5.7, ['L']]]);
+    s.q('#rail').style.opacity = prog(lt, .7, 1.0);
+    const tool = lt < 2.6 ? '✎' : lt < 3.8 ? '↗' : lt < 5.2 ? '▤' : '✦';
+    for (const rt of s.q('#rail').children) rt.classList.toggle('on', rt.dataset.g === tool);
+
+    const pen = s.q('#pen'), pp = eio(prog(lt, 1.5, 2.4));
+    pen.style.strokeDashoffset = pen.dataset.L * (1 - pp);
+    const arr = s.q('#arr'), ap = eio(prog(lt, 2.85, 3.4));
+    arr.style.strokeDashoffset = arr.dataset.L * (1 - ap);
+    s.q('#arrHead').style.opacity = prog(lt, 3.35, 3.45);
+
+    const st = s.q('#sticky'), so = prog(lt, 4.0, 4.35);
+    st.style.opacity = so; st.style.transform = `scale(${lerp(.6, 1, back(so))}) rotate(-2deg)`;
+    s.q('#stickyText').textContent = 'Ship by Friday! 🧀'.slice(0, Math.floor(clamp((lt - 4.4) / .035, 0, 18)));
+
+    const dots = s.q('#laser').children, lp = t => prog(t, 5.4, 7.6);
+    for (let k = 0; k < dots.length; k++) {
+      const t = lt - k * .035, [x, y] = laserAt(eio(lp(t)));
+      const on = lt > 5.4 && lt < 7.7 && t > 5.35;
+      Object.assign(dots[k].style, { left: x + 'px', top: y + 'px', opacity: on ? Math.pow(1 - k / dots.length, 1.6) : 0, transform: `scale(${1 - k / dots.length * .6})`, boxShadow: k === 0 ? '0 0 18px 7px rgba(255,45,85,.75)' : 'none' });
+    }
+
+    if (lt > .9 && lt < 1.5) { const [cx, cy] = path(lt, [[.9, 640, 560], [1.45, 560, 250]]); setCursor(cx, cy, prog(lt, .9, 1.0), 'cross'); }
+    else if (lt >= 1.5 && lt < 2.45) { const q = pen.getPointAtLength(pen.dataset.L * pp); setCursor(q.x, q.y, 1, 'cross'); }
+    else if (lt >= 2.45 && lt < 2.85) { const [cx, cy] = path(lt, [[2.45, 546, 226], [2.85, 778, 222]]); setCursor(cx, cy, 1, 'cross'); }
+    else if (lt >= 2.85 && lt < 3.5) { const q = arr.getPointAtLength(arr.dataset.L * ap); setCursor(q.x, q.y, 1, 'cross'); }
+    else if (lt >= 3.5 && lt < 4.0) { const [cx, cy] = path(lt, [[3.5, 588, 254], [3.95, 810, 350]]); setCursor(cx, cy, 1, 'cross'); }
+    else if (lt >= 4.0 && lt < 5.3) setCursor(810, 350, 1 - prog(lt, 5.0, 5.3), 'cross');
+    else setCursor(0, 0, 0);
+  }
+});
+
+// 7. Command palette ---------------------------------------------------------
+const PALETTE = [
+  ['📷', 'Capture Region', 'Screenshots', '⌃⌥4'],
+  ['◧', 'Snap Left Half', 'Window Snapping', '⌃⌥←'],
+  ['✎', 'Draw on Screen', 'Draw', '⌃⌥D'],
+  ['▦', 'Show Clipboard as QR', 'QR', ''],
+  ['📄', 'Files: Merge PDFs…', 'Files', ''],
+  ['⚙︎', 'Settings: App Hotkeys', 'Settings', ''],
+  ['☕', 'Keep Awake: Indefinitely', 'Keep Awake', ''],
+  ['☕', 'Keep Awake: Until…', 'Keep Awake', ''],
+];
+scene({
+  id: 'palette', start: 48.2, end: 55.2, num: '07 — COMMAND PALETTE', title: 'Command palette', keys: ['⌃', '⌥', '↩'],
+  desc: 'Every Cheese action, one search away, with its shortcut beside it. Here it turns on Keep Awake, and the countdown sits by the icon.',
+  html: `
+    <div class="win" style="left:70px;top:80px;width:520px;height:440px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Notes</div>
+      <div class="body"><b style="font-size:22px">Launch week</b><div class="line" style="width:80%"></div><div class="line" style="width:60%"></div><div class="line" style="width:72%"></div><div class="line" style="width:50%"></div></div></div>
+    <div class="win" style="left:500px;top:150px;width:540px;height:460px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Safari</div>
+      <div class="body"><div style="height:150px;border-radius:10px;background:linear-gradient(135deg,#5a4bb5,#3a7bd5)"></div><div class="line" style="width:90%"></div><div class="line" style="width:75%"></div><div class="line" style="width:82%"></div></div></div>
+    <div class="palette" id="pal">
+      <div class="pq"><span style="color:#888">⌕</span><span id="pq"></span></div>
+      <div id="prows"></div>
+    </div>
+    <div class="toast" id="toast"><div class="ic">☕</div>Keeping your Mac awake</div>`,
+  update(lt, s) {
+    setHud(lt, [[.3, 1.1, ['⌃', '⌥', '↩']], [2.75, 3.3, ['↩']]]);
+    popIn(s.q('#pal'), lt, .6, 3.3, .25);
+    const query = 'awake'.slice(0, Math.floor(clamp((lt - 1.5) / .2, 0, 5)));
+    s.q('#pq').innerHTML = (query || '<span class="ph">Search Cheese actions</span>') + (lt % 1 < .55 ? '<span class="caret"></span>' : '');
+    const rows = (query ? PALETTE.filter(r => r[1].toLowerCase().includes(query)) : PALETTE).slice(0, 6);
+    const html = rows.map((r, i) => {
+      const t = query ? r[1].replace(new RegExp(query, 'i'), m => `<b>${m}</b>`) : r[1];
+      return `<div class="prow ${i === 0 ? 'on' : ''}"><span class="pi">${r[0]}</span><span>${t}</span><span class="pm">${r[2]}</span><span class="pk">${r[3]}</span></div>`;
+    }).join('');
+    const el = s.q('#prows'); if (el.dataset.h !== html) { el.innerHTML = html; el.dataset.h = html; }
+    if (lt > 3.3) setIndicator('∞');
+    $('mbCheese').classList.toggle('on', lt > 3.3 && lt < 3.9);
+    toast(s.q('#toast'), lt, 3.5, 5.6);
+    setCursor(0, 0, 0);
+  }
+});
+
+// 8. Files -------------------------------------------------------------------
+const FILES = [['Q3 Report.pdf', 'PDF'], ['Appendix.pdf', 'PDF'], ['Invoice.pdf', 'PDF'], ['Beach.heic', 'HEIC']];
+const docIcon = kind => kind === 'PDF'
+  ? '<div class="doc-ic"><i style="top:12px"></i><i style="top:21px"></i><i style="top:30px;right:22px"></i><b>PDF</b></div>'
+  : '<div class="doc-ic" style="background:linear-gradient(160deg,#7cc4f2,#f2c46b 70%,#e0a24a)"><b style="background:#3a7bd5">HEIC</b></div>';
+const fileIcon = (id, name, kind, x, y) => `<div class="ficon" id="${id}" style="left:${x}px;top:${y}px">${docIcon(kind)}<div class="nm">${name}</div></div>`;
+const DROP_MENU = ['#PDF', 'Merge PDFs…', 'Split PDF…', 'Compress PDF…', 'Watermark…', 'Page Numbers…', '#Convert', 'PDF to Word…', 'PDF to Excel…', 'PDF to Images…'];
+const menuHTML = items => items.map(m => m === '-' ? '<div class="msep"></div>' : m[0] === '#' ? `<div class="mh">${m.slice(1)}</div>` : `<div class="mi" data-k="${m.split('|')[0]}"><span>${m.split('|')[0]}</span><span>${m.split('|')[1] || ''}</span></div>`).join('');
+scene({
+  id: 'files', start: 54.8, end: 63.6, num: '08 — FILES', title: 'PDF &amp; file tools', keys: ['Finder', 'Drop on 🧀', 'Palette'],
+  desc: 'Merge, split, compress, watermark and convert PDFs, Office files and images. Fully offline: nothing is uploaded.',
+  html: `
+    <div class="win" style="left:70px;top:110px;width:660px;height:420px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Documents</div>
+      <div style="position:absolute;inset:38px 0 0 0;background:#fff"></div></div>
+    ${FILES.map((f, i) => fileIcon('f' + i, f[0], f[1], 100 + i * 150, 175)).join('')}
+    ${fileIcon('fm', 'Q3 Report (merged).pdf', 'PDF', 100, 340)}
+    <div class="ghost" id="ghost">${docIcon('PDF')}<div style="position:absolute;left:12px;top:8px;transform:rotate(6deg)">${docIcon('PDF')}</div><div class="badge">2</div></div>
+    <div class="menu" id="dmenu" style="width:240px">${menuHTML(DROP_MENU)}</div>
+    <div class="win" id="opts" style="left:300px;top:170px;width:470px;height:300px;opacity:0;z-index:74">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div>Merge PDFs</div>
+      <div style="padding:14px 20px 0;font-size:13px;color:#888">Drag to set the order</div>
+      <div class="group" style="margin:8px 20px">
+        <div class="frow"><span class="h">≡</span>📄 Q3 Report.pdf<span class="pg">12 pages</span></div>
+        <div class="frow"><span class="h">≡</span>📄 Appendix.pdf<span class="pg">4 pages</span></div>
+      </div>
+      <div style="padding:8px 24px;font-size:15px">☑︎ Keep bookmarks</div>
+      <div style="position:absolute;right:18px;bottom:16px;display:flex;gap:8px"><div class="ebtn" style="padding:7px 16px;font-size:14px">Cancel</div><div class="ebtn primary" id="run" style="padding:7px 24px;font-size:14px">Run</div></div>
+    </div>
+    <div class="notif" id="notif" style="width:420px"><img class="app" src="../../docs/media/icon.png"><div><b>Merged 2 PDFs</b><br><span style="color:#666">Q3 Report (merged).pdf</span></div><div class="ebtn" style="margin-left:auto;white-space:nowrap">Show in Finder</div></div>`,
+  update(lt, s) {
+    setHud(lt, [[1.0, 1.5, ['⌘', 'click']], [5.0, 5.5, ['Run']]]);
+    setIndicator(lt < 5.7 || lt > 6.6 ? '∞' : lt < 6.15 ? '∞ · 1/2' : '∞ · 2/2');
+    const merged = lt > 6.6;
+    s.q('#f0').classList.toggle('pick', lt > .7 && !merged);
+    s.q('#f1').classList.toggle('pick', lt > 1.25 && !merged);
+    const fm = s.q('#fm'), fo = prog(lt, 6.6, 6.9);
+    fm.classList.toggle('pick', merged);
+    fm.style.opacity = fo; fm.style.transform = `scale(${lerp(.6, 1, back(fo))})`;
+
+    const icon = at($('mbCheese').querySelector('svg'));
+    const f0 = [160, 215], f1 = [310, 215];
+    const dm = s.q('#dmenu');
+    dm.style.left = Math.min(icon[0] - 14, 1100 - 252) + 'px';
+    popIn(dm, lt, 2.6, 3.75, .2);
+    const merge = dm.querySelector('[data-k="Merge PDFs…"]');
+    merge.classList.toggle('on', lt > 3.3);
+    $('mbCheese').classList.toggle('on', (lt > 2.1 && lt < 2.6) || (lt > 2.6 && lt < 3.75));
+
+    const opts = s.q('#opts');
+    popIn(opts, lt, 3.9, 5.7, .25);
+    s.q('#run').style.filter = lt > 5.15 && lt < 5.4 ? 'brightness(.75)' : 'none';
+
+    const ng = s.q('#notif'), no = win(lt, 6.6, 8.8, .3);
+    ng.style.opacity = no; ng.style.transform = `translateX(${(1 - eo(prog(lt, 6.6, 6.95))) * 60}px)`;
+
+    const ghost = s.q('#ghost');
+    let c = null;
+    if (lt > .3 && lt < 1.5) c = path(lt, [[.3, 560, 600], [.7, f0[0], f0[1]], [.9, f0[0], f0[1]], [1.2, f1[0], f1[1]]]);
+    else if (lt >= 1.5 && lt < 2.6) c = path(lt, [[1.5, f1[0], f1[1]], [2.3, icon[0], icon[1]]]);
+    else if (lt >= 2.6 && lt < 3.75) { const m = at(merge, .3); c = path(lt, [[2.75, icon[0], icon[1]], [3.25, m[0], m[1]]]); }
+    else if (lt >= 3.9 && lt < 5.5) { const r = at(s.q('#run')); c = path(lt, [[4.3, 560, 420], [5.0, r[0], r[1]]]); }
+    if (c) setCursor(c[0], c[1], 1); else setCursor(0, 0, 0);
+    const dragging = lt > 1.55 && lt < 2.6;
+    ghost.style.opacity = dragging ? .9 : 0;
+    if (c) Object.assign(ghost.style, { left: (c[0] - 40) + 'px', top: (c[1] - 30) + 'px' });
+  }
+});
+
+// 9. QR + app hotkeys --------------------------------------------------------
+const QR_MENU = ['Clipboard History|⌃⌥V', '-', '#Capture', 'Capture Region|⌃⌥4', 'Copy Text from Screen|⌃⌥T', '-', '#Utilities', 'Draw on Screen|⌃⌥D', 'Show Clipboard as QR|', 'Keep Awake|▸', '-', 'Settings…|⌘,'];
+const CAL_DAYS = Array.from({ length: 35 }, (_, i) => i - 2);
+scene({
+  id: 'more', start: 63.2, end: 71.2, num: '09 — AND MORE', title: 'QR codes &amp; app hotkeys', keys: ['⌃', '⌥', '⌘', 'C'],
+  desc: 'Show what you copied as a QR code for your phone. Give any app its own ⌃⌥⌘ shortcut, and Cheese suggests a free one.',
+  html: `
+    <div class="win" id="notes" style="left:90px;top:90px;width:540px;height:380px;z-index:2"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Notes</div>
+      <div class="body"><b style="font-size:22px">For the team</b><br>Grab the latest build here:<br><span style="background:#b3d4fc;border-radius:3px;padding:1px 2px">https://github.com/maanit-gupta/Cheese</span><div class="line" style="width:70%;margin-top:22px"></div><div class="line" style="width:55%"></div></div></div>
+    <div class="win" id="cal" style="left:250px;top:150px;width:600px;height:440px;opacity:0;z-index:3"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Calendar — October</div>
+      <div class="cal">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(d => `<span style="font-weight:700;color:#999">${d}</span>`).join('')}${CAL_DAYS.map(d => `<span class="${d === 22 ? 'today' : d === 24 || d === 28 ? 'ev' : ''}">${d > 0 && d <= 31 ? d : ''}</span>`).join('')}</div></div>
+    <div class="menu" id="qmenu" style="width:250px">${menuHTML(QR_MENU)}</div>
+    <div class="qrpanel" id="qr">
+      <div class="qw"><div style="width:244px;height:244px"><div style="transform:scale(1.45);transform-origin:0 0">${qrHTML()}</div></div></div>
+      <div class="qp">https://github.com/maanit-gupta/Cheese</div>
+      <div class="qh">Esc to close</div>
+    </div>
+    <div class="phone" id="phone"><div class="cam"><div style="padding:8px;background:#fff;border-radius:8px;transform:scale(.62)">${qrHTML()}</div></div>
+      <div class="bn" id="banner"><b>Open in Safari</b><br>github.com/maanit-gupta/Cheese</div></div>
+    <div class="chip" id="c1">Calendar<span>⌃⌥⌘C</span></div>
+    <div class="chip" id="c2">Notes<span>⌃⌥⌘N</span></div>`,
+  update(lt, s) {
+    setHud(lt, [[.15, .8, ['⌘', 'C']], [3.85, 4.35, ['Esc']], [4.75, 5.5, ['⌃', '⌥', '⌘', 'C']], [6.25, 7.0, ['⌃', '⌥', '⌘', 'N']]]);
+    setIndicator('∞');
+    const icon = at($('mbCheese').querySelector('svg'));
+    const qm = s.q('#qmenu');
+    qm.style.left = Math.min(icon[0] - 14, 1100 - 262) + 'px';
+    popIn(qm, lt, 1.0, 2.05, .2);
+    const item = qm.querySelector('[data-k="Show Clipboard as QR"]');
+    item.classList.toggle('on', lt > 1.6);
+    $('mbCheese').classList.toggle('on', lt > 1.0 && lt < 2.05);
+    if (lt > .6 && lt < 2.0) { const m = at(item, .3); const [cx, cy] = path(lt, [[.6, 560, 520], [1.0, icon[0], icon[1]], [1.55, m[0], m[1]]]); setCursor(cx, cy, 1); }
+    else setCursor(0, 0, 0);
+
+    popIn(s.q('#qr'), lt, 2.05, 4.6, .3);
+    const ph = s.q('#phone'), po = win(lt, 2.5, 4.6, .35);
+    ph.style.opacity = po; ph.style.transform = `translateY(${(1 - eo(prog(lt, 2.5, 3.0))) * 90}px) rotate(-4deg)`;
+    s.q('#banner').style.opacity = prog(lt, 3.2, 3.45);
+
+    const cal = s.q('#cal'), co = prog(lt, 5.05, 5.4);
+    cal.style.opacity = co; cal.style.transform = `scale(${lerp(.9, 1, back(co))})`;
+    const notes = s.q('#notes'), nf = lt > 6.55;
+    notes.style.zIndex = nf ? 4 : 2;
+    notes.style.transform = `scale(${nf ? lerp(.96, 1, back(prog(lt, 6.55, 6.9))) : 1})`;
+    const c1 = s.q('#c1'), c2 = s.q('#c2');
+    Object.assign(c1.style, { left: '270px', top: '110px', opacity: win(lt, 5.2, 6.5, .2) });
+    Object.assign(c2.style, { left: '110px', top: '50px', opacity: win(lt, 6.65, 7.9, .2) });
+  }
+});
+
+// 10. Shortcuts --------------------------------------------------------------
 const SHORTCUT_ROWS = [['Open clipboard history', '⌃⌥V'], ['Capture region', '⌃⌥4'], ['Capture full screen', '⌃⌥3'], ['Capture window', '⌃⌥5'], ['Copy text from region (OCR)', '⌃⌥T'], ['Scrolling capture', '⌃⌥S']];
 scene({
-  id: 'keys', start: 39.6, end: 45.6, num: 'YOUR KEYS', title: 'Every shortcut is yours', keys: ['Keyboard Shortcuts…'],
+  id: 'keys', start: 70.8, end: 76.8, num: 'YOUR KEYS', title: 'Every shortcut is yours', keys: ['Keyboard Shortcuts…'],
   desc: 'Every feature is one click away in the menu bar. Don\'t like a default? Choose Keyboard Shortcuts…, click one and press new keys.',
   html: `
-    <div class="menu" id="menu">
-      ${['Clipboard History|⌃⌥V', '-', 'Capture Region|⌃⌥4', 'Capture Window|⌃⌥5', 'Capture Full Screen|⌃⌥3', 'Scrolling Capture|⌃⌥S', 'Copy Text from Screen|⌃⌥T', 'Arrange Window|▸', '-', 'Clear History|', 'Clear All…|', '-', 'Keyboard Shortcuts…|', 'Settings…|⌘,', 'Welcome Guide…|', 'Quit Cheese|⌘Q'].map(m => m === '-' ? '<div class="msep"></div>' : `<div class="mi" data-k="${m.split('|')[0]}"><span>${m.split('|')[0]}</span><span>${m.split('|')[1]}</span></div>`).join('')}
+    <div class="menu" id="menu" style="padding:5px">
+      ${menuHTML(['Clipboard History|⌃⌥V', '-', '#Capture', 'Capture Region|⌃⌥4', 'Capture Window|⌃⌥5', 'Capture Full Screen|⌃⌥3', 'Scrolling Capture|⌃⌥S', '#Text', 'Copy Text from Screen|⌃⌥T', '#Windows', 'Arrange Window|▸', '#Utilities', 'Draw on Screen|⌃⌥D', 'Show Clipboard as QR|', 'Keep Awake|▸', '-', 'Clear History|', 'Clear All…|', '-', 'Command Palette|⌃⌥↩', 'Keyboard Shortcuts…|', 'Settings…|⌘,', 'Welcome Guide…|', 'Quit Cheese|⌘Q'])}
     </div>
-    <div class="win" id="settings" style="left:250px;top:70px;width:600px;height:590px;opacity:0">
+    <div class="win" id="settings" style="left:180px;top:70px;width:720px;height:590px;opacity:0">
       <div class="tb" style="justify-content:center;position:relative"><div class="dots" style="position:absolute;left:14px"><i></i><i></i><i></i></div>Cheese Settings</div>
-      <div class="tabs"><div class="tab"><span class="g">⚙︎</span>General</div><div class="tab on"><span class="g">⌨︎</span>Shortcuts</div><div class="tab"><span class="g">📋</span>Clipboard</div><div class="tab"><span class="g">⌕</span>OCR</div><div class="tab"><span class="g">🔒</span>Permissions</div></div>
+      <div class="tabs">${[['⚙︎', 'General'], ['⌨︎', 'Shortcuts'], ['📋', 'Clipboard'], ['⌕', 'OCR'], ['🚀', 'App Hotkeys'], ['📄', 'Files'], ['🔒', 'Permissions'], ['ⓘ', 'About']].map(([g, n]) => `<div class="tab ${n === 'Shortcuts' ? 'on' : ''}" style="width:82px"><span class="g">${g}</span>${n}</div>`).join('')}</div>
       <div style="font-size:13px;color:#888;margin:14px 26px 0">Click a shortcut and press the keys you want instead.</div>
       <div class="gtitle">Clipboard &amp; Capture</div>
       <div class="group">${SHORTCUT_ROWS.map((r, i) => `<div class="srow"><span>${r[0]}</span><div class="rec" id="rec${i}">${r[1]}</div></div>`).join('')}</div>
@@ -511,6 +807,8 @@ scene({
     setHud(lt, [[2.9, 3.8, ['⇧', '⌘', 'V']]]);
     const m = s.q('#menu'), mo = prog(lt, .3, .5) * (1 - prog(lt, 1.4, 1.55));
     m.style.opacity = mo;
+    const icon = at($('mbCheese').querySelector('svg'));
+    m.style.left = Math.min(icon[0] - 14, 1100 - 282) + 'px';
     $('mbCheese').classList.toggle('on', lt > .25 && lt < 1.5);
     for (const mi of m.querySelectorAll('.mi')) mi.classList.toggle('on', mi.dataset.k === 'Keyboard Shortcuts…' && lt > 1.0);
     const st = s.q('#settings'), so = prog(lt, 1.5, 1.85);
@@ -520,30 +818,38 @@ scene({
     rec.classList.toggle('recording', recording);
     rec.textContent = recording ? 'Press shortcut' : changed ? '⇧⌘V' : '⌃⌥V';
     rec.style.background = changed ? `rgba(255,200,61,${.7 * (1 - prog(lt, 3.3, 4.6))})` : '#fff';
-    if (lt < 1.5) { const [cx, cy] = path(lt, [[0, 600, 300], [.25, 855, 15], [.6, 855, 15], [1.0, 800, 328]]); setCursor(cx, cy, win(lt, 0, 1.5, .15)); }
-    else if (lt < 3.0) { const [cx, cy] = path(lt, [[1.8, 600, 500], [2.35, 790, 228]]); setCursor(cx, cy, win(lt, 1.8, 3.2, .15)); }
+    const ks = at(m.querySelector('[data-k="Keyboard Shortcuts…"]'), .35);
+    if (lt < 1.5) { const [cx, cy] = path(lt, [[0, 600, 300], [.25, icon[0], icon[1]], [.6, icon[0], icon[1]], [1.0, ks[0], ks[1]]]); setCursor(cx, cy, win(lt, 0, 1.5, .15)); }
+    else if (lt < 3.0) { const r = at(rec); const [cx, cy] = path(lt, [[1.8, 600, 500], [2.35, r[0], r[1]]]); setCursor(cx, cy, win(lt, 1.8, 3.2, .15)); }
     else setCursor(0, 0, 0);
   }
 });
 
 // ---------- master timeline ----------
-const DURATION = 50;
+const DURATION = 81;
 const screen = $('screen');
 window.DURATION = DURATION;
 window.seek = function (t) {
   // intro
-  const iv = 1 - prog(t, 3.6, 4.2);
+  const iv = 1 - prog(t, 4.6, 5.2);
   $('intro').style.opacity = iv;
   const ip = prog(t, .2, 1.1);
   $('introIcon').style.transform = `scale(${lerp(.6, 1, back(ip))}) rotate(${lerp(-12, 0, eo(ip))}deg)`;
   $('introIcon').style.opacity = ip;
   $('introWord').style.opacity = prog(t, .8, 1.4); $('introWord').style.transform = `translateY(${(1 - eo(prog(t, .8, 1.4))) * 30}px)`;
   $('introTag').style.opacity = prog(t, 1.4, 2.0); $('introTag').style.transform = `translateY(${(1 - eo(prog(t, 1.4, 2.0))) * 20}px)`;
+  [...$('introPills').children].forEach((p, i) => {
+    const pp = prog(t, 2.1 + i * .12, 2.45 + i * .12);
+    p.style.opacity = pp; p.style.transform = `translateY(${(1 - eo(pp)) * 16}px)`;
+  });
 
   // screen
-  const sv = win(t, 3.9, 45.8, .5);
+  const sv = win(t, 4.9, 76.8, .5);
   screen.style.opacity = sv;
-  screen.style.transform = `translateY(${(1 - eo(prog(t, 3.9, 4.6))) * 60}px) scale(${lerp(.97, 1, eo(prog(t, 3.9, 4.6)))})`;
+  screen.style.transform = `translateY(${(1 - eo(prog(t, 4.9, 5.6))) * 60}px) scale(${lerp(.97, 1, eo(prog(t, 4.9, 5.6)))})`;
+  // Shared menu bar state; the scene that owns t sets it again below.
+  $('mbCheese').classList.remove('on');
+  setIndicator('');
 
   let anyHud = false;
   for (const s of scenes) {
@@ -560,9 +866,9 @@ window.seek = function (t) {
   if (!owner || owner.id !== 'shot') flash.style.opacity = 0;
 
   // outro
-  const ov = prog(t, 45.4, 46.2);
+  const ov = prog(t, 76.4, 77.2);
   $('outro').style.opacity = ov;
-  $('outroIcon').style.transform = `scale(${lerp(.7, 1, back(prog(t, 45.5, 46.4)))})`;
+  $('outroIcon').style.transform = `scale(${lerp(.7, 1, back(prog(t, 76.5, 77.4)))})`;
 };
 window.seek(0);
 </script>
