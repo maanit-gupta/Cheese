@@ -88,6 +88,8 @@ private struct IntroPage: View {
         ("text.viewfinder", "Copy text from anything", "OCR any part of the screen. QR codes and barcodes too.", .ocrRegion),
         ("rectangle.expand.vertical", "Scrolling capture", "Cheese scrolls the page for you and stitches one tall image.", .scrollingCapture),
         ("rectangle.split.2x1", "Window snapping", "Halves, maximize and multi-display moves from the keyboard.", .snapLeft),
+        ("pencil.and.scribble", "Draw on screen", "Pens, shapes, sticky notes and a laser pointer over everything.", .drawOnScreen),
+        ("command", "Command palette", "Search every Cheese action, plus QR sharing and Keep Awake.", .commandPalette),
     ]
 
     var body: some View {
@@ -95,12 +97,12 @@ private struct IntroPage: View {
             VStack(spacing: 10) {
                 Image(nsImage: NSApp.applicationIconImage)
                     .resizable()
-                    .frame(width: 96, height: 96)
+                    .frame(width: 72, height: 72)
                     .accessibilityHidden(true)
-                PageHeader(title: "Welcome to Cheese", subtitle: "Five everyday tools that live in your menu bar.")
+                PageHeader(title: "Welcome to Cheese", subtitle: "Everyday tools that live in your menu bar.")
             }
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 10) {
                 ForEach(Self.features, id: \.title) { feature in
                     HStack(spacing: 14) {
                         Image(systemName: feature.symbol)

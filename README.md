@@ -5,8 +5,9 @@
 <h1 align="center">Cheese</h1>
 
 <p align="center">
-  <b>Five everyday Mac tools in one tiny menu bar app.</b><br>
-  Clipboard history · Screenshots · OCR · Scrolling capture · Window snapping
+  <b>Everyday Mac tools in one tiny menu bar app.</b><br>
+  Clipboard history · Screenshots · OCR · Scrolling capture · Window snapping<br>
+  Draw on screen · Clipboard as QR · Keep awake · App hotkeys · Command palette
 </p>
 
 <p align="center">
@@ -34,10 +35,10 @@
 
 ---
 
-Cheese replaces a handful of single-purpose utilities (a clipboard manager, a screenshot tool, a text grabber and a window manager) with one native app. It lives in your menu bar, starts instantly and stays out of the way until you press a shortcut.
+Cheese replaces a handful of single-purpose utilities (a clipboard manager, a screenshot tool, a text grabber, a window manager, a screen annotator, a keep-awake toggle and an app launcher) with one native app. It lives in your menu bar, starts instantly and stays out of the way until you press a shortcut.
 
 - **Native.** Swift 6, SwiftUI and AppKit, built on ScreenCaptureKit, Vision and Accessibility. No Electron and no web views.
-- **Private.** Everything stays on your Mac. No accounts, analytics or network calls. Items that password managers mark as secret are never recorded.
+- **Private.** Everything stays on your Mac. No accounts, analytics or internet access. The only network use is the optional local Wi-Fi share link for QR codes, which serves one file to your own network for 10 minutes. Items that password managers mark as secret are never recorded or shown.
 - **Yours to tweak.** Every shortcut can be changed, and the source is MIT licensed.
 
 ## Features
@@ -69,6 +70,46 @@ Cheese replaces a handful of single-purpose utilities (a clipboard manager, a sc
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>←</kbd> / <kbd>→</kbd> snaps to the left or right half, <kbd>↑</kbd> maximizes and <kbd>↓</kbd> snaps to the bottom half.
 - Press <kbd>→</kbd> again on the right half to jump to the next display, Windows-style.
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌫</kbd> puts the window back where it was.
+
+### ✏️ Draw on screen
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> puts a transparent canvas over every display, including full-screen apps, with a Miro-style tool rail on the left (drag it anywhere).
+- Pen, highlighter, eraser, rectangle, ellipse, line, arrow, text and sticky notes. Hold <kbd>⇧</kbd> for squares, circles and 45° lines.
+- Presenting? **Laser pointer**, **spotlight** and **zoom** (scroll to resize or magnify), plus a whiteboard or blackboard behind your drawings.
+- **Pass-through** (<kbd>M</kbd>) lets you click and type in the apps underneath while drawings stay visible.
+- **Snapshot** (<kbd>⌘</kbd><kbd>⇧</kbd><kbd>S</kbd>) copies the screen with your drawings; Shift-click it to annotate instead.
+- <kbd>Esc</kbd> hides the canvas. Drawings come back next time, until you **Clear All** or quit.
+
+| Key | Tool | Key | Tool |
+|---|---|---|---|
+| <kbd>V</kbd> | Select, move, resize | <kbd>T</kbd> | Text |
+| <kbd>M</kbd> | Pass-through | <kbd>N</kbd> | Sticky note |
+| <kbd>P</kbd> | Pen | <kbd>L</kbd> | Laser pointer |
+| <kbd>H</kbd> | Highlighter | <kbd>S</kbd> | Spotlight |
+| <kbd>E</kbd> | Eraser | <kbd>Z</kbd> | Zoom |
+| <kbd>R</kbd> / <kbd>O</kbd> | Rectangle / ellipse | <kbd>B</kbd> | Board: off → white → black |
+| <kbd>I</kbd> / <kbd>A</kbd> | Line / arrow | <kbd>1</kbd>–<kbd>9</kbd> | Color preset |
+| <kbd>[</kbd> / <kbd>]</kbd> | Thinner / thicker | <kbd>⌘</kbd><kbd>Z</kbd> / <kbd>⌘</kbd><kbd>⇧</kbd><kbd>Z</kbd> | Undo / redo |
+
+### 📱 Show clipboard as QR
+- Pick **Show Clipboard as QR** from the menu or the command palette. A large QR code appears in the middle of the screen.
+- Short text and links go straight into the code. Anything bigger (long text, images, rich text, files, folders) is served from a **local Wi-Fi link** that expires after 10 minutes or when you press **Stop Sharing**. Your phone must be on the same Wi-Fi.
+- The first time Cheese shares over Wi-Fi, **the macOS firewall may ask** whether Cheese can accept incoming connections (only if the firewall is on). Allow it, or the phone can't reach the link.
+
+### ☕️ Keep awake
+- **Keep Awake ▸ Indefinitely / Until… / Turn Off** stops your Mac and display from going to sleep while idle.
+- While it's on, the time left shows next to the menu bar icon (`1h 12m`, `42m`, or `∞`).
+- Keeping the Mac awake **with the lid closed isn't supported**: that needs a privileged helper, which Cheese doesn't install.
+
+### 🚀 App hotkeys
+- **Settings → App Hotkeys** gives any app a <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + letter shortcut that opens it, or brings it to the front if it's running.
+- Add an app and Cheese **suggests a free, memorable key** (Figma → <kbd>F</kbd>, Microsoft Word → <kbd>W</kbd>), skipping keys that Cheese, macOS or popular utilities already use. Accept it, ask for another, or record your own.
+
+### ⌘ Command palette
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, draw mode, QR, keep awake, history and each Settings tab.
+- Each row shows the action's shortcut, so you learn them as you go. Recently used actions come first.
+
+### 🧩 Modules
+Don't need a tool? Switch it off in **Settings → General → Modules**. A module that's off has no shortcuts, runs nothing in the background and disappears from the menu and the palette.
 
 ## Install
 
@@ -115,7 +156,7 @@ Cheese opens a short **welcome guide** the first time it runs:
 
    | Permission | Needed for |
    |---|---|
-   | **Screen Recording** | Screenshots, OCR, scrolling capture |
+   | **Screen Recording** | Screenshots, OCR, scrolling capture, draw-mode snapshots and zoom |
    | **Accessibility** | Pasting from history, window snapping, auto-scrolling |
 
    You can skip this step. Cheese asks the first time a feature needs a permission.
@@ -136,10 +177,15 @@ After that, look for the 🧀 wedge in your menu bar. **Click it to open the Che
  Copy Text from Screen            ⌃⌥T
  WINDOWS
  Arrange Window                     ▸
+ UTILITIES
+ Draw on Screen                   ⌃⌥D
+ Show Clipboard as QR
+ Keep Awake                         ▸
  ───────────────────────────────────
  Clear History
  Clear All…
  ───────────────────────────────────
+ Command Palette                  ⌃⌥↩
  Keyboard Shortcuts…
  Settings…                         ⌘,
  Welcome Guide…
@@ -162,6 +208,11 @@ The shortcuts shown are your current ones, and they update when you change them.
 | Maximize | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↑</kbd> |
 | Snap bottom half | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↓</kbd> |
 | Restore window | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌫</kbd> |
+| Toggle draw on screen | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> |
+| Command palette | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> |
+| Your app hotkeys | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + a letter or digit |
+
+Show Clipboard as QR and Keep Awake have no shortcut; use the menu or the command palette.
 
 ### Changing shortcuts
 
@@ -190,10 +241,11 @@ Cheese warns you if a combination is already taken by macOS or the menu. The men
 
 | Tab | What's there |
 |---|---|
-| **General** | Launch at login, screenshot save folder (default: Desktop), welcome guide |
+| **General** | Launch at login, screenshot save folder (default: Desktop), module on/off switches, welcome guide |
 | **Shortcuts** | Rebind every global shortcut |
 | **Clipboard** | History size (default 200 unpinned items) |
 | **OCR** | Languages (English, Hindi) and line-break handling |
+| **App Hotkeys** | Apps with their own <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> shortcut, with key suggestions |
 | **Permissions** | Live status of Screen Recording and Accessibility, with shortcuts to System Settings |
 
 ## Troubleshooting
@@ -227,6 +279,18 @@ Another app may already be using it. Pick **Keyboard Shortcuts…** from the men
 </details>
 
 <details>
+<summary><b>My phone can't open the QR share link</b></summary>
+
+The phone has to be on the same Wi-Fi as your Mac, and links stop working after 10 minutes. If the macOS firewall is on, allow incoming connections for Cheese in **System Settings → Network → Firewall → Options**. Some guest or office networks block devices from reaching each other; there's no way around that from Cheese.
+</details>
+
+<details>
+<summary><b>Keep Awake doesn't work with the lid closed</b></summary>
+
+That's expected. Keeping a Mac awake with the lid closed needs a privileged helper, which Cheese doesn't install. With the lid open (or an external display, keyboard and power connected), Keep Awake works as usual.
+</details>
+
+<details>
 <summary><b>I can't see the icon in the menu bar</b></summary>
 
 On MacBooks with a notch, a crowded menu bar can hide icons. Quit a few other menu bar apps, or hold <kbd>⌘</kbd> and drag icons to rearrange them. Your shortcuts keep working even while the icon is hidden.
@@ -257,7 +321,9 @@ make run        # build and launch
 make release    # Release build → dist/Cheese.zip + SHA-256
 ```
 
-The Xcode project is generated, so edit `project.yml` rather than `Cheese.xcodeproj`. The code is organised by feature (`Clipboard/`, `Capture/`, `OCR/`, `ScrollCapture/`, `Windows/`, `Editor/`, `Welcome/`, `Settings/`), with the wiring in `App/`. Pure logic (fuzzy matching, stitching, sticky-header detection, snap geometry and display coordinate conversion) has no AppKit dependencies and is covered by unit tests. [`CLAUDE.md`](CLAUDE.md) has the full spec and architecture notes.
+The Xcode project is generated, so edit `project.yml` rather than `Cheese.xcodeproj`. The code is organised by feature (`Clipboard/`, `Capture/`, `OCR/`, `ScrollCapture/`, `Windows/`, `Editor/`, `Draw/`, `QR/`, `KeepAwake/`, `AppHotkeys/`, `Palette/`, `Welcome/`, `Settings/`), with the wiring in `App/`: every action lives once in an `ActionRegistry` that the menu, hotkeys and command palette all read, and each feature is a `CheeseModule` that can be switched off. Pure logic (fuzzy matching, stitching, sticky-header detection, snap geometry, display coordinate conversion, canvas history, stroke smoothing, hit-testing, QR payload planning, share-link rules, keep-awake scheduling, hotkey suggestions and palette ranking) has no AppKit dependencies and is covered by unit tests. [`CLAUDE.md`](CLAUDE.md) and [`CLAUDE-V2.md`](CLAUDE-V2.md) have the full spec and architecture notes.
+
+Known global shortcuts that the hotkey suggester should never propose live in [`ReservedShortcuts.json`](Cheese/AppHotkeys/ReservedShortcuts.json). Add an entry there in a pull request; no code changes needed.
 
 **Publishing a release:** bump `MARKETING_VERSION` in `project.yml`, run `make release`, then:
 
