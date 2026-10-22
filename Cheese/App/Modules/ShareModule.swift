@@ -8,14 +8,26 @@ import os
 final class ShareModule: CheeseModule {
     let id = ModuleID.share
     private let setIndicator: (Bool) -> Void
+    private let openMenu: () -> Void
     private let prompt = ReceivePrompt()
     private var service: ShareService?
     private var panel: SharePanelController?
     private(set) var isRunning = false
 
-    /// - Parameter setIndicator: shows or hides the listening indicator beside the menu bar icon.
-    init(setIndicator: @escaping (Bool) -> Void) {
+    /// - Parameters:
+    ///   - setIndicator: shows or hides the listening indicator beside the menu bar icon.
+    ///   - openMenu: opens the menu bar menu, for the Share panel's back button.
+    init(setIndicator: @escaping (Bool) -> Void, openMenu: @escaping () -> Void = {}) {
         self.setIndicator = setIndicator
+        self.openMenu = openMenu
+    }
+
+    var isPanelShown: Bool { panel?.isShown ?? false }
+
+    /// Gets the Share panel out of the way of another Cheese feature. Sharing keeps running for the
+    /// usual 10 minutes after.
+    func closePanel() {
+        panel?.close()
     }
 
     var actions: [CheeseAction] {
@@ -83,7 +95,7 @@ final class ShareModule: CheeseModule {
             }
         ))
         self.service = service
-        return SharePanelController(service: service) { Self.clipboardItems() }
+        return SharePanelController(service: service, clipboardItems: { Self.clipboardItems() }, openMenu: openMenu)
     }
 
     /// Received text goes on the clipboard, where clipboard history (when it's on) records it.

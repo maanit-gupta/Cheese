@@ -9,13 +9,18 @@ import UniformTypeIdentifiers
 final class SharePanelController {
     private let service: ShareService
     private let model: SharePanelModel
+    private let openMenu: () -> Void
     private var panel: CheesePanel?
 
-    /// - Parameter clipboardItems: the current clipboard as things to send.
-    init(service: ShareService, clipboardItems: @escaping @MainActor () -> [OutgoingItem]) {
+    /// - Parameters:
+    ///   - clipboardItems: the current clipboard as things to send.
+    ///   - openMenu: opens Cheese's menu bar menu, for the panel's back button.
+    init(service: ShareService, clipboardItems: @escaping @MainActor () -> [OutgoingItem], openMenu: @escaping () -> Void = {}) {
         self.service = service
+        self.openMenu = openMenu
         model = SharePanelModel(service: service, clipboardItems: clipboardItems)
         model.onClose = { [weak self] in self?.close() }
+        model.onBackToMenu = { [weak self] in self?.backToMenu() }
     }
 
     var isShown: Bool { panel?.isVisible ?? false }
@@ -36,6 +41,14 @@ final class SharePanelController {
         guard panel?.isVisible == true else { return }
         panel?.dismiss()
         service.panelClosed()
+    }
+
+    /// Closes the panel and opens the menu bar menu in its place. Sharing keeps running for the
+    /// usual 10 minutes, so a phone mid-transfer isn't cut off.
+    private func backToMenu() {
+        close()
+        // After the button's click finishes, or the menu's tracking loop swallows it.
+        Task { @MainActor [openMenu] in openMenu() }
     }
 
     private func makePanel() -> CheesePanel {
@@ -62,6 +75,7 @@ final class SharePanelModel {
     var mode = Mode.devices
     @ObservationIgnored let clipboardItems: @MainActor () -> [OutgoingItem]
     @ObservationIgnored var onClose: () -> Void = {}
+    @ObservationIgnored var onBackToMenu: () -> Void = {}
 
     init(service: ShareService, clipboardItems: @escaping @MainActor () -> [OutgoingItem]) {
         self.service = service
@@ -144,8 +158,11 @@ private struct SharePanelView: View {
 
     private var header: some View {
         CheeseToolbar {
-            if model.mode == .phone {
-                CheeseIconButton(symbol: "chevron.left", help: "Back") { model.mode = .devices }
+            switch model.mode {
+            case .phone:
+                CheeseIconButton(symbol: "chevron.left", help: "Back to devices") { model.mode = .devices }
+            case .devices:
+                CheeseIconButton(symbol: "chevron.left", help: "Back to the Cheese menu") { model.onBackToMenu() }
             }
             Image(systemName: ModuleID.share.symbol)
                 .foregroundStyle(.tint)

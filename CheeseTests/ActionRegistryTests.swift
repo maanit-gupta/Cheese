@@ -250,6 +250,22 @@ struct ActionRegistryTests {
         #expect(module.performed.first?.previousApp == app)
     }
 
+    @Test func willPerformRunsBeforeEachActionButNotForUnavailableOnes() {
+        let clipboard = FakeModule(.clipboard)
+        let ocr = FakeModule(.ocr)
+        let registry = makeRegistry([clipboard, ocr], enabled: [.clipboard])
+        var announced: [ModuleID?] = []
+        registry.willPerform = { action in
+            #expect(clipboard.performed.isEmpty)
+            announced.append(action.module)
+        }
+
+        registry.perform(FakeModule.actionID(for: .ocr), context: ActionContext())
+        registry.perform(FakeModule.actionID(for: .clipboard), context: ActionContext())
+        #expect(announced == [.clipboard])
+        #expect(clipboard.performed.count == 1)
+    }
+
     @Test func disabledModulesBindNoHotkeys() {
         let clipboard = FakeModule(.clipboard, shortcut: .openHistory)
         let snapping = FakeModule(.windowSnapping, shortcut: .snapLeft)

@@ -11,6 +11,9 @@ final class ActionRegistry {
     private let permissions: any PermissionChecking
     private let onMissingPermission: (Permission, _ feature: String) -> Void
     private var hotkeyTasks: [KeyboardShortcuts.Name: Task<Void, Never>] = [:]
+    /// Called just before an action runs, from the menu, a hotkey or the palette, so whatever
+    /// Cheese UI is open can make way for it.
+    var willPerform: (CheeseAction) -> Void = { _ in }
 
     init(
         appActions: [CheeseAction],
@@ -51,6 +54,7 @@ final class ActionRegistry {
             onMissingPermission(missing, action.alertName)
             return
         }
+        willPerform(action)
         action.perform(context)
     }
 
@@ -121,6 +125,9 @@ final class ActionRegistry {
         if event == .keyDown, let missing = permissions.missing(from: action.requiredPermissions).first {
             onMissingPermission(missing, action.alertName)
             return
+        }
+        if event == .keyDown {
+            willPerform(action)
         }
         handler(event)
     }

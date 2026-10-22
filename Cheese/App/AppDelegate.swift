@@ -49,10 +49,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let registry = makeRegistry()
         self.registry = registry
+        // Starting any other feature leaves Share, so its floating panel never strands the user.
+        registry.willPerform = { [weak self] action in
+            if action.module != .share {
+                self?.share?.closePanel()
+            }
+        }
         menuBar = MenuBarController(
             statusMenu: StatusMenu(registry: registry) { [weak self] in self?.files?.progressMenuItems ?? [] },
             dropMenu: { [weak self] urls in self?.dropMenu(for: urls) },
-            openShare: { [weak self] in self?.share?.open() }
+            openShare: { [weak self] in self?.share?.open() },
+            isShareShown: { [weak self] in self?.share?.isPanelShown ?? false }
         )
         EditorShortcutVariant.sync()
         registry.refresh()
@@ -104,7 +111,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ))
         let files = FilesModule { [weak self] text in self?.menuBar?.setIndicator(text, for: .files) }
         self.files = files
-        let share = ShareModule { [weak self] listening in self?.menuBar?.setIndicator(listening ? "Share" : nil, for: .share) }
+        let share = ShareModule(
+            setIndicator: { [weak self] listening in self?.menuBar?.setIndicator(listening ? "Share" : nil, for: .share) },
+            openMenu: { [weak self] in self?.menuBar?.openMenu() }
+        )
         self.share = share
         let shelf = ShelfModule(services: ShelfServices(
             fileTools: { [weak files] urls in

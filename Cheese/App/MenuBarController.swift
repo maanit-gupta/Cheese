@@ -25,20 +25,28 @@ final class MenuBarController: NSObject, NSMenuDelegate, NSWindowDelegate, NSDra
     private let dropMenu: ([URL]) -> NSMenu?
     /// Clicking the Share indicator reopens the Share panel.
     private let openShare: () -> Void
+    /// While the Share panel is showing, the indicator opens the menu like the rest of the icon.
+    private let isShareShown: () -> Bool
 
     /// The view popovers anchor to, so they appear under the menu bar icon.
     var anchorView: NSView? { statusItem.button }
 
-    init(statusMenu: StatusMenu, dropMenu: @escaping ([URL]) -> NSMenu? = { _ in nil }, openShare: @escaping () -> Void = {}) {
+    init(
+        statusMenu: StatusMenu,
+        dropMenu: @escaping ([URL]) -> NSMenu? = { _ in nil },
+        openShare: @escaping () -> Void = {},
+        isShareShown: @escaping () -> Bool = { false }
+    ) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         self.statusMenu = statusMenu
         self.dropMenu = dropMenu
         self.openShare = openShare
+        self.isShareShown = isShareShown
         super.init()
 
         statusMenu.menu.delegate = self
         if let button = statusItem.button {
-            // Clicks open the menu, except on the Share indicator, which reopens the Share panel.
+            // Clicks open the menu, except on the Share indicator, which reopens a closed Share panel.
             button.target = self
             button.action = #selector(buttonClicked(_:))
             button.sendAction(on: [.leftMouseDown, .rightMouseDown])
@@ -71,13 +79,19 @@ final class MenuBarController: NSObject, NSMenuDelegate, NSWindowDelegate, NSDra
     }
 
     @objc private func buttonClicked(_ sender: NSStatusBarButton) {
-        if let event = NSApp.currentEvent, event.type == .leftMouseDown, isOnShareIndicator(event, in: sender) {
+        if let event = NSApp.currentEvent, event.type == .leftMouseDown, isOnShareIndicator(event, in: sender), !isShareShown() {
             openShare()
             return
         }
+        openMenu()
+    }
+
+    /// Opens the feature menu under the icon, as a click on it does.
+    func openMenu() {
+        guard let button = statusItem.button else { return }
         // Attaching the menu only for this click keeps the button's action for the next one.
         statusItem.menu = statusMenu.menu
-        sender.performClick(nil)
+        button.performClick(nil)
         statusItem.menu = nil
     }
 
