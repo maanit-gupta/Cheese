@@ -1,7 +1,7 @@
 import CoreGraphics
 
 /// A color stored as plain components so documents stay `Sendable` and comparable.
-struct RGBAColor: Equatable, Hashable, Sendable {
+struct RGBAColor: Codable, Equatable, Hashable, Sendable {
     var red: CGFloat
     var green: CGFloat
     var blue: CGFloat
