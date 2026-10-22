@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import SwiftUI
 import Testing
 @testable import Cheese
 
@@ -213,5 +214,124 @@ struct ShelfItemMenuTests {
             NSApp.sendAction(action, to: remove.target, from: remove)
         }
         #expect(store.isEmpty)
+    }
+}
+
+// MARK: - Adding by drop, paste and the file picker
+
+@MainActor
+struct ShelfIntakeTests {
+    private let disk = FakeShelfFileSystem()
+    private let folder = URL(filePath: "/Shelf", directoryHint: .isDirectory)
+
+    private func makeModel() -> ShelfViewModel {
+        ShelfViewModel(store: ShelfStore(folder: folder, fileSystem: disk), services: ShelfServices())
+    }
+
+    /// A private pasteboard, so tests never touch the user's clipboard.
+    private func pasteboard(_ fill: (NSPasteboard) -> Void) -> NSPasteboard {
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("CheeseShelfTests-\(UUID().uuidString)"))
+        pasteboard.clearContents()
+        fill(pasteboard)
+        return pasteboard
+    }
+
+    @Test func filePickerURLsAddFilesAndFolders() {
+        let model = makeModel()
+        let file = disk.addFile("/Users/me/Report.pdf")
+        let folderURL = disk.addFile("/Users/me/Photos")
+        let added = model.add([file, folderURL].map(ShelfInput.file))
+        #expect(added.count == 2)
+        #expect(model.store.originalFileURLs == [file, folderURL])
+        // Choosing the same files again doesn't duplicate them.
+        #expect(model.add([.file(file)]).isEmpty)
+    }
+
+    @Test func readsFileURLs() {
+        let urls = [URL(filePath: "/tmp/a.txt"), URL(filePath: "/tmp/b.png")]
+        let board = pasteboard { $0.writeObjects(urls.map { $0 as NSURL }) }
+        #expect(ShelfDropReader.inputs(from: board) == urls.map(ShelfInput.file))
+    }
+
+    @Test func readsImageDataAsPNGNamedAfterItsAddress() throws {
+        let png = try #require(NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: 2, pixelsHigh: 2, bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        )?.representation(using: .png, properties: [:]))
+        let board = pasteboard { board in
+            let item = NSPasteboardItem()
+            item.setData(png, forType: .png)
+            item.setString("https://example.com/cat.jpg", forType: .URL)
+            board.writeObjects([item])
+        }
+        #expect(ShelfDropReader.inputs(from: board) == [.imageData(png, suggestedName: "cat.jpg")])
+    }
+
+    @Test func readsPlainTextAndLinks() {
+        let text = pasteboard { $0.setString("  a note\nwith lines ", forType: .string) }
+        #expect(ShelfDropReader.inputs(from: text) == [.text("  a note\nwith lines ")])
+        let link = pasteboard { $0.setString(" https://example.com/page ", forType: .string) }
+        #expect(ShelfDropReader.inputs(from: link) == [.link(URL(string: "https://example.com/page")!)])
+    }
+
+    @Test func readsTheTextOfHTMLOnlyDrags() {
+        let board = pasteboard { $0.setData(Data("<p>Hello <b>shelf</b></p>".utf8), forType: .html) }
+        guard case let .text(text) = ShelfDropReader.inputs(from: board).first else {
+            Issue.record("HTML wasn't read as text")
+            return
+        }
+        #expect(text.contains("Hello shelf"))
+    }
+
+    @Test func emptyPasteboardAddsNothing() {
+        #expect(ShelfDropReader.inputs(from: pasteboard { _ in }).isEmpty)
+    }
+
+    @Test func dragOutRemovesOnlyWhenTheDropLanded() {
+        let model = makeModel()
+        var leftCount = 0
+        model.onItemsLeft = { leftCount += 1 }
+        model.add([.text("one"), .text("two")])
+        let ids = model.store.items.map(\.id)
+
+        model.dragEnded([ids[0]], operation: [])
+        #expect(model.store.items.count == 2)
+        #expect(leftCount == 0)
+
+        model.dragEnded([ids[0]], operation: .copy)
+        #expect(model.store.items.map(\.id) == [ids[1]])
+        #expect(leftCount == 1)
+    }
+
+    @Test func draggedOutImagesCarryTheirFileAndPNG() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: "ShelfDrag-\(UUID().uuidString).png")
+        let png = Data([0x89, 0x50, 0x4E, 0x47])
+        try png.write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let item = ShelfDropReader.pasteboardItem(forImageAt: url)
+        #expect(item.string(forType: .fileURL) == url.absoluteString)
+        #expect(item.data(forType: .png) == png)
+    }
+
+    @Test func shelfKeys() {
+        #expect(ShelfKey(keyCode: 49, modifiers: [], characters: " ") == .quickLook)
+        #expect(ShelfKey(keyCode: 31, modifiers: .command, characters: "o") == .addFiles)
+        #expect(ShelfKey(keyCode: 9, modifiers: .command, characters: "v") == .paste)
+        #expect(ShelfKey(keyCode: 9, modifiers: [.command, .shift], characters: "v") == nil)
+        #expect(ShelfKey(keyCode: 9, modifiers: [], characters: "v") == nil)
+    }
+
+    /// The drop target sits above every card and takes every kind the shelf reads.
+    @Test func dropHostTakesEveryAcceptedType() {
+        let content = NSHostingView(rootView: Color.clear.frame(width: 520, height: 170))
+        let host = ShelfDropHostView(content: content, types: ShelfDropReader.acceptedTypes)
+        let registered = Set(host.registeredDraggedTypes)
+        for type in [NSPasteboard.PasteboardType.fileURL, .URL, .png, .tiff, .string, .rtfd, .html] {
+            #expect(registered.contains(type))
+        }
+        #expect(content.superview === host)
+        // Sized like its SwiftUI content, which is what the panel sizes itself to.
+        #expect(host.fittingSize == CGSize(width: 520, height: 170))
+        #expect(host.frame.size == CGSize(width: 520, height: 170))
     }
 }

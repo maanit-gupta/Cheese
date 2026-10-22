@@ -42,6 +42,7 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 ### Shelf
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>F</kbd> shows a floating shelf near the pointer. Drag it anywhere; it remembers the spot.
 - Drop files, folders, images, text and links on it to park them while you find where they go. Or drop files on the menu bar icon and pick **Add to Shelf**.
+- Rather not drag? Click **+** (or **Upload Files…** on an empty shelf, or press <kbd>⌘</kbd><kbd>O</kbd>) to pick files and folders, or press <kbd>⌘</kbd><kbd>V</kbd> to add what's on the clipboard.
 - Files stay where they are: the shelf keeps a reference that survives renames and moves. Dropped images and text are kept in `~/Library/Application Support/Cheese/Shelf/`.
 - Drag an item (or the stack handle, for everything) somewhere and it leaves the shelf. Dragging follows Finder's rules: same disk moves, another disk copies, <kbd>⌥</kbd> forces a copy. The shelf hides once it's empty.
 - The toolbar has **Send…** (Cheese Share), **Files** tools for the shelf's files, **Zip** (to Downloads), **Copy Paths**, **Quick Look** (or <kbd>Space</kbd>) and **Clear**. Missing originals show greyed out.

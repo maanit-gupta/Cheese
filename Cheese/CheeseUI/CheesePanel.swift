@@ -35,7 +35,10 @@ final class CheesePanel: NSPanel {
     private var rememberedKey: String?
     private var moveObserver: NSObjectProtocol?
 
-    init(rootView: some View, behavior: Behavior = Behavior()) {
+    /// `wrap` puts the SwiftUI content inside an AppKit view, for what SwiftUI can't do reliably in a
+    /// non-activating panel, like the shelf's drop target. It's handed the hosting view and returns
+    /// the panel's content view.
+    init(rootView: some View, behavior: Behavior = Behavior(), wrap: ((NSView) -> NSView)? = nil) {
         self.behavior = behavior
         super.init(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
         isFloatingPanel = true
@@ -50,7 +53,11 @@ final class CheesePanel: NSPanel {
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
         let hosting = NSHostingController(rootView: rootView)
         hosting.sizingOptions = [.preferredContentSize]
-        contentViewController = hosting
+        if let wrap {
+            contentViewController = WrappingViewController(content: hosting, wrap: wrap)
+        } else {
+            contentViewController = hosting
+        }
     }
 
     override var canBecomeKey: Bool { true }
@@ -151,6 +158,33 @@ final class CheesePanel: NSPanel {
             NSEvent.removeMonitor(monitor)
         }
         clickMonitors.removeAll()
+    }
+}
+
+/// Shows a child controller's view inside a wrapping view, and passes its size on to the panel.
+private final class WrappingViewController: NSViewController {
+    private let content: NSViewController
+    private let wrap: (NSView) -> NSView
+
+    init(content: NSViewController, wrap: @escaping (NSView) -> NSView) {
+        self.content = content
+        self.wrap = wrap
+        super.init(nibName: nil, bundle: nil)
+        addChild(content)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not supported")
+    }
+
+    override func loadView() {
+        view = wrap(content.view)
+    }
+
+    override func preferredContentSizeDidChange(for viewController: NSViewController) {
+        super.preferredContentSizeDidChange(for: viewController)
+        preferredContentSize = viewController.preferredContentSize
     }
 }
 

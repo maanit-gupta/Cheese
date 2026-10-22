@@ -20,7 +20,7 @@ struct ShelfServices {
 /// Things dropped on it are added; things dragged off it and dropped somewhere leave it; it hides
 /// once it's empty.
 @MainActor
-final class ShelfPanelController: NSObject, NSWindowDelegate, @preconcurrency QLPreviewPanelDataSource, QLPreviewPanelDelegate {
+final class ShelfPanelController: NSObject, @preconcurrency QLPreviewPanelDataSource, QLPreviewPanelDelegate {
     let store: ShelfStore
     private let model: ShelfViewModel
     private var panel: CheesePanel?
@@ -34,6 +34,8 @@ final class ShelfPanelController: NSObject, NSWindowDelegate, @preconcurrency QL
         model.onItemsLeft = { [weak self] in self?.itemsLeft() }
         model.onClose = { [weak self] in self?.hide() }
         model.onQuickLook = { [weak self] in self?.toggleQuickLook() }
+        model.onAddFiles = { [weak self] in self?.chooseFiles() }
+        model.onPaste = { [weak self] in self?.paste() }
     }
 
     var isShown: Bool { panel?.isVisible ?? false }
@@ -58,10 +60,35 @@ final class ShelfPanelController: NSObject, NSWindowDelegate, @preconcurrency QL
     }
 
     func add(_ inputs: [ShelfInput]) {
-        store.add(inputs)
+        model.add(inputs)
         if !store.isEmpty {
             show()
         }
+    }
+
+    /// Asks for files and folders to put on the shelf.
+    func chooseFiles() {
+        let openPanel = NSOpenPanel()
+        openPanel.allowsMultipleSelection = true
+        openPanel.canChooseFiles = true
+        openPanel.canChooseDirectories = true
+        openPanel.prompt = "Add to Shelf"
+        openPanel.message = "Choose files and folders to put on the shelf."
+        // Above the floating shelf, so it isn't hidden behind it.
+        openPanel.level = .modalPanel
+        NSApp.activate()
+        guard openPanel.runModal() == .OK, !openPanel.urls.isEmpty else { return }
+        add(openPanel.urls.map(ShelfInput.file))
+    }
+
+    /// Adds what's on the clipboard: files, an image, a link or text.
+    func paste() {
+        let inputs = ShelfDropReader.inputs(from: .general)
+        guard !inputs.isEmpty else {
+            CheeseToast.show("Nothing on the clipboard to add", systemImage: "doc.on.clipboard")
+            return
+        }
+        add(inputs)
     }
 
     func clear() {
@@ -74,10 +101,14 @@ final class ShelfPanelController: NSObject, NSWindowDelegate, @preconcurrency QL
         behavior.dismissesOnOutsideClick = false
         behavior.isMovable = true
         behavior.level = .floating
-        let panel = CheesePanel(rootView: ShelfView(model: model), behavior: behavior)
+        let panel = CheesePanel(rootView: ShelfView(model: model), behavior: behavior) { [weak self] content in
+            let host = ShelfDropHostView(content: content, types: ShelfDropReader.acceptedTypes)
+            host.onEntered = { self?.dragEntered($0) ?? [] }
+            host.onExited = { self?.model.isDropTargeted = false }
+            host.onDrop = { self?.drop($0) ?? false }
+            return host
+        }
         panel.onCancel = { [weak self] in self?.hide() }
-        panel.delegate = self
-        panel.registerForDraggedTypes(ShelfDropReader.acceptedTypes)
         return panel
     }
 
@@ -99,10 +130,25 @@ final class ShelfPanelController: NSObject, NSWindowDelegate, @preconcurrency QL
     private func installKeyMonitor() {
         guard keyMonitor == nil else { return }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            let isSpace = event.keyCode == 49 && event.modifierFlags.intersection(.deviceIndependentFlagsMask).isEmpty
+            let key = ShelfKey(
+                keyCode: Int(event.keyCode),
+                modifiers: event.modifierFlags,
+                characters: event.charactersIgnoringModifiers
+            )
+            let window = event.window
             let handled = MainActor.assumeIsolated { () -> Bool in
-                guard let self, isSpace, event.window === self.panel || event.window === QLPreviewPanel.shared() else { return false }
-                self.toggleQuickLook()
+                guard let self, let key else { return false }
+                switch key {
+                case .quickLook:
+                    guard window === self.panel || window === QLPreviewPanel.shared() else { return false }
+                    self.toggleQuickLook()
+                case .addFiles:
+                    guard window === self.panel else { return false }
+                    self.chooseFiles()
+                case .paste:
+                    guard window === self.panel else { return false }
+                    self.paste()
+                }
                 return true
             }
             return handled ? nil : event
@@ -146,36 +192,28 @@ final class ShelfPanelController: NSObject, NSWindowDelegate, @preconcurrency QL
         return urls.indices.contains(index) ? urls[index] as NSURL : nil
     }
 
-    // MARK: Dropping onto the shelf (the panel forwards drags to its delegate)
+    // MARK: Dropping onto the shelf (through `ShelfDropHostView`)
 
-    func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
+    private func dragEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
         guard !ShelfDropReader.isFromShelf(sender) else { return [] }
         model.isDropTargeted = true
+        panel?.orderFrontRegardless()
         return .copy
     }
 
-    func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation {
-        model.isDropTargeted ? .copy : []
-    }
-
-    func draggingExited(_ sender: (any NSDraggingInfo)?) {
-        model.isDropTargeted = false
-    }
-
-    func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
+    private func drop(_ sender: any NSDraggingInfo) -> Bool {
         model.isDropTargeted = false
         guard !ShelfDropReader.isFromShelf(sender) else { return false }
         let pasteboard = sender.draggingPasteboard
         let inputs = ShelfDropReader.inputs(from: pasteboard)
         if !inputs.isEmpty {
-            store.add(inputs)
+            model.add(inputs)
+            return true
         }
         // Photos and some browsers promise files instead of handing them over.
         let promises = pasteboard.readObjects(forClasses: [NSFilePromiseReceiver.self]) as? [NSFilePromiseReceiver] ?? []
-        if inputs.isEmpty, !promises.isEmpty {
-            receive(promises)
-        }
-        return !inputs.isEmpty || !promises.isEmpty
+        receive(promises)
+        return !promises.isEmpty
     }
 
     private func receive(_ promises: [NSFilePromiseReceiver]) {
@@ -188,19 +226,20 @@ final class ShelfPanelController: NSObject, NSWindowDelegate, @preconcurrency QL
                         Logger.shelf.error("A promised file didn't arrive: \(error.localizedDescription, privacy: .public)")
                         return
                     }
-                    self?.store.add([.file(url)])
+                    self?.model.add([.file(url)])
                 }
             }
         }
     }
 }
 
-/// Reads what was dropped on the shelf, most specific first: files, then images, then links, then text.
+/// Reads what was dropped or pasted on the shelf, most specific first: files, then images, then
+/// links, then text (plain, or the text of rich text and HTML).
 @MainActor
 enum ShelfDropReader {
     static let acceptedTypes: [NSPasteboard.PasteboardType] = {
         let promised: [NSPasteboard.PasteboardType] = NSFilePromiseReceiver.readableDraggedTypes.map { NSPasteboard.PasteboardType($0) }
-        let direct: [NSPasteboard.PasteboardType] = [.fileURL, .URL, .png, .tiff, .string]
+        let direct: [NSPasteboard.PasteboardType] = [.fileURL, .URL, .png, .tiff, .string, .rtfd, .rtf, .html]
         return direct + promised
     }()
 
@@ -213,21 +252,73 @@ enum ShelfDropReader {
         if !files.isEmpty {
             return files.map(ShelfInput.file)
         }
-        if let image = NSImage(pasteboard: pasteboard), pasteboard.canReadItem(withDataConformingToTypes: [UTType.image.identifier]),
-           let tiff = image.tiffRepresentation, let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
-            return [.imageData(png, suggestedName: nil)]
-        }
         let links = (pasteboard.readObjects(forClasses: [NSURL.self]) as? [URL] ?? []).filter { !$0.isFileURL }
+        if let png = imageData(from: pasteboard) {
+            // A browser's image drag also carries the image's address, which gives it a name.
+            let name = links.first.map(\.lastPathComponent).flatMap { $0.isEmpty || $0 == "/" ? nil : $0 }
+            return [.imageData(png, suggestedName: name)]
+        }
         if !links.isEmpty {
             return links.map(ShelfInput.link)
         }
-        if let text = pasteboard.string(forType: .string) {
+        if let text = text(from: pasteboard) {
             if let url = URL(string: text.trimmingCharacters(in: .whitespacesAndNewlines)), let scheme = url.scheme, ["http", "https"].contains(scheme) {
                 return [.link(url)]
             }
             return [.text(text)]
         }
         return []
+    }
+
+    /// A stored image for dragging out: its file, for Finder and apps that take files, plus its PNG
+    /// data for apps that only take images.
+    static func pasteboardItem(forImageAt url: URL) -> NSPasteboardItem {
+        let item = NSPasteboardItem()
+        item.setString(url.absoluteString, forType: .fileURL)
+        if let png = try? Data(contentsOf: url) {
+            item.setData(png, forType: .png)
+        }
+        return item
+    }
+
+    /// PNG data for an image on the pasteboard: PNG as it is, anything else converted.
+    private static func imageData(from pasteboard: NSPasteboard) -> Data? {
+        guard pasteboard.canReadItem(withDataConformingToTypes: [UTType.image.identifier]) else { return nil }
+        if let png = pasteboard.data(forType: .png) {
+            return png
+        }
+        guard let image = NSImage(pasteboard: pasteboard), let tiff = image.tiffRepresentation else { return nil }
+        return NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:])
+    }
+
+    private static func text(from pasteboard: NSPasteboard) -> String? {
+        if let text = pasteboard.string(forType: .string) {
+            return text
+        }
+        for (type, documentType) in [(NSPasteboard.PasteboardType.rtfd, NSAttributedString.DocumentType.rtfd), (.rtf, .rtf), (.html, .html)] {
+            guard let data = pasteboard.data(forType: type),
+                  let text = try? NSAttributedString(data: data, options: [.documentType: documentType], documentAttributes: nil).string
+            else { continue }
+            return text
+        }
+        return nil
+    }
+}
+
+/// The shelf's own keys, while it's focused: Space, ⌘O and ⌘V.
+enum ShelfKey: Equatable {
+    case quickLook
+    case addFiles
+    case paste
+
+    init?(keyCode: Int, modifiers: NSEvent.ModifierFlags, characters: String?) {
+        let modifiers = modifiers.intersection([.command, .option, .control, .shift])
+        switch (modifiers, characters?.lowercased()) {
+        case ([], _) where keyCode == 49: self = .quickLook
+        case (.command, "o"): self = .addFiles
+        case (.command, "v"): self = .paste
+        default: return nil
+        }
     }
 }
 
@@ -245,6 +336,8 @@ final class ShelfViewModel {
     @ObservationIgnored var onItemsLeft: () -> Void = {}
     @ObservationIgnored var onClose: () -> Void = {}
     @ObservationIgnored var onQuickLook: () -> Void = {}
+    @ObservationIgnored var onAddFiles: () -> Void = {}
+    @ObservationIgnored var onPaste: () -> Void = {}
 
     init(store: ShelfStore, services: ShelfServices) {
         self.store = store
@@ -254,6 +347,14 @@ final class ShelfViewModel {
     var fileTools: [ToolID] {
         let files = store.fileURLs
         return files.isEmpty ? [] : services.fileTools(files)
+    }
+
+    /// Adds new items, animating their cards in.
+    @discardableResult
+    func add(_ inputs: [ShelfInput]) -> [ShelfItem] {
+        withAnimation(DesignTokens.animation(DesignTokens.Duration.gentle, reduceMotion: DesignTokens.reducesMotion)) {
+            store.add(inputs)
+        }
     }
 
     func dragEnded(_ ids: [ShelfItem.ID], operation: NSDragOperation) {
@@ -352,14 +453,14 @@ private struct ShelfView: View {
             Divider()
             Group {
                 if model.store.isEmpty {
-                    CheeseEmptyState(symbol: "tray.and.arrow.down", title: "Drop things here", detail: "Files, images, text and links wait here until you drag them somewhere.")
-                        .frame(maxWidth: .infinity)
+                    emptyDropZone
                 } else {
                     ScrollView(.horizontal) {
                         HStack(alignment: .top, spacing: DesignTokens.Spacing.small) {
                             ForEach(model.store.items) { item in
                                 ShelfItemView(model: model, item: item)
                                     .onAppear { model.loadThumbnail(for: item, scale: displayScale) }
+                                    .transition(.scale(scale: 0.85).combined(with: .opacity))
                             }
                         }
                         .padding(DesignTokens.Spacing.medium)
@@ -376,6 +477,46 @@ private struct ShelfView: View {
         )
     }
 
+    /// Where things land while the shelf is empty: a dashed drop zone with buttons for those who'd
+    /// rather not drag.
+    private var emptyDropZone: some View {
+        HStack(spacing: DesignTokens.Spacing.large) {
+            Image(systemName: "tray.and.arrow.down")
+                .font(.system(size: 28))
+                .foregroundStyle(model.isDropTargeted ? Color.accentColor : .secondary)
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
+                Text("Drop files, images, or text here")
+                    .font(DesignTokens.Typography.heading)
+                Text("They wait here until you drag them somewhere.")
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(.secondary)
+                HStack(spacing: DesignTokens.Spacing.small) {
+                    Button("Upload Files…", systemImage: "plus") { model.onAddFiles() }
+                        .buttonStyle(.borderedProminent)
+                    Button("Paste", systemImage: "doc.on.clipboard") { model.onPaste() }
+                        .help("Add what's on the clipboard (⌘V)")
+                }
+                .controlSize(.small)
+                .padding(.top, DesignTokens.Spacing.xxSmall)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(DesignTokens.Spacing.large)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                .fill(Color.accentColor.opacity(model.isDropTargeted ? DesignTokens.Opacity.hoverTint : 0))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                .strokeBorder(
+                    model.isDropTargeted ? Color.accentColor : Color.secondary.opacity(0.5),
+                    style: StrokeStyle(lineWidth: model.isDropTargeted ? 2 : 1.5, dash: [6, 4])
+                )
+        )
+        .padding(DesignTokens.Spacing.medium)
+    }
+
     private var toolbar: some View {
         CheeseToolbar {
             DragAllHandle(model: model)
@@ -383,6 +524,8 @@ private struct ShelfView: View {
                 .font(DesignTokens.Typography.caption)
                 .foregroundStyle(.secondary)
         } trailing: {
+            CheeseIconButton(symbol: "plus.circle.fill", help: "Add Files… (⌘O)") { model.onAddFiles() }
+            CheeseIconButton(symbol: "doc.on.clipboard", help: "Paste from Clipboard (⌘V)") { model.onPaste() }
             if model.services.isSendAvailable() {
                 CheeseIconButton(symbol: "square.and.arrow.up", help: "Send…") { model.send() }
                     .disabled(model.store.isEmpty)
@@ -575,10 +718,14 @@ final class ShelfDragSourceView: NSView, NSDraggingSource {
         let writer: any NSPasteboardWriting
         var icon: NSImage?
         switch item.content {
-        case .file, .image:
+        case .file:
             guard let url = store.url(for: item) else { return nil }
             writer = url as NSURL
             icon = NSWorkspace.shared.icon(forFile: url.path(percentEncoded: false))
+        case .image:
+            guard let url = store.url(for: item) else { return nil }
+            writer = ShelfDropReader.pasteboardItem(forImageAt: url)
+            icon = NSImage(contentsOf: url) ?? NSWorkspace.shared.icon(forFile: url.path(percentEncoded: false))
         case let .text(text):
             writer = text as NSString
             icon = NSImage(systemSymbolName: "text.quote", accessibilityDescription: nil)
