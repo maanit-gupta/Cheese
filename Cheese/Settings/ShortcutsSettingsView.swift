@@ -10,6 +10,12 @@ struct ShortcutsSettingsView: View {
 
     var body: some View {
         Form {
+            Section {
+                Text("Click a shortcut and press the keys you want instead. Click ⓧ to turn one off.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
             ForEach(Self.sections, id: \.title) { section in
                 Section(section.title) {
                     ForEach(section.hotkeys, id: \.self) { hotkey in

@@ -6,6 +6,7 @@ enum PreferenceKey {
     static let screenshotSaveFolder = "screenshotSaveFolder"
     static let historySize = "historySize"
     static let ocrLineBreakMode = "ocrLineBreakMode"
+    static let hasSeenWelcome = "hasSeenWelcome"
 
     static func ocrLanguageEnabled(_ language: OCRLanguage) -> String {
         "ocrLanguageEnabled_\(language.rawValue)"
@@ -67,6 +68,11 @@ struct Preferences {
     var ocrLineBreakMode: OCRLineBreakMode {
         defaults.string(forKey: PreferenceKey.ocrLineBreakMode).flatMap(OCRLineBreakMode.init(rawValue:))
             ?? Self.defaultLineBreakMode
+    }
+
+    /// False until the welcome window has been finished or closed once.
+    var hasSeenWelcome: Bool {
+        defaults.bool(forKey: PreferenceKey.hasSeenWelcome)
     }
 
     func isOCRLanguageEnabled(_ language: OCRLanguage) -> Bool {

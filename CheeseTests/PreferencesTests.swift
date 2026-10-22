@@ -15,6 +15,7 @@ struct PreferencesTests {
         #expect(preferences.historySize == 200)
         #expect(preferences.ocrLineBreakMode == .keepLineBreaks)
         #expect(preferences.screenshotSaveFolder == Preferences.defaultSaveFolder)
+        #expect(!preferences.hasSeenWelcome)
         for language in OCRLanguage.allCases {
             #expect(preferences.isOCRLanguageEnabled(language))
         }
@@ -25,11 +26,13 @@ struct PreferencesTests {
         defaults.set(OCRLineBreakMode.joinParagraphs.rawValue, forKey: PreferenceKey.ocrLineBreakMode)
         defaults.set("/tmp/Shots", forKey: PreferenceKey.screenshotSaveFolder)
         defaults.set(false, forKey: PreferenceKey.ocrLanguageEnabled(.hindi))
+        defaults.set(true, forKey: PreferenceKey.hasSeenWelcome)
 
         #expect(preferences.historySize == 500)
         #expect(preferences.ocrLineBreakMode == .joinParagraphs)
         #expect(preferences.screenshotSaveFolder.path(percentEncoded: false) == "/tmp/Shots/")
         #expect(!preferences.isOCRLanguageEnabled(.hindi))
+        #expect(preferences.hasSeenWelcome)
         #expect(preferences.isOCRLanguageEnabled(.english))
     }
 
@@ -47,7 +50,7 @@ struct PreferencesTests {
     }
 
     @Test func keysAreKVOSafe() {
-        let keys = [PreferenceKey.screenshotSaveFolder, PreferenceKey.historySize, PreferenceKey.ocrLineBreakMode]
+        let keys = [PreferenceKey.screenshotSaveFolder, PreferenceKey.historySize, PreferenceKey.ocrLineBreakMode, PreferenceKey.hasSeenWelcome]
             + OCRLanguage.allCases.map(PreferenceKey.ocrLanguageEnabled)
         #expect(keys.allSatisfy { !$0.contains(".") })
         #expect(Set(keys).count == keys.count)

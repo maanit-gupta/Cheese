@@ -3,6 +3,8 @@ import SwiftUI
 import os
 
 struct GeneralSettingsView: View {
+    let showWelcome: @MainActor () -> Void
+
     @AppStorage(PreferenceKey.screenshotSaveFolder)
     private var saveFolderPath = Preferences.defaultSaveFolder.path(percentEncoded: false)
 
@@ -31,6 +33,12 @@ struct GeneralSettingsView: View {
                             .truncationMode(.middle)
                         Button("Choose…", action: chooseSaveFolder)
                     }
+                }
+            }
+
+            Section {
+                Button("Show Welcome Guide…") {
+                    showWelcome()
                 }
             }
         }

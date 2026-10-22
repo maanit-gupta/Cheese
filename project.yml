@@ -13,6 +13,9 @@ settings:
     MACOSX_DEPLOYMENT_TARGET: "27.0"
     SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
     GCC_TREAT_WARNINGS_AS_ERRORS: YES
+    # Cheese has no App Intents; skip Xcode's metadata extraction step, which otherwise
+    # warns "Metadata extraction skipped, no AppIntents.framework dependency found".
+    LM_SKIP_METADATA_EXTRACTION: YES
     # Stable signing keeps Screen Recording / Accessibility grants across rebuilds.
     # The author's personal team: the OU of the Apple Development certificate (not the ID in its name).
     DEVELOPMENT_TEAM: 8H5274FWRC
@@ -51,7 +54,13 @@ targets:
   CheeseTests:
     type: bundle.unit-test
     platform: macOS
-    sources: [CheeseTests]
+    sources:
+      - path: CheeseTests
+        excludes: [Fixtures]
+      # Folder reference: fixtures land in the test bundle under Fixtures/.
+      - path: CheeseTests/Fixtures
+        type: folder
+        buildPhase: resources
     dependencies:
       - target: Cheese
     settings:

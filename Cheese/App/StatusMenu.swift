@@ -16,6 +16,7 @@ final class StatusMenu: NSObject {
         menu.addItem(.separator())
         addItems([.clearHistory, .clearAll])
         menu.addItem(.separator())
+        addItem(.editShortcuts)
         addItem(.openSettings, keyEquivalent: ",")
         addItem(.quit, keyEquivalent: "q")
     }

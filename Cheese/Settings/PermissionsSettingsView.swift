@@ -10,7 +10,11 @@ struct PermissionsSettingsView: View {
             Form {
                 Section {
                     ForEach(Permission.allCases) { permission in
-                        row(for: permission, isGranted: permissions.isGranted(permission))
+                        PermissionRow(
+                            permission: permission,
+                            isGranted: permissions.isGranted(permission),
+                            openSystemSettings: openSystemSettings
+                        )
                     }
                 } footer: {
                     Text("macOS may ask you to quit and reopen Cheese before a new Screen Recording grant takes effect.")
@@ -19,24 +23,6 @@ struct PermissionsSettingsView: View {
                 }
             }
             .formStyle(.grouped)
-        }
-    }
-
-    private func row(for permission: Permission, isGranted: Bool) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Image(systemName: isGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundStyle(isGranted ? .green : .red)
-                .accessibilityLabel(isGranted ? "Granted" : "Not granted")
-            VStack(alignment: .leading, spacing: 2) {
-                Text(permission.title)
-                Text(permission.purpose)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button("Open System Settings") {
-                openSystemSettings(permission)
-            }
         }
     }
 }

@@ -13,6 +13,7 @@ enum AppAction: Equatable, Sendable {
     case restoreWindow
     case clearHistory
     case clearAll
+    case editShortcuts
     case openSettings
     case quit
 
@@ -45,7 +46,7 @@ enum AppAction: Equatable, Sendable {
         case .maximize: .maximize
         case .snapBottom: .snapBottom
         case .restoreWindow: .restoreWindow
-        case .clearHistory, .clearAll, .openSettings, .quit: nil
+        case .clearHistory, .clearAll, .editShortcuts, .openSettings, .quit: nil
         }
     }
 
@@ -64,6 +65,7 @@ enum AppAction: Equatable, Sendable {
         case .restoreWindow: "Restore Window"
         case .clearHistory: "Clear History"
         case .clearAll: "Clear All"
+        case .editShortcuts: "Keyboard Shortcuts…"
         case .openSettings: "Settings…"
         case .quit: "Quit"
         }
@@ -79,7 +81,7 @@ enum AppAction: Equatable, Sendable {
             [.screenRecording, .accessibility]
         case .snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow:
             [.accessibility]
-        case .openHistory, .clearHistory, .clearAll, .openSettings, .quit:
+        case .openHistory, .clearHistory, .clearAll, .editShortcuts, .openSettings, .quit:
             []
         }
     }

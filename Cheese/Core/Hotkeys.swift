@@ -63,3 +63,27 @@ extension KeyboardShortcuts.Name {
     static let snapBottom = Self("snapBottom", initial: .init(.downArrow, modifiers: modifiers))
     static let restoreWindow = Self("restoreWindow", initial: .init(.delete, modifiers: modifiers))
 }
+
+extension KeyboardShortcuts.Name {
+    /// Not listed in Settings: always the full-screen shortcut plus Shift, which opens the editor.
+    /// A separate registration is needed because a hotkey only fires for its exact modifiers.
+    static let captureFullScreenEditor = Self("captureFullScreenEditor")
+}
+
+@MainActor
+enum EditorShortcutVariant {
+    /// Keeps `captureFullScreenEditor` in step with the user's full-screen shortcut.
+    static func sync() {
+        let target = shiftVariant(of: KeyboardShortcuts.getShortcut(for: .captureFullScreen))
+        // Only write on a real change: writing posts a defaults notification that calls this again.
+        if KeyboardShortcuts.getShortcut(for: .captureFullScreenEditor) != target {
+            KeyboardShortcuts.setShortcut(target, for: .captureFullScreenEditor)
+        }
+    }
+
+    /// The shortcut plus Shift, or nil when there's no shortcut or it already uses Shift.
+    nonisolated static func shiftVariant(of shortcut: KeyboardShortcuts.Shortcut?) -> KeyboardShortcuts.Shortcut? {
+        guard let shortcut, let key = shortcut.key, !shortcut.modifiers.contains(.shift) else { return nil }
+        return KeyboardShortcuts.Shortcut(key, modifiers: shortcut.modifiers.union(.shift))
+    }
+}

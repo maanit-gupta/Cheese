@@ -7,7 +7,7 @@ struct AppActionTests {
         #expect(AppAction(hotkey).hotkey == hotkey)
     }
 
-    @Test(arguments: [AppAction.clearHistory, .clearAll, .openSettings, .quit])
+    @Test(arguments: [AppAction.clearHistory, .clearAll, .editShortcuts, .openSettings, .quit])
     func menuOnlyActionsHaveNoHotkey(_ action: AppAction) {
         #expect(action.hotkey == nil)
         #expect(action.requiredPermissions.isEmpty)
