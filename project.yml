@@ -31,7 +31,14 @@ targets:
   Cheese:
     type: application
     platform: macOS
-    sources: [Cheese]
+    sources:
+      - path: Cheese
+        excludes: [Resources/Renderers]
+      # Folder reference: the vendored renderers keep their layout under Renderers/ in the bundle,
+      # so office.html can load its scripts by relative path.
+      - path: Cheese/Resources/Renderers
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: KeyboardShortcuts
     settings:
