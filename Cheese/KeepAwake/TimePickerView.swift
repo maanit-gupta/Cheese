@@ -8,14 +8,14 @@ struct TimePickerView: View {
     let onCancel: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.large) {
             Text("Keep the Mac awake until")
-                .font(.headline)
+                .font(DesignTokens.Typography.heading)
             DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
                 .datePickerStyle(.stepperField)
                 .labelsHidden()
             Text("A time that has already passed today means tomorrow.")
-                .font(.caption)
+                .font(DesignTokens.Typography.caption)
                 .foregroundStyle(.secondary)
             HStack {
                 Spacer()
@@ -25,7 +25,7 @@ struct TimePickerView: View {
                     .keyboardShortcut(.defaultAction)
             }
         }
-        .padding(20)
+        .padding(DesignTokens.Spacing.xxLarge)
         .frame(width: 300)
     }
 }
