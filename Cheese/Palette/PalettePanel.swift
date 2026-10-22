@@ -73,7 +73,7 @@ private struct PaletteView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 10) {
+            HStack(spacing: DesignTokens.Spacing.medium) {
                 Image(systemName: "magnifyingglass")
                     .font(.title2)
                     .foregroundStyle(.secondary)
@@ -82,21 +82,26 @@ private struct PaletteView: View {
                     .font(.title2)
                     .focused($searchFocused)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, DesignTokens.Spacing.xLarge)
             .padding(.vertical, 14)
 
             Divider()
 
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(spacing: 2) {
+                    LazyVStack(spacing: DesignTokens.Spacing.hairline) {
                         ForEach(Array(model.results.enumerated()), id: \.element.id) { index, entry in
-                            PaletteRow(entry: entry, isSelected: index == model.selection)
-                                .id(entry.id)
-                                .onTapGesture { model.run(entry.id) }
+                            CheeseListRow(symbol: entry.symbol, title: entry.title, detail: entry.moduleName, isSelected: index == model.selection) {
+                                if let shortcut = entry.shortcut {
+                                    Text(shortcut)
+                                        .font(DesignTokens.Typography.keycap)
+                                }
+                            }
+                            .id(entry.id)
+                            .onTapGesture { model.run(entry.id) }
                         }
                     }
-                    .padding(6)
+                    .padding(DesignTokens.Spacing.xSmall)
                 }
                 .onChange(of: model.selection) { _, _ in
                     if let id = model.selectedEntry?.id {
@@ -106,40 +111,12 @@ private struct PaletteView: View {
             }
             .overlay {
                 if model.results.isEmpty {
-                    Text("No matching actions")
-                        .foregroundStyle(.secondary)
+                    CheeseEmptyState(symbol: "magnifyingglass", title: "No matching actions")
                 }
             }
         }
         .frame(width: 600, height: 420)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .cheesePanelBackground()
         .onAppear { searchFocused = true }
-    }
-}
-
-private struct PaletteRow: View {
-    let entry: PaletteEntry
-    let isSelected: Bool
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: entry.symbol)
-                .frame(width: 22)
-                .foregroundStyle(isSelected ? .white : .secondary)
-            Text(entry.title)
-                .foregroundStyle(isSelected ? .white : .primary)
-            Text(entry.moduleName)
-                .foregroundStyle(isSelected ? .white.opacity(0.75) : .secondary)
-            Spacer()
-            if let shortcut = entry.shortcut {
-                Text(shortcut)
-                    .font(.system(.callout, design: .rounded))
-                    .foregroundStyle(isSelected ? .white.opacity(0.85) : .secondary)
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(isSelected ? Color.accentColor : .clear, in: RoundedRectangle(cornerRadius: 8))
-        .contentShape(Rectangle())
     }
 }
