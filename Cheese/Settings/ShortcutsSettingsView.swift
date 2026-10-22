@@ -14,7 +14,7 @@ struct ShortcutsSettingsView: View {
         Form {
             Section {
                 Text("Click a shortcut and press the keys you want instead. Click ⓧ to turn one off.")
-                    .font(.callout)
+                    .font(DesignTokens.Typography.secondary)
                     .foregroundStyle(.secondary)
             }
 

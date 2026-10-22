@@ -22,7 +22,7 @@ struct GeneralSettingsView: View {
                     }
                 if let launchAtLoginMessage {
                     Text(launchAtLoginMessage)
-                        .font(.caption)
+                        .font(DesignTokens.Typography.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -44,7 +44,7 @@ struct GeneralSettingsView: View {
                 Text("Draw on Screen")
             } footer: {
                 Text("Draw mode works with the mouse alone: hold the right button for tools and colors, ⇧ for straight lines, ⌘ to erase, ⌥ to highlight, and scroll to size the brush. Turn this on to also pick tools with letters (P, H, E, R…).")
-                    .font(.caption)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }
 
@@ -56,7 +56,7 @@ struct GeneralSettingsView: View {
                 Text("Modules")
             } footer: {
                 Text("A module that's off has no shortcuts, runs nothing in the background, and leaves the menu.")
-                    .font(.caption)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }
 

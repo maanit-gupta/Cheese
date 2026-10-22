@@ -40,7 +40,7 @@ struct FilesSettingsView: View {
                 Text("Finder")
             } footer: {
                 Text("Turn on Cheese under Finder Extensions to get a “Cheese ▸” submenu when you right-click files. You can also drop files on the menu bar icon, or use the command palette.")
-                    .font(.caption)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }
 
@@ -51,7 +51,7 @@ struct FilesSettingsView: View {
                     Text("Office to PDF")
                 } footer: {
                     Text("Found: \(model.nativeApps.map(\.name).joined(separator: ", ")). Their PDFs match the original more closely. macOS asks once per app to let Cheese control it, and the app may open while it works. If it fails, Cheese's built-in renderer is used.")
-                        .font(.caption)
+                        .font(DesignTokens.Typography.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -63,7 +63,7 @@ struct FilesSettingsView: View {
             } header: {
                 Text("About the Files tools")
             }
-            .font(.callout)
+            .font(DesignTokens.Typography.secondary)
         }
         .formStyle(.grouped)
         .onAppear { model.refresh() }

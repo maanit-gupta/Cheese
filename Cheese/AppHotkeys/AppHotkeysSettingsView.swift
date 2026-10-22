@@ -57,7 +57,7 @@ struct AppHotkeysSettingsView: View {
                 Text("Apps")
             } footer: {
                 Text("The shortcut opens the app, or brings it to the front if it's already running.")
-                    .font(.caption)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }
 
@@ -79,7 +79,7 @@ private struct AppIcon: View {
         Image(nsImage: url.map { NSWorkspace.shared.icon(forFile: $0.path(percentEncoded: false)) }
             ?? NSWorkspace.shared.icon(for: .application))
             .resizable()
-            .frame(width: 22, height: 22)
+            .frame(width: DesignTokens.Size.rowIcon, height: DesignTokens.Size.rowIcon)
     }
 }
 
@@ -92,12 +92,12 @@ private struct AppHotkeyRow: View {
         HStack {
             AppIcon(url: url)
                 .opacity(url == nil ? 0.4 : 1)
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.hairline) {
                 Text(binding.name)
                     .foregroundStyle(url == nil ? .secondary : .primary)
                 if url == nil {
                     Text("Not found")
-                        .font(.caption)
+                        .font(DesignTokens.Typography.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -124,22 +124,22 @@ private struct AddAppHotkeySheet: View {
     @State private var hasRecorded = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.large) {
             if let chosen {
                 suggestionStep(for: chosen)
             } else {
                 searchStep
             }
         }
-        .padding(20)
+        .padding(DesignTokens.Spacing.xxLarge)
         .frame(width: 420, height: 420)
         .task { await model.refreshInstalledApps() }
     }
 
     private var searchStep: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             Text("Add an App")
-                .font(.headline)
+                .font(DesignTokens.Typography.heading)
             TextField("Search apps", text: $query)
                 .textFieldStyle(.roundedBorder)
             List(model.matches(for: query)) { app in
@@ -169,16 +169,16 @@ private struct AddAppHotkeySheet: View {
     }
 
     private func suggestionStep(for binding: AppHotkeyBinding) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.large) {
             HStack {
                 AppIcon(url: chosenURL)
                 Text(binding.name)
-                    .font(.headline)
+                    .font(DesignTokens.Typography.heading)
             }
             if let suggestion, let shortcut = AppHotkeyKeys.shortcut(for: suggestion) {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                     Text("Suggested shortcut")
-                        .font(.caption)
+                        .font(DesignTokens.Typography.caption)
                         .foregroundStyle(.secondary)
                     Text(shortcut.description)
                         .font(.system(size: 28, weight: .semibold, design: .rounded))

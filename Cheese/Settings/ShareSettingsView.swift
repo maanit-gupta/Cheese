@@ -45,7 +45,7 @@ struct ShareSettingsView: View {
                 if let fingerprint {
                     LabeledContent("Certificate fingerprint") {
                         Text(fingerprint.prefix(16).uppercased() + "…")
-                            .font(.system(.caption, design: .monospaced))
+                            .font(DesignTokens.Typography.code)
                             .textSelection(.enabled)
                             .help(fingerprint)
                     }

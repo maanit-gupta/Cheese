@@ -97,7 +97,7 @@ struct AboutView: View {
                     DisclosureGroup {
                         ScrollView {
                             Text(item.text)
-                                .font(.system(.caption, design: .monospaced))
+                                .font(DesignTokens.Typography.code)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -109,7 +109,7 @@ struct AboutView: View {
                 DisclosureGroup {
                     ScrollView {
                         Text(Acknowledgements.perfectFreehandLicense)
-                            .font(.system(.caption, design: .monospaced))
+                            .font(DesignTokens.Typography.code)
                             .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -122,7 +122,7 @@ struct AboutView: View {
                 Text("Acknowledgements")
             } footer: {
                 Text("The Files tools render documents with these libraries, bundled with Cheese and run offline. Draw on screen's ink outlines follow perfect-freehand.")
-                    .font(.caption)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }
         }

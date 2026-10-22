@@ -11,7 +11,7 @@ struct ClipboardSettingsView: View {
                 }
             } footer: {
                 Text("Pinned items don't count toward this limit and never expire.")
-                    .font(.caption)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }
         }

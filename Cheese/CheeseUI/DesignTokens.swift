@@ -37,6 +37,8 @@ enum DesignTokens {
         static let caption = Font.caption
         static let keycap = Font.system(.callout, design: .rounded)
         static let numeric = Font.callout.monospacedDigit()
+        /// Licenses, fingerprints and other machine text.
+        static let code = Font.system(.caption, design: .monospaced)
     }
 
     enum Size {
