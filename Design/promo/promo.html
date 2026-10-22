@@ -1,0 +1,570 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Cheese Promo</title>
+<style>
+  :root {
+    --cheese: #FFC83D;
+    --cheese-deep: #F29E1F;
+    --ink: #1d1d1f;
+    --paper: #fbfaf7;
+    --muted: #8a8a8e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    background: #0e0d12;
+    font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+  #stage { position: absolute; inset: 0; overflow: hidden;
+    background:
+      radial-gradient(900px 700px at 18% 30%, rgba(255,200,61,0.16), transparent 70%),
+      radial-gradient(1100px 800px at 85% 90%, rgba(242,158,31,0.12), transparent 70%),
+      linear-gradient(160deg, #15131b 0%, #0d0c11 100%);
+  }
+  .layer { position: absolute; inset: 0; opacity: 0; }
+  .abs { position: absolute; }
+
+  /* ---------- Intro / outro ---------- */
+  .center-col { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .big-icon { width: 300px; height: 300px; filter: drop-shadow(0 30px 60px rgba(0,0,0,.55)); }
+  .wordmark { font-size: 132px; font-weight: 800; letter-spacing: -4px; margin-top: 8px; }
+  .tagline { font-size: 40px; font-weight: 500; color: #c9c6cf; margin-top: 10px; letter-spacing: -0.5px; }
+  .pills { display: flex; gap: 16px; margin-top: 42px; }
+  .pill { font-size: 26px; font-weight: 600; padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); color: #e9e6ee; }
+  .pill.y { background: var(--cheese); color: #2a1d00; border-color: transparent; }
+  .term { margin-top: 44px; font: 500 26px "SF Mono", Menlo, monospace; background: #000; border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 22px 30px; color: #e8e8e8; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  .term .p { color: var(--cheese); }
+  .url { margin-top: 26px; font-size: 30px; color: #c9c6cf; font-weight: 500; }
+
+  /* ---------- Left caption panel ---------- */
+  .panel { position: absolute; left: 110px; top: 0; bottom: 0; width: 540px; display: flex; flex-direction: column; justify-content: center; opacity: 0; }
+  .panel .num { font: 700 24px "SF Mono", Menlo, monospace; color: var(--cheese); letter-spacing: 2px; }
+  .panel h2 { font-size: 74px; font-weight: 800; letter-spacing: -2.5px; line-height: 1.02; margin-top: 18px; }
+  .panel p { font-size: 30px; line-height: 1.35; color: #bdb9c6; margin-top: 22px; font-weight: 450; }
+  .keys { display: flex; gap: 10px; margin-top: 34px; flex-wrap: wrap; }
+  .key { min-width: 64px; height: 64px; padding: 0 16px; border-radius: 14px; background: linear-gradient(#2c2a33, #1f1d25); border: 1px solid rgba(255,255,255,.14); border-bottom-width: 4px; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 600; color: #fff; }
+  .keys .plus { align-self: center; color: #6f6b78; font-size: 28px; }
+
+  /* ---------- Mock screen ---------- */
+  #screen { position: absolute; left: 720px; top: 180px; width: 1100px; height: 720px; border-radius: 22px; overflow: hidden; opacity: 0;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 50px 120px rgba(0,0,0,.65);
+    background:
+      radial-gradient(600px 500px at 80% 85%, rgba(255,200,61,.55), transparent 70%),
+      radial-gradient(700px 600px at 10% 10%, rgba(120,90,220,.55), transparent 70%),
+      linear-gradient(135deg, #3b2a6b 0%, #8a3d6b 55%, #e08a3a 100%);
+  }
+  .menubar { position: absolute; left: 0; right: 0; top: 0; height: 30px; background: rgba(30,20,40,.35); backdrop-filter: blur(20px); display: flex; align-items: center; padding: 0 16px; font-size: 14px; font-weight: 500; color: #fff; gap: 20px; z-index: 50; }
+  .menubar .sp { flex: 1; }
+  .menubar b { font-weight: 700; }
+  .mb-cheese { width: 26px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 5px; }
+  .mb-cheese.on { background: rgba(255,255,255,.3); }
+  .mb-cheese svg { width: 20px; height: 20px; color: #fff; }
+
+  .win { position: absolute; background: var(--paper); border-radius: 12px; box-shadow: 0 0 0 1px rgba(0,0,0,.12), 0 22px 50px rgba(0,0,0,.35); overflow: hidden; color: var(--ink); }
+  .win .tb { height: 38px; background: #ecebe8; border-bottom: 1px solid #dddcd8; display: flex; align-items: center; padding: 0 14px; gap: 8px; font-size: 14px; font-weight: 600; color: #4a4a4e; }
+  .dots { display: flex; gap: 8px; margin-right: 10px; }
+  .dots i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; display: block; }
+  .dots i:nth-child(2) { background: #febc2e; } .dots i:nth-child(3) { background: #28c840; }
+  .win .body { padding: 22px 26px; font-size: 17px; line-height: 1.55; }
+
+  .hud { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); display: flex; gap: 8px; padding: 12px 16px; border-radius: 18px; background: rgba(20,18,26,.82); backdrop-filter: blur(18px); box-shadow: 0 12px 40px rgba(0,0,0,.4); z-index: 80; opacity: 0; }
+  .hud .key { min-width: 54px; height: 54px; font-size: 26px; border-radius: 12px; }
+
+  .toast { position: absolute; left: 50%; bottom: 44px; display: flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 16px; background: rgba(28,26,34,.9); backdrop-filter: blur(16px); color: #fff; font-size: 19px; font-weight: 600; box-shadow: 0 14px 40px rgba(0,0,0,.4); z-index: 70; opacity: 0; white-space: nowrap; }
+  .toast .ic { width: 30px; height: 30px; border-radius: 8px; background: var(--cheese); color: #2a1d00; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+  .toast .btn { margin-left: 8px; padding: 5px 14px; background: rgba(255,255,255,.16); border-radius: 8px; font-size: 16px; }
+
+  .dim { position: absolute; inset: 0; background: rgba(0,0,0,.38); opacity: 0; z-index: 60; }
+  .sel { position: absolute; border: 2px solid #fff; box-shadow: 0 0 0 9999px rgba(0,0,0,.38); z-index: 61; opacity: 0; }
+  .sel .lbl { position: absolute; right: -2px; bottom: -34px; background: rgba(20,18,26,.85); color: #fff; font: 600 13px "SF Mono", Menlo, monospace; padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+  .cursor { position: absolute; z-index: 90; width: 26px; height: 26px; opacity: 0; pointer-events: none; }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 95; }
+
+  /* clipboard popover */
+  .pop { position: absolute; width: 660px; height: 430px; top: 40px; left: 360px; border-radius: 14px; background: #f7f6f3; box-shadow: 0 0 0 1px rgba(0,0,0,.12), 0 30px 70px rgba(0,0,0,.4); color: var(--ink); transform-origin: 590px 0; display: flex; flex-direction: column; overflow: hidden; z-index: 40; opacity: 0; }
+  .search { margin: 14px; height: 40px; border-radius: 10px; background: #ebe9e4; display: flex; align-items: center; padding: 0 14px; font-size: 17px; gap: 10px; color: #333; }
+  .search .ph { color: #9a9a9e; }
+  .caret { width: 2px; height: 20px; background: #0a64d8; display: inline-block; vertical-align: middle; }
+  .cols { flex: 1; display: flex; border-top: 1px solid #e3e1dc; min-height: 0; }
+  .list { width: 290px; border-right: 1px solid #e3e1dc; padding: 8px; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; font-size: 15px; white-space: nowrap; overflow: hidden; }
+  .row .t { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  .row .n { color: #9a9a9e; font-size: 13px; }
+  .row.on { background: #0a64d8; color: #fff; }
+  .row.on .n { color: rgba(255,255,255,.75); }
+  .row .ri { width: 26px; height: 26px; border-radius: 6px; background: #e7e4dd; display: flex; align-items: center; justify-content: center; font-size: 14px; flex: none; }
+  .row.on .ri { background: rgba(255,255,255,.22); }
+  .preview { flex: 1; padding: 20px 22px; font-size: 16px; line-height: 1.55; color: #333; }
+  .preview .meta { font-size: 13px; color: #9a9a9e; margin-top: 16px; }
+  .mark { background: rgba(255,200,61,.55); border-radius: 3px; }
+
+  /* report window (screenshot scene) */
+  .bars { display: flex; align-items: flex-end; gap: 18px; height: 230px; padding: 10px 6px 0; border-bottom: 2px solid #e2dfd8; }
+  .bars div { flex: 1; border-radius: 8px 8px 0 0; }
+  .line { height: 12px; border-radius: 6px; background: #e6e3dc; margin-top: 14px; }
+
+  .editor { position: absolute; left: 150px; top: 90px; width: 800px; height: 540px; z-index: 75; opacity: 0; }
+  .tools { display: flex; gap: 6px; align-items: center; }
+  .tool { width: 34px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #444; }
+  .tool.on { background: #d9d6cf; }
+  .ebtn { padding: 5px 14px; border-radius: 7px; background: #e1ded8; font-size: 13px; font-weight: 600; color: #333; }
+  .ebtn.primary { background: #0a64d8; color: #fff; }
+
+  /* OCR */
+  .doc p { margin-bottom: 14px; }
+  .w { border-radius: 3px; }
+  .w.hit { background: rgba(255,200,61,.6); }
+  .scanline { position: absolute; height: 3px; background: linear-gradient(90deg, transparent, var(--cheese), transparent); box-shadow: 0 0 18px var(--cheese); z-index: 62; opacity: 0; }
+
+  /* scroll capture */
+  .page { position: absolute; left: 0; right: 0; top: 0; }
+  .navbar { height: 52px; background: #1d1d1f; color: #fff; display: flex; align-items: center; padding: 0 18px; gap: 16px; font-size: 14px; font-weight: 600; }
+  .navbar .logo { width: 22px; height: 22px; border-radius: 6px; background: var(--cheese); }
+  .card { margin: 16px 18px; border-radius: 12px; padding: 16px; color: #fff; font-weight: 700; font-size: 18px; }
+  .card .l { height: 9px; border-radius: 5px; background: rgba(255,255,255,.45); margin-top: 10px; }
+  .stitch { position: absolute; overflow: hidden; border-radius: 10px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15), 0 20px 50px rgba(0,0,0,.4); }
+
+  /* settings */
+  .tabs { display: flex; justify-content: center; gap: 4px; padding: 10px 0 12px; border-bottom: 1px solid #dddcd8; background: #ecebe8; }
+  .tab { width: 92px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: #555; padding: 6px 0; border-radius: 8px; }
+  .tab .g { font-size: 20px; }
+  .tab.on { background: #d9d6cf; color: #111; }
+  .srow { display: flex; align-items: center; justify-content: space-between; padding: 11px 16px; font-size: 15px; border-bottom: 1px solid #ebe9e4; }
+  .srow:last-child { border-bottom: none; }
+  .rec { min-width: 118px; height: 30px; border-radius: 8px; background: #fff; border: 1px solid #d3d0c9; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; color: #222; }
+  .rec.recording { border: 2px solid #0a64d8; color: #0a64d8; }
+  .group { margin: 0 22px; background: #fff; border-radius: 10px; border: 1px solid #e3e1dc; }
+  .gtitle { font-size: 12px; font-weight: 700; color: #8a8a8e; margin: 14px 26px 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .menu { position: absolute; width: 270px; top: 34px; left: 700px; border-radius: 10px; background: rgba(246,245,242,.97); box-shadow: 0 0 0 1px rgba(0,0,0,.12), 0 20px 50px rgba(0,0,0,.4); color: var(--ink); padding: 6px; font-size: 14px; z-index: 45; opacity: 0; }
+  .mi { display: flex; justify-content: space-between; padding: 5px 10px; border-radius: 6px; }
+  .mi span:last-child { color: #8a8a8e; }
+  .mi.on { background: #0a64d8; color: #fff; }
+  .mi.on span:last-child { color: rgba(255,255,255,.8); }
+  .msep { height: 1px; background: #dddcd8; margin: 5px 8px; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- Intro -->
+  <div class="layer" id="intro">
+    <div class="center-col">
+      <img class="big-icon" id="introIcon" src="../../Cheese/Resources/Assets.xcassets/AppIcon.appiconset/icon_512x512@2x.png">
+      <div class="wordmark" id="introWord">Cheese</div>
+      <div class="tagline" id="introTag">Five everyday Mac tools. One tiny menu bar app.</div>
+    </div>
+  </div>
+
+  <!-- Caption panels (one per feature scene) -->
+  <div id="panels"></div>
+
+  <!-- Shared mock screen -->
+  <div id="screen">
+    <div class="menubar">
+      <b></b><b>Finder</b><span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Window</span>
+      <span class="sp"></span>
+      <span class="mb-cheese" id="mbCheese"><svg viewBox="0 0 18 18"><path fill-rule="evenodd" fill="currentColor" d="M 3.2 13.5 C 2.6 13.5 2.2 12.9 2.4 12.3 L 5.1 4.5 C 5.3 3.9 6.0 3.5 6.6 3.6 L 14.8 5.2 C 15.5 5.3 15.9 6.0 15.7 6.7 L 14.3 12.5 C 14.1 13.1 13.5 13.5 12.9 13.5 Z M 6.8 7.2 A 1.2 1.2 0 1 0 6.8 9.6 A 1.2 1.2 0 1 0 6.8 7.2 Z M 11.2 6.5 A 1.0 1.0 0 1 0 11.2 8.5 A 1.0 1.0 0 1 0 11.2 6.5 Z M 10.5 10.2 A 1.4 1.4 0 1 0 10.5 13.0 A 1.4 1.4 0 1 0 10.5 10.2 Z"/></svg></span>
+      <span>Wed 22 Oct&nbsp;&nbsp;11:30</span>
+    </div>
+    <div id="scenes"></div>
+    <div class="hud" id="hud"></div>
+    <div class="flash" id="flash"></div>
+    <svg class="cursor" id="cursor" viewBox="0 0 26 26"></svg>
+  </div>
+
+  <!-- Outro -->
+  <div class="layer" id="outro">
+    <div class="center-col">
+      <img class="big-icon" id="outroIcon" src="../../Cheese/Resources/Assets.xcassets/AppIcon.appiconset/icon_512x512@2x.png" style="width:220px;height:220px">
+      <div class="wordmark" style="font-size:110px">Cheese</div>
+      <div class="pills">
+        <div class="pill y">Free &amp; open source</div>
+        <div class="pill">MIT licensed</div>
+        <div class="pill">macOS 27</div>
+      </div>
+      <div class="term"><span class="p">$</span> curl -fsSL https://raw.githubusercontent.com/maanit-gupta/Cheese/main/install.sh | bash</div>
+      <div class="url">github.com/maanit-gupta/Cheese</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- timing helpers (everything is a pure function of t, so frames render deterministically) ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const back = x => { const c = 1.7; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const lerp = (a, b, p) => a + (b - a) * p;
+const win = (t, a, b, f = .35) => Math.min(prog(t, a, a + f), 1 - prog(t, b - f, b));
+const $ = id => document.getElementById(id);
+const keyHTML = keys => keys.map(k => `<div class="key">${k}</div>`).join('');
+
+const CURSOR_ARROW = '<path d="M3 2 L3 21 L8 16.5 L11.5 24 L14.5 22.6 L11 15.4 L18 15.4 Z" fill="#000" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>';
+const CURSOR_CROSS = '<path d="M13 1 V25 M1 13 H25" stroke="#fff" stroke-width="3"/><path d="M13 1 V25 M1 13 H25" stroke="#000" stroke-width="1.2"/>';
+
+const hud = $('hud'), cursor = $('cursor'), flash = $('flash');
+
+// HUD showing keys pressed: list of [start, end, keys]
+function setHud(lt, events) {
+  let shown = null, op = 0, sc = 1;
+  for (const [a, b, keys] of events) {
+    const v = win(lt, a, b, .18);
+    if (v > 0) { shown = keys; op = v; sc = lerp(.9, 1, eo(prog(lt, a, a + .2))); }
+  }
+  if (shown) {
+    const html = keyHTML(shown);
+    if (hud.dataset.k !== html) { hud.innerHTML = html; hud.dataset.k = html; }
+  }
+  hud.style.opacity = op;
+  hud.style.transform = `translateX(-50%) scale(${sc})`;
+}
+function setCursor(x, y, op, kind = 'arrow') {
+  if (cursor.dataset.kind !== kind) { cursor.innerHTML = kind === 'arrow' ? CURSOR_ARROW : CURSOR_CROSS; cursor.dataset.kind = kind; }
+  const off = kind === 'arrow' ? [3, 2] : [13, 13];
+  cursor.style.left = (x - off[0]) + 'px'; cursor.style.top = (y - off[1]) + 'px'; cursor.style.opacity = op;
+}
+function path(lt, pts) { // pts: [t, x, y]; eased between keyframes
+  if (lt <= pts[0][0]) return [pts[0][1], pts[0][2]];
+  for (let i = 1; i < pts.length; i++) {
+    if (lt <= pts[i][0]) { const p = eio(prog(lt, pts[i - 1][0], pts[i][0])); return [lerp(pts[i - 1][1], pts[i][1], p), lerp(pts[i - 1][2], pts[i][2], p)]; }
+  }
+  const l = pts[pts.length - 1]; return [l[1], l[2]];
+}
+function toast(el, lt, a, b) {
+  const v = win(lt, a, b, .25);
+  el.style.opacity = v;
+  el.style.transform = `translateX(-50%) translateY(${(1 - eo(prog(lt, a, a + .3))) * 30}px)`;
+}
+
+// ---------- scenes ----------
+const scenes = [];
+const scenesEl = $('scenes'), panelsEl = $('panels');
+function scene(def) {
+  const layer = document.createElement('div'); layer.className = 'layer'; layer.innerHTML = def.html; scenesEl.appendChild(layer);
+  const panel = document.createElement('div'); panel.className = 'panel';
+  panel.innerHTML = `<div class="num">${def.num}</div><h2>${def.title}</h2><p>${def.desc}</p><div class="keys">${def.keys.map(k => `<div class="key">${k}</div>`).join('')}</div>`;
+  panelsEl.appendChild(panel);
+  def.layer = layer; def.panel = panel; def.q = s => layer.querySelector(s);
+  if (def.init) def.init(def);
+  scenes.push(def);
+}
+
+// 1. Clipboard history -------------------------------------------------------
+const CLIPS = [
+  { i: '¶', t: 'Meeting notes — Q4 roadmap', full: 'Meeting notes — Q4 roadmap<br>• Ship Cheese v0.1 to GitHub<br>• Write the README and install guide<br>• Record a promo video', meta: 'Text · copied 2 min ago' },
+  { i: '🔗', t: 'https://github.com/maanit-gupta/Cheese', full: 'https://github.com/maanit-gupta/Cheese', meta: 'Link · copied 6 min ago' },
+  { i: '🖼', t: 'Screenshot 840 × 420', full: '<div style="height:150px;border-radius:10px;background:linear-gradient(135deg,#ffc83d,#f29e1f 60%,#8a3d6b)"></div>', meta: 'Image · text inside is searchable' },
+  { i: '{}', t: 'let total = cart.reduce(0) { $0 + $1.price }', full: '<code style="font:15px SF Mono,Menlo,monospace">let total = cart.reduce(0) { $0 + $1.price }</code>', meta: 'Text · copied 18 min ago' },
+  { i: '📄', t: 'Invoice-October.pdf', full: '📄 Invoice-October.pdf<br><span style="color:#9a9a9e">~/Documents/Invoices</span>', meta: 'File · copied 1 hr ago' },
+  { i: '¶', t: 'Road trip packing list', full: 'Road trip packing list<br>• Chargers • Snacks • Playlist', meta: 'Text · copied yesterday' },
+];
+scene({
+  id: 'clip', start: 4.0, end: 12.2, num: '01 — CLIPBOARD', title: 'Clipboard history', keys: ['⌃', '⌥', 'V'],
+  desc: 'Everything you copy — text, rich text, images and files — searchable and one keystroke from pasting.',
+  html: `
+    <div class="win" style="left:60px;top:90px;width:560px;height:440px">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div>Notes</div>
+      <div class="body" id="notesBody"><b style="font-size:22px">Monday</b><br>Call with the design team at 3.<br><span id="pasted" style="display:block;margin-top:10px;border-radius:6px;padding:2px 4px;margin-left:-4px"></span></div>
+    </div>
+    <div class="pop" id="pop">
+      <div class="search"><span style="color:#888">⌕</span><span id="q"></span></div>
+      <div class="cols"><div class="list" id="list"></div><div class="preview" id="prev"></div></div>
+    </div>`,
+  update(lt, s) {
+    setHud(lt, [[.3, 1.3, ['⌃', '⌥', 'V']], [4.4, 5.2, ['↩']]]);
+    const pop = s.q('#pop');
+    const open = prog(lt, .7, 1.05), close = prog(lt, 4.7, 5.0);
+    pop.style.opacity = open * (1 - close);
+    pop.style.transform = `scale(${lerp(.92, 1, back(open)) - close * .04})`;
+    $('mbCheese').classList.toggle('on', lt > .6 && lt < 4.9);
+
+    const query = 'road'.slice(0, Math.floor(clamp((lt - 1.5) / .25, 0, 4)));
+    s.q('#q').innerHTML = (query ? query : '<span class="ph">Search history</span>') + (lt % 1 < .55 ? '<span class="caret"></span>' : '');
+    const visible = CLIPS.filter(c => c.t.toLowerCase().includes(query));
+    const selIdx = 0;
+    const listHTML = visible.map((c, i) => {
+      const t = query ? c.t.replace(new RegExp(query, 'i'), m => `<span class="${i === selIdx ? '' : 'mark'}" style="${i === selIdx ? 'text-decoration:underline' : ''}">${m}</span>`) : c.t;
+      return `<div class="row ${i === selIdx ? 'on' : ''}"><div class="ri">${c.i}</div><div class="t">${t}</div><div class="n">⌘${i + 1}</div></div>`;
+    }).join('');
+    const list = s.q('#list'); if (list.dataset.h !== listHTML) { list.innerHTML = listHTML; list.dataset.h = listHTML; }
+    const sel = visible[selIdx];
+    const prevHTML = sel ? `${sel.full}<div class="meta">${sel.meta}</div>` : '';
+    const prev = s.q('#prev'); if (prev.dataset.h !== prevHTML) { prev.innerHTML = prevHTML; prev.dataset.h = prevHTML; }
+
+    const pasted = s.q('#pasted');
+    const pv = prog(lt, 5.15, 5.4);
+    pasted.innerHTML = pv > 0 ? CLIPS[0].full : '';
+    pasted.style.background = pv > 0 ? `rgba(255,200,61,${.55 * (1 - prog(lt, 5.6, 7))})` : 'transparent';
+    setCursor(0, 0, 0);
+  }
+});
+
+// 2. Screenshots --------------------------------------------------------------
+const BAR_COLORS = ['#ffc83d', '#f29e1f', '#e0702f', '#8a3d6b', '#5a4bb5', '#3a7bd5'];
+const BAR_H = [45, 70, 55, 92, 66, 80];
+const barsHTML = (h = 230) => `<div class="bars" style="height:${h}px">${BAR_H.map((v, i) => `<div style="height:${v}%;background:${BAR_COLORS[i]}"></div>`).join('')}</div>`;
+scene({
+  id: 'shot', start: 11.8, end: 19.6, num: '02 — SCREENSHOTS', title: 'Screenshots', keys: ['⌃', '⌥', '4'],
+  desc: 'Region, window or full screen, straight to your clipboard. Hold ⇧ as you finish to annotate.',
+  html: `
+    <div class="win" style="left:70px;top:70px;width:960px;height:600px">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div><div style="flex:1;margin:0 120px;height:24px;border-radius:7px;background:#dddbd6;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px;color:#777">dashboard.example.com</div></div>
+      <div class="body">
+        <div style="font-size:28px;font-weight:800">Weekly report</div>
+        <div style="color:#888;margin-top:2px">Active users, last six weeks</div>
+        <div style="margin:26px 40px 0 40px">${barsHTML()}</div>
+        <div class="line" style="width:70%;margin-top:30px"></div><div class="line" style="width:52%"></div>
+      </div>
+    </div>
+    <div class="dim" id="dim"></div>
+    <div class="sel" id="sel"><div class="lbl" id="lbl"></div></div>
+    <div class="toast" id="toast"><div class="ic">📷</div>Screenshot copied</div>
+    <div class="win editor" id="editor">
+      <div class="tb" style="justify-content:space-between"><div style="display:flex;align-items:center"><div class="dots"><i></i><i></i><i></i></div>
+        <div class="tools"><div class="tool on">↗</div><div class="tool">▢</div><div class="tool">T</div><div class="tool">🖍</div><div class="tool">▦</div><div class="tool">⌗</div><div class="tool">↶</div><div class="tool">↷</div></div></div>
+        <div class="tools"><div class="ebtn primary" id="copyBtn">Copy</div><div class="ebtn">Save</div><div class="ebtn">Close</div></div></div>
+      <div style="position:absolute;left:30px;top:68px;right:30px;bottom:30px;background:#fbfaf7;border-radius:8px;box-shadow:0 0 0 1px #e3e1dc;padding:24px 40px">
+        <div style="font-size:22px;font-weight:800">Active users</div>
+        <div style="margin-top:18px">${barsHTML(300)}</div>
+        <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 740 442">
+          <path id="arrow" d="M120 70 C 220 40, 330 50, 420 112" fill="none" stroke="#e5352b" stroke-width="7" stroke-linecap="round"/>
+          <path id="arrowHead" d="M392 82 L426 116 L380 122" fill="none" stroke="#e5352b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect id="box" x="400" y="105" width="96" height="320" rx="10" fill="none" stroke="#e5352b" stroke-width="6"/>
+        </svg>
+      </div>
+    </div>`,
+  init(s) {
+    for (const id of ['#arrow', '#box']) { const el = s.q(id); const L = el.getTotalLength(); el.style.strokeDasharray = L; el.dataset.L = L; }
+  },
+  update(lt, s) {
+    setHud(lt, [[.3, 1.2, ['⌃', '⌥', '4']], [3.9, 4.8, ['⇧', 'Shift — annotate']]]);
+    const dimV = win(lt, .5, 2.55, .2);
+    s.q('#dim').style.opacity = prog(lt, .5, .7) * (1 - prog(lt, 1.0, 1.05)) * dimV;
+    const p = eio(prog(lt, 1.0, 2.1));
+    const x0 = 250, y0 = 170, x1 = lerp(x0, 820, p), y1 = lerp(y0, 500, p);
+    const sel = s.q('#sel');
+    sel.style.opacity = lt > 1.0 && lt < 2.5 ? 1 : 0;
+    Object.assign(sel.style, { left: x0 + 'px', top: y0 + 'px', width: (x1 - x0) + 'px', height: (y1 - y0) + 'px' });
+    s.q('#lbl').textContent = `${Math.round((x1 - x0) * 2)} × ${Math.round((y1 - y0) * 2)}`;
+    if (lt > .6 && lt < 2.5) { const [cx, cy] = path(lt, [[.6, 560, 420], [1.0, x0, y0], [2.1, 820, 500]]); setCursor(cx, cy, 1, 'cross'); }
+    else if (lt > 5.4 && lt < 7) { const [cx, cy] = path(lt, [[5.4, 600, 600], [6.6, 772, 113]]); setCursor(cx, cy, win(lt, 5.4, 7.2, .2)); }
+    else setCursor(0, 0, 0);
+    flash.style.opacity = .85 * (1 - prog(lt, 2.5, 2.85)) * (lt >= 2.5 ? 1 : 0);
+    toast(s.q('#toast'), lt, 2.6, 3.9);
+
+    const ed = s.q('#editor'), eopen = prog(lt, 4.1, 4.45);
+    ed.style.opacity = eopen; ed.style.transform = `scale(${lerp(.94, 1, back(eopen))})`;
+    const a = s.q('#arrow'), ah = s.q('#arrowHead'), bx = s.q('#box');
+    a.style.strokeDashoffset = a.dataset.L * (1 - eo(prog(lt, 4.7, 5.4)));
+    ah.style.opacity = prog(lt, 5.3, 5.45);
+    bx.style.strokeDashoffset = bx.dataset.L * (1 - eo(prog(lt, 5.5, 6.3)));
+    s.q('#copyBtn').style.filter = lt > 6.6 && lt < 6.85 ? 'brightness(.75)' : 'none';
+  }
+});
+
+// 3. OCR --------------------------------------------------------------------
+const OCR_TEXT = 'The best tools disappear into your day. Press a shortcut, drag over anything on screen — a video frame, a locked PDF, a slide in a meeting — and the words land on your clipboard, ready to paste.';
+const ocrWords = OCR_TEXT.split(' ');
+const qrCells = (() => { let s = 7, out = []; for (let i = 0; i < 21 * 21; i++) { s = (s * 1103515245 + 12345) & 0x7fffffff; out.push((s >> 16) & 1); } return out; })();
+function qrHTML() {
+  let h = ''; const finder = (r, c) => { for (const [fr, fc] of [[0, 0], [0, 14], [14, 0]]) { const y = r - fr, x = c - fc; if (y >= 0 && y < 7 && x >= 0 && x < 7) return (y === 0 || y === 6 || x === 0 || x === 6 || (y >= 2 && y <= 4 && x >= 2 && x <= 4)) ? 1 : 0; } return -1; };
+  for (let r = 0; r < 21; r++) for (let c = 0; c < 21; c++) { const f = finder(r, c); const on = f === -1 ? qrCells[r * 21 + c] : f; if (on) h += `<div style="position:absolute;left:${c * 8}px;top:${r * 8}px;width:8px;height:8px;background:#111"></div>`; }
+  return `<div style="position:relative;width:168px;height:168px">${h}</div>`;
+}
+scene({
+  id: 'ocr', start: 19.2, end: 26.4, num: '03 — OCR', title: 'Copy text from anything', keys: ['⌃', '⌥', 'T'],
+  desc: 'Drag over any part of the screen to copy the words in it. English and Hindi. QR codes and barcodes too.',
+  html: `
+    <div class="win" style="left:70px;top:70px;width:960px;height:600px">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div>Keynote — Product Review.key</div>
+      <div style="display:flex;gap:40px;padding:60px 60px">
+        <div class="doc" style="flex:1">
+          <div style="font-size:38px;font-weight:800;letter-spacing:-1px;margin-bottom:22px">Why Cheese?</div>
+          <p id="ocrP" style="font-size:22px;line-height:1.6;color:#333">${ocrWords.map(w => `<span class="w">${w}</span>`).join(' ')}</p>
+        </div>
+        <div style="width:220px;display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:80px">
+          <div style="padding:14px;background:#fff;border-radius:12px;box-shadow:0 0 0 1px #e3e1dc">${qrHTML()}</div>
+          <div style="font-size:14px;color:#888">Scan for the repo</div>
+        </div>
+      </div>
+    </div>
+    <div class="sel" id="sel"></div>
+    <div class="scanline" id="scan"></div>
+    <div class="toast" id="t1"><div class="ic">❝</div><span id="t1text"></span></div>
+    <div class="toast" id="t2"><div class="ic">▦</div>Copied link · github.com/maanit-gupta/Cheese<div class="btn">Open</div></div>`,
+  update(lt, s) {
+    setHud(lt, [[.3, 1.2, ['⌃', '⌥', 'T']], [3.8, 4.6, ['⌃', '⌥', 'T']]]);
+    const sel = s.q('#sel');
+    const r1 = [120, 220, 700, 500], r2 = [748, 192, 966, 412];
+    let r = null, p;
+    if (lt > .9 && lt < 2.9) { p = eio(prog(lt, .9, 1.8)); r = [r1[0], r1[1], lerp(r1[0], r1[2], p), lerp(r1[1], r1[3], p)]; }
+    if (lt > 4.1 && lt < 5.2) { p = eio(prog(lt, 4.1, 4.7)); r = [r2[0], r2[1], lerp(r2[0], r2[2], p), lerp(r2[1], r2[3], p)]; }
+    sel.style.opacity = r ? 1 : 0;
+    if (r) Object.assign(sel.style, { left: r[0] + 'px', top: r[1] + 'px', width: (r[2] - r[0]) + 'px', height: (r[3] - r[1]) + 'px' });
+    if (lt > .5 && lt < 1.8) { const [cx, cy] = path(lt, [[.5, 500, 600], [.9, r1[0], r1[1]], [1.8, r1[2], r1[3]]]); setCursor(cx, cy, 1, 'cross'); }
+    else if (lt > 3.9 && lt < 4.7) { const [cx, cy] = path(lt, [[3.9, 600, 500], [4.1, r2[0], r2[1]], [4.7, r2[2], r2[3]]]); setCursor(cx, cy, 1, 'cross'); }
+    else setCursor(0, 0, 0);
+
+    const sp = prog(lt, 1.9, 2.8), scan = s.q('#scan');
+    scan.style.opacity = lt > 1.9 && lt < 2.85 ? 1 : 0;
+    Object.assign(scan.style, { left: r1[0] + 'px', width: (r1[2] - r1[0]) + 'px', top: lerp(r1[1], r1[3], sp) + 'px' });
+    const words = s.q('#ocrP').children, hit = Math.floor(sp * words.length), fade = 1 - prog(lt, 3.6, 4.0);
+    for (let i = 0; i < words.length; i++) words[i].style.background = (i < hit && fade > 0) ? `rgba(255,200,61,${.6 * fade})` : 'transparent';
+    s.q('#t1text').textContent = `Copied ${ocrWords.length} words`;
+    toast(s.q('#t1'), lt, 2.9, 3.9);
+    toast(s.q('#t2'), lt, 5.0, 7.0);
+  }
+});
+
+// 4. Scrolling capture -------------------------------------------------------
+const CARD_COLORS = ['#f29e1f', '#5a4bb5', '#3a7bd5', '#8a3d6b', '#2f9e74', '#e0702f', '#c4469a', '#3d6b8a', '#ffb000', '#6b4bd5'];
+const pageHTML = () => `<div class="navbar"><div class="logo"></div>cheese.dev<span style="flex:1"></span><span style="opacity:.6">Docs</span><span style="opacity:.6">Blog</span></div>` +
+  CARD_COLORS.map((c, i) => `<div class="card" style="background:${c};height:${120 + (i % 3) * 30}px">Section ${i + 1}<div class="l" style="width:${60 + (i * 13) % 30}%"></div><div class="l" style="width:${40 + (i * 7) % 30}%"></div></div>`).join('');
+const VIEW_H = 520, SCROLL_MAX = 1260;
+scene({
+  id: 'scroll', start: 26.0, end: 33.4, num: '04 — SCROLLING CAPTURE', title: 'Scrolling capture', keys: ['⌃', '⌥', 'S'],
+  desc: 'Cheese scrolls the page for you and stitches one tall image. Sticky headers are kept once, not repeated.',
+  html: `
+    <div class="win" style="left:60px;top:70px;width:560px;height:600px">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div>Safari — cheese.dev</div>
+      <div style="position:absolute;left:0;right:0;top:38px;bottom:0;overflow:hidden;background:#f3f1ec">
+        <div class="navbar" style="position:absolute;left:0;right:0;top:0;z-index:2"><div class="logo"></div>cheese.dev<span style="flex:1"></span><span style="opacity:.6">Docs</span><span style="opacity:.6">Blog</span></div>
+        <div class="page" id="page" style="padding-top:0">${pageHTML()}</div>
+      </div>
+    </div>
+    <div id="frameSel" style="position:absolute;left:58px;top:106px;width:564px;height:566px;border:3px dashed var(--cheese);border-radius:4px;opacity:0;z-index:20"></div>
+    <div class="abs" id="stLabel" style="left:700px;top:62px;font-size:15px;font-weight:700;color:#fff;opacity:0;text-shadow:0 1px 6px rgba(0,0,0,.4)"></div>
+    <div class="stitch" id="stitch" style="left:700px;top:92px;width:180px">
+      <div id="stInner" style="width:560px;transform:scale(${180 / 560});transform-origin:0 0;background:#f3f1ec">${pageHTML()}</div>
+    </div>
+    <div class="win" id="spWin" style="left:120px;top:440px;width:440px;height:150px;opacity:0;z-index:30">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div>Scrolling Capture</div>
+      <div style="padding:18px;display:flex;gap:8px;flex-wrap:wrap"><div class="ebtn primary">Copy</div><div class="ebtn">Save</div><div class="ebtn">Annotate</div><div class="ebtn">OCR</div></div>
+      <div style="padding:0 18px;font-size:13px;color:#888">560 × 1,830 pt · stitched from 6 frames</div>
+    </div>`,
+  update(lt, s) {
+    setHud(lt, [[.3, 1.2, ['⌃', '⌥', 'S']]]);
+    s.q('#frameSel').style.opacity = win(lt, .7, 5.6, .25);
+    const sp = eio(prog(lt, 1.2, 5.0));
+    const scroll = sp * SCROLL_MAX;
+    s.q('#page').style.transform = `translateY(${-scroll}px)`;
+    const capturedH = (VIEW_H + 52 + scroll) * (180 / 560);
+    const st = s.q('#stitch');
+    st.style.height = capturedH + 'px';
+    st.style.opacity = prog(lt, 1.0, 1.3);
+    s.q('#stLabel').style.opacity = prog(lt, 1.0, 1.3);
+    s.q('#stLabel').textContent = `Stitching… ${Math.round(1 + sp * 5)} frames · ${Math.round((VIEW_H + 52 + scroll) * 2).toLocaleString()} px`;
+    const w = s.q('#spWin'), wo = prog(lt, 5.5, 5.85);
+    w.style.opacity = wo; w.style.transform = `scale(${lerp(.94, 1, back(wo))})`;
+    setCursor(0, 0, 0);
+  }
+});
+
+// 5. Window snapping ---------------------------------------------------------
+const FULL = [0, 30, 1100, 690];
+scene({
+  id: 'snap', start: 33.0, end: 40.0, num: '05 — WINDOWS', title: 'Window snapping', keys: ['⌃', '⌥', '← → ↑ ↓'],
+  desc: 'Halves and maximize from the keyboard. Press again to hop to the next display. ⌃⌥⌫ puts it back.',
+  html: `
+    <div class="win" id="wa" style="z-index:2"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Notes</div>
+      <div class="body"><b style="font-size:20px">Ideas</b><div class="line" style="width:80%"></div><div class="line" style="width:60%"></div><div class="line" style="width:70%"></div></div></div>
+    <div class="win" id="wb" style="z-index:3"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Safari</div>
+      <div class="body"><div style="height:120px;border-radius:10px;background:linear-gradient(135deg,#5a4bb5,#3a7bd5)"></div><div class="line" style="width:90%"></div><div class="line" style="width:75%"></div></div></div>`,
+  update(lt, s) {
+    setHud(lt, [[.4, 1.3, ['⌃', '⌥', '←']], [1.9, 2.8, ['⌃', '⌥', '→']], [3.4, 4.3, ['⌃', '⌥', '↑']], [4.9, 5.8, ['⌃', '⌥', '⌫']]]);
+    const A0 = [120, 110, 520, 400], B0 = [420, 190, 560, 420];
+    const L = [0, 30, 550, 690], R = [550, 30, 550, 690];
+    const mix = (a, b, p) => a.map((v, i) => lerp(v, b[i], p));
+    const B = mix(B0, L, eo(prog(lt, .5, .85)));
+    let A = mix(A0, R, eo(prog(lt, 2.0, 2.35)));
+    A = mix(A, FULL, eo(prog(lt, 3.5, 3.85)));
+    A = mix(A, A0, eo(prog(lt, 5.0, 5.4)));
+    const place = (el, r) => Object.assign(el.style, { left: r[0] + 'px', top: r[1] + 'px', width: r[2] + 'px', height: r[3] + 'px', borderRadius: r[0] === 0 && r[2] >= 1100 ? '0' : '12px' });
+    place(s.q('#wa'), A); place(s.q('#wb'), B);
+    s.q('#wa').style.zIndex = lt > 1.6 ? 4 : 2;
+    setCursor(0, 0, 0);
+  }
+});
+
+// 6. Shortcuts ---------------------------------------------------------------
+const SHORTCUT_ROWS = [['Open clipboard history', '⌃⌥V'], ['Capture region', '⌃⌥4'], ['Capture full screen', '⌃⌥3'], ['Capture window', '⌃⌥5'], ['Copy text from region (OCR)', '⌃⌥T'], ['Scrolling capture', '⌃⌥S']];
+scene({
+  id: 'keys', start: 39.6, end: 45.6, num: 'YOUR KEYS', title: 'Every shortcut is yours', keys: ['Keyboard Shortcuts…'],
+  desc: 'Don\'t like a default? Pick Keyboard Shortcuts… from the menu bar icon, click a shortcut and press new keys.',
+  html: `
+    <div class="menu" id="menu">
+      ${['Open History|⌃⌥V', 'Capture Region|⌃⌥4', 'Capture Window|⌃⌥5', 'Capture Screen|⌃⌥3', 'OCR|⌃⌥T', 'Scrolling Capture|⌃⌥S', '-', 'Clear History|', 'Clear All|', '-', 'Keyboard Shortcuts…|', 'Settings…|⌘,', 'Quit|⌘Q'].map(m => m === '-' ? '<div class="msep"></div>' : `<div class="mi" data-k="${m.split('|')[0]}"><span>${m.split('|')[0]}</span><span>${m.split('|')[1]}</span></div>`).join('')}
+    </div>
+    <div class="win" id="settings" style="left:250px;top:70px;width:600px;height:590px;opacity:0">
+      <div class="tb" style="justify-content:center;position:relative"><div class="dots" style="position:absolute;left:14px"><i></i><i></i><i></i></div>Cheese Settings</div>
+      <div class="tabs"><div class="tab"><span class="g">⚙︎</span>General</div><div class="tab on"><span class="g">⌨︎</span>Shortcuts</div><div class="tab"><span class="g">📋</span>Clipboard</div><div class="tab"><span class="g">⌕</span>OCR</div><div class="tab"><span class="g">🔒</span>Permissions</div></div>
+      <div style="font-size:13px;color:#888;margin:14px 26px 0">Click a shortcut and press the keys you want instead.</div>
+      <div class="gtitle">Clipboard &amp; Capture</div>
+      <div class="group">${SHORTCUT_ROWS.map((r, i) => `<div class="srow"><span>${r[0]}</span><div class="rec" id="rec${i}">${r[1]}</div></div>`).join('')}</div>
+    </div>`,
+  update(lt, s) {
+    setHud(lt, [[2.9, 3.8, ['⇧', '⌘', 'V']]]);
+    const m = s.q('#menu'), mo = prog(lt, .3, .5) * (1 - prog(lt, 1.4, 1.55));
+    m.style.opacity = mo;
+    $('mbCheese').classList.toggle('on', lt > .25 && lt < 1.5);
+    for (const mi of m.querySelectorAll('.mi')) mi.classList.toggle('on', mi.dataset.k === 'Keyboard Shortcuts…' && lt > 1.0);
+    const st = s.q('#settings'), so = prog(lt, 1.5, 1.85);
+    st.style.opacity = so; st.style.transform = `scale(${lerp(.95, 1, back(so))})`;
+    const rec = s.q('#rec0');
+    const recording = lt > 2.4 && lt < 3.0, changed = lt >= 3.0;
+    rec.classList.toggle('recording', recording);
+    rec.textContent = recording ? 'Press shortcut' : changed ? '⇧⌘V' : '⌃⌥V';
+    rec.style.background = changed ? `rgba(255,200,61,${.7 * (1 - prog(lt, 3.3, 4.6))})` : '#fff';
+    if (lt < 1.5) { const [cx, cy] = path(lt, [[0, 600, 300], [.25, 855, 15], [.6, 855, 15], [1.0, 800, 270]]); setCursor(cx, cy, win(lt, 0, 1.5, .15)); }
+    else if (lt < 3.0) { const [cx, cy] = path(lt, [[1.8, 600, 500], [2.35, 790, 228]]); setCursor(cx, cy, win(lt, 1.8, 3.2, .15)); }
+    else setCursor(0, 0, 0);
+  }
+});
+
+// ---------- master timeline ----------
+const DURATION = 50;
+const screen = $('screen');
+window.DURATION = DURATION;
+window.seek = function (t) {
+  // intro
+  const iv = 1 - prog(t, 3.6, 4.2);
+  $('intro').style.opacity = iv;
+  const ip = prog(t, .2, 1.1);
+  $('introIcon').style.transform = `scale(${lerp(.6, 1, back(ip))}) rotate(${lerp(-12, 0, eo(ip))}deg)`;
+  $('introIcon').style.opacity = ip;
+  $('introWord').style.opacity = prog(t, .8, 1.4); $('introWord').style.transform = `translateY(${(1 - eo(prog(t, .8, 1.4))) * 30}px)`;
+  $('introTag').style.opacity = prog(t, 1.4, 2.0); $('introTag').style.transform = `translateY(${(1 - eo(prog(t, 1.4, 2.0))) * 20}px)`;
+
+  // screen
+  const sv = win(t, 3.9, 45.8, .5);
+  screen.style.opacity = sv;
+  screen.style.transform = `translateY(${(1 - eo(prog(t, 3.9, 4.6))) * 60}px) scale(${lerp(.97, 1, eo(prog(t, 3.9, 4.6)))})`;
+
+  let anyHud = false;
+  for (const s of scenes) {
+    const v = win(t, s.start, s.end, .4);
+    s.layer.style.opacity = v;
+    s.panel.style.opacity = v;
+    s.panel.style.transform = `translateX(${(1 - eo(prog(t, s.start, s.start + .6))) * -40}px)`;
+    s.layer.style.visibility = v > 0 ? 'visible' : 'hidden';
+  }
+  // only the scene that owns time t drives shared elements (HUD, cursor, flash, menubar icon)
+  const owner = [...scenes].reverse().find(s => t >= s.start) || null;
+  if (owner && t < owner.end) owner.update(t - owner.start, owner);
+  else { hud.style.opacity = 0; setCursor(0, 0, 0); }
+  if (!owner || owner.id !== 'shot') flash.style.opacity = 0;
+
+  // outro
+  const ov = prog(t, 45.4, 46.2);
+  $('outro').style.opacity = ov;
+  $('outroIcon').style.transform = `scale(${lerp(.7, 1, back(prog(t, 45.5, 46.4)))})`;
+};
+window.seek(0);
+</script>
+</body>
+</html>

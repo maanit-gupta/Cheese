@@ -112,23 +112,26 @@ Inside the history panel:
 - Some windows refuse resizing (fixed-size panels). Clamp the frame and don't crash.
 
 ### Menu bar menu
-Open History · Capture Region · Capture Window · Capture Screen · OCR · Scrolling Capture · — · Clear History · Clear All · — · Settings… · Quit
+Open History · Capture Region · Capture Window · Capture Screen · OCR · Scrolling Capture · — · Clear History · Clear All · — · Keyboard Shortcuts… (opens Settings on the Shortcuts tab) · Settings… · Quit
 
 ### Settings (SwiftUI window)
-- **General:** launch at login, screenshot save folder
+- **General:** launch at login, screenshot save folder, "Show Welcome Guide…"
 - **Shortcuts:** `KeyboardShortcuts.Recorder` for every action
 - **Clipboard:** history size (default 200)
 - **OCR:** languages, line-break mode
 - **Permissions:** live status of Screen Recording and Accessibility, each with an "Open System Settings" button
 
+### Welcome guide
+Shown once on first launch (`hasSeenWelcome` in UserDefaults; closing it counts as seen), reopenable from Settings → General. Four pages: what Cheese does (with live shortcuts) · permissions (live status + Open System Settings) · shortcuts (the same recorders as Settings) · launch at login. Everything in it is skippable.
+
 ### Permissions
-- No onboarding flow in v1. When a feature needs a permission that's missing (Screen Recording for capture/OCR/scroll, Accessibility for paste/snap/auto-scroll), show a single clear alert explaining why, with a button that opens the right System Settings pane.
+- Besides the welcome guide, when a feature needs a permission that's missing (Screen Recording for capture/OCR/scroll, Accessibility for paste/snap/auto-scroll), show a single clear alert explaining why, with a button that opens the right System Settings pane.
 - Check with `CGPreflightScreenCaptureAccess()` and `AXIsProcessTrusted()`. Never call the request APIs in a loop.
 
 ---
 
 ## Out of scope for v1 (don't build these unprompted)
-Sparkle / auto-updates · notarization · Homebrew cask · onboarding flow · ignore-app list · pause recording · encrypted history · repeat last region · floating thumbnail · horizontal scrolling capture · quarters/thirds/center snapping · drag-to-edge snapping · window gaps.
+Sparkle / auto-updates · notarization · Homebrew cask · ignore-app list · pause recording · encrypted history · repeat last region · floating thumbnail · horizontal scrolling capture · quarters/thirds/center snapping · drag-to-edge snapping · window gaps.
 
 ---
 
@@ -147,6 +150,7 @@ Cheese/
                   ScrollPreviewWindow
   Windows/        WindowManager (AX), SnapLayout (pure frame math), FrameHistory
   Settings/       SettingsView + tabs
+  Welcome/        First-launch welcome guide
 CheeseTests/      Unit tests + Fixtures/
 project.yml       XcodeGen spec
 Makefile
@@ -164,6 +168,7 @@ make generate   # xcodegen generate
 make build      # xcodebuild -scheme Cheese -configuration Debug build
 make test       # xcodebuild test -scheme Cheese
 make run        # build, then open the .app
+make release    # Release build zipped to dist/Cheese.zip (+ .sha256) via scripts/package.sh
 ```
 After every change: `make build` must succeed with **zero warnings**, and `make test` must pass.
 
@@ -184,4 +189,4 @@ Claude Code can build and unit-test but can't grant TCC permissions or judge on-
 8. Scrolling capture (stitcher tests first, using fixtures)
 
 ## Release (v1)
-GitHub Releases with a zipped `Cheese.app`, unnotarized. The README explains the first-launch Gatekeeper step (right-click → Open, or System Settings → Privacy & Security → Open Anyway) and the two permissions. MIT `LICENSE` at the repo root.
+GitHub Releases with a zipped `Cheese.app` (never a .dmg), unnotarized. The asset is always named `Cheese.zip` (plus `Cheese.zip.sha256`) so `releases/latest/download/Cheese.zip` and `install.sh` keep working. The README and `docs/INSTALL.md` explain the first-launch Gatekeeper step (System Settings → Privacy & Security → Open Anyway) and the two permissions. MIT `LICENSE` at the repo root. Promo media lives in `docs/media/`.

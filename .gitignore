@@ -6,3 +6,7 @@ xcuserdata/
 Cheese.xcodeproj/
 .swiftpm/
 .build/
+dist/
+Design/promo/frames/
+Design/promo/stills/
+node_modules/
