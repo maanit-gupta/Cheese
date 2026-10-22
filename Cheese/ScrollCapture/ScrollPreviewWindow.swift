@@ -76,11 +76,11 @@ private struct ScrollPreviewView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 10) {
+            CheeseToolbar {
                 Text("\(image.image.width) × \(image.image.height) px")
-                    .font(.callout.monospacedDigit())
+                    .font(DesignTokens.Typography.numeric)
                     .foregroundStyle(.secondary)
-                Spacer()
+            } trailing: {
                 Button("Copy") {
                     Task {
                         if await ImageExport.copy(image) { CheeseToast.show("Copied") }
@@ -107,8 +107,7 @@ private struct ScrollPreviewView: View {
                 Button("Close", action: close)
                     .keyboardShortcut("w", modifiers: .command)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .controlSize(.regular)
             Divider()
             TiledImageScrollView(image: image)
         }
