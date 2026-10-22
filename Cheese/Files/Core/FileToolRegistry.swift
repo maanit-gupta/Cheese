@@ -16,7 +16,12 @@ final class FileToolRegistry {
         [
             AnyFileTool(MergeTool()),
             AnyFileTool(SplitTool()),
+            AnyFileTool(ImagesToPDFTool()),
+            AnyFileTool(PDFToImagesTool()),
             AnyFileTool(ConvertImageTool()),
+            AnyFileTool(ResizeImageTool()),
+            AnyFileTool(CompressImageTool()),
+            AnyFileTool(RemoveBackgroundTool()),
         ]
     }
 
