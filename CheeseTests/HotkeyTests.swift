@@ -22,7 +22,11 @@ struct HotkeyTests {
             .drawOnScreen: .d,
             .commandPalette: .return,
             .toggleShelf: .f,
+            .autoKill: .q,
+            .killAllApps: .q,
         ]
+        // The instant variants are their panel's shortcut plus Shift.
+        let withShift: Set<Hotkey> = [.killAllApps]
         // Share has no default shortcut; the user can assign one.
         let unbound: Set<Hotkey> = [.showShare]
         #expect(unbound.allSatisfy { $0.name.initialShortcut == nil })
@@ -31,7 +35,8 @@ struct HotkeyTests {
             let key = expected[hotkey]
             #expect(key != nil, "No expected default for \(hotkey)")
             if let key {
-                #expect(hotkey.name.initialShortcut == .init(key, modifiers: controlOption), "\(hotkey)")
+                let modifiers = withShift.contains(hotkey) ? controlOption.union(.shift) : controlOption
+                #expect(hotkey.name.initialShortcut == .init(key, modifiers: modifiers), "\(hotkey)")
             }
         }
     }

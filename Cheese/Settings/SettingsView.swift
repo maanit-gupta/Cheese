@@ -9,6 +9,7 @@ enum SettingsTab: Hashable {
     case appHotkeys
     case files
     case share
+    case autoKill
     case permissions
     case about
 }
@@ -46,6 +47,9 @@ struct SettingsView: View {
             }
             Tab("Share", systemImage: "dot.radiowaves.left.and.right", value: .share) {
                 ShareSettingsView()
+            }
+            Tab("Auto-Kill", systemImage: "xmark.app", value: .autoKill) {
+                AutoKillSettingsView()
             }
             Tab("Permissions", systemImage: "lock.shield", value: .permissions) {
                 PermissionsSettingsView(

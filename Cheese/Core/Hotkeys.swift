@@ -18,6 +18,8 @@ enum Hotkey: CaseIterable, Sendable {
     case commandPalette
     case toggleShelf
     case showShare
+    case autoKill
+    case killAllApps
 
     var name: KeyboardShortcuts.Name {
         switch self {
@@ -36,6 +38,8 @@ enum Hotkey: CaseIterable, Sendable {
         case .commandPalette: .commandPalette
         case .toggleShelf: .toggleShelf
         case .showShare: .showShare
+        case .autoKill: .autoKill
+        case .killAllApps: .killAllApps
         }
     }
 
@@ -56,6 +60,8 @@ enum Hotkey: CaseIterable, Sendable {
         case .commandPalette: "Command palette"
         case .toggleShelf: "Show or hide the shelf"
         case .showShare: "Open Cheese Share"
+        case .autoKill: "Auto-Kill: open the app list"
+        case .killAllApps: "Auto-Kill: quit all open apps now"
         }
     }
 }
@@ -79,6 +85,9 @@ extension KeyboardShortcuts.Name {
     static let toggleShelf = Self("toggleShelf", initial: .init(.f, modifiers: modifiers))
     /// No default: Share is reached from the menu and the palette unless the user assigns one.
     static let showShare = Self("showShare")
+    static let autoKill = Self("autoKill", initial: .init(.q, modifiers: modifiers))
+    /// The panel's shortcut plus Shift: quits everything unshielded straight away, with no panel.
+    static let killAllApps = Self("killAllApps", initial: .init(.q, modifiers: modifiers.union(.shift)))
 }
 
 extension KeyboardShortcuts.Name {

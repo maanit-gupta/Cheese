@@ -51,7 +51,8 @@ enum PermissionPlan {
         case .drawOnScreen: [.screenRecording]
         case .files: [.notifications, .finderExtension]
         case .share: [.localNetwork, .notifications]
-        case .qr, .keepAwake, .appHotkeys, .commandPalette, .shelf: []
+        // Quitting other apps needs no permission.
+        case .qr, .keepAwake, .appHotkeys, .commandPalette, .shelf, .appSweep: []
         }
     }
 

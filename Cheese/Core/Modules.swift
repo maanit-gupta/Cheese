@@ -14,6 +14,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
     case files
     case shelf
     case share
+    case appSweep
 
     var id: Self { self }
 
@@ -32,6 +33,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .files: "Files"
         case .shelf: "Shelf"
         case .share: "Cheese Share"
+        case .appSweep: "Auto-Kill"
         }
     }
 
@@ -43,7 +45,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .drawOnScreen: .draw
         case .files: .convert
         case .share, .shelf: .share
-        case .windowSnapping, .appHotkeys, .keepAwake, .commandPalette: .control
+        case .windowSnapping, .appHotkeys, .keepAwake, .commandPalette, .appSweep: .control
         }
     }
 
@@ -62,6 +64,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .files: "doc.on.doc"
         case .shelf: "tray"
         case .share: "dot.radiowaves.left.and.right"
+        case .appSweep: "xmark.app"
         }
     }
 
@@ -81,6 +84,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .files: "Merge, split, compress and convert PDFs, Office files and images, offline."
         case .shelf: "A floating shelf to park files, images and text while you drag."
         case .share: "Send files and text to phones and computers nearby, LocalSend-compatible."
+        case .appSweep: "Quit every open app in one go, keeping the ones you shield."
         }
     }
 
@@ -95,6 +99,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .drawOnScreen: .drawOnScreen
         case .commandPalette: .commandPalette
         case .shelf: .toggleShelf
+        case .appSweep: .autoKill
         case .qr, .keepAwake, .appHotkeys, .files, .share: nil
         }
     }

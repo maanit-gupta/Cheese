@@ -48,6 +48,11 @@ extension ActionID {
     static let clearShelf = Self(rawValue: "clearShelf")
     static let showShare = Self(rawValue: "showShare")
     static let sendClipboard = Self(rawValue: "sendClipboard")
+    static let autoKillPanel = Self(rawValue: "autoKillPanel")
+    static let killAllApps = Self(rawValue: "killAllApps")
+    static let killBackgroundApps = Self(rawValue: "killBackgroundApps")
+    static let forceKillAllApps = Self(rawValue: "forceKillAllApps")
+    static let settingsAutoKill = Self(rawValue: "settingsAutoKill")
 
     /// "Files: Merge PDFs…" and the other Files tools.
     static func files(_ tool: ToolID) -> Self {

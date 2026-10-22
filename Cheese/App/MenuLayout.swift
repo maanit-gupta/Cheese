@@ -28,6 +28,9 @@ enum MenuLayout {
         .action(.showShare),
         .action(.toggleShelf),
         .submenu(title: "Tools", symbol: "wrench.and.screwdriver", children: [
+            .action(.autoKillPanel),
+            .action(.killAllApps),
+            .separator,
             .action(.showClipboardQR),
             .submenu(title: "Keep Awake", symbol: "cup.and.saucer", children: [
                 .action(.keepAwakeIndefinitely), .action(.keepAwakeUntil), .action(.keepAwakeOff),

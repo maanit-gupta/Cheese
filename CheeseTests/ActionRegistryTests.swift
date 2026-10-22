@@ -75,6 +75,7 @@ struct ActionCatalogueTests {
             FilesModule { _ in },
             ShelfModule(services: ShelfServices()),
             ShareModule { _ in },
+            AppSweepModule(),
         ]
     }
 
@@ -152,7 +153,7 @@ struct ActionCatalogueTests {
     @Test func everyModuleActionIsInTheMenu() {
         let inMenu = Set(MenuLayout.actionIDs(in: MenuLayout.standard))
         // The palette is a keyboard tool, and these few live only in it.
-        let paletteOnly: Set<ActionID> = [.commandPalette, .clearShelf, .sendClipboard]
+        let paletteOnly: Set<ActionID> = [.commandPalette, .clearShelf, .sendClipboard, .killBackgroundApps, .forceKillAllApps]
         let menuActions = actions.filter { $0.module != nil && !paletteOnly.contains($0.id) }
         #expect(Set(menuActions.map(\.id)).isSubset(of: inMenu))
     }
@@ -324,7 +325,9 @@ struct MenuLayoutTests {
         #expect(titles(submenu("Capture", in: visible) ?? []) == [
             "captureRegion", "captureWindow", "captureFullScreen", "ocrRegion", "scrollingCapture",
         ])
-        #expect(titles(submenu("Tools", in: visible) ?? []) == ["showClipboardQR", "Keep Awake▸", "Arrange Window▸"])
+        #expect(titles(submenu("Tools", in: visible) ?? []) == [
+            "autoKillPanel", "killAllApps", "—", "showClipboardQR", "Keep Awake▸", "Arrange Window▸",
+        ])
     }
 
     @Test func filesSubmenuGroupsEveryToolUnderHeaders() {

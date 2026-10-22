@@ -70,6 +70,13 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - **Settings → App Hotkeys** gives any app a <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + letter shortcut that opens it, or brings it to the front if it's running.
 - Add an app and Cheese **suggests a free, memorable key** (Figma → <kbd>F</kbd>, Microsoft Word → <kbd>W</kbd>), skipping keys that Cheese, macOS or popular utilities already use. Accept it, ask for another, or record your own.
 
+### Auto-Kill
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>Q</kbd> opens a list of every open app with one big **Kill All** button on top: click it or press <kbd>↩</kbd> and they all quit, as if you'd pressed <kbd>⌘</kbd><kbd>Q</kbd> in each. Apps with unsaved work still ask before quitting.
+- Click the **lock** next to an app to protect it: Kill All leaves it open, today and every time after. Cheese and Finder are always left alone. **Keep [app]** leaves the app you were in open too, and **×** quits a single app.
+- Hold <kbd>⌥</kbd> and the button turns red: **Force Kill All** gives apps 3 seconds to quit, then force-quits the rest. Unsaved changes in those are lost.
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>Q</kbd> sweeps straight away, without the list (shields still apply). The palette also has **Kill Background Apps (Keep Frontmost)** and **Force Kill All Open Apps**.
+- **Settings → Auto-Kill** lists the protected apps, and can make every sweep force-quit apps still open after 3 seconds.
+
 ### Command palette
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, QR, keep awake, Files tools, history and each Settings tab. (Draw mode stays out of it, and the palette doesn't open while you're drawing.)
 - Each row shows the action's shortcut, so you learn them as you go. Recently used actions come first.
@@ -149,7 +156,7 @@ Click the 🧀 in the menu bar for every tool, so shortcuts are optional:
  Files                              ▸   every Files tool
  Share…
  Shelf                            ⌃⌥F
- Tools                              ▸   Show Clipboard as QR · Keep Awake ▸ · Arrange Window ▸
+ Tools                              ▸   Auto-Kill Apps… · Kill All Open Apps Now · Show Clipboard as QR · Keep Awake ▸ · Arrange Window ▸
  ───────────────────────────────────
  Clear History                          (hold ⌥ for Clear All…)
  Settings…                         ⌘,
@@ -189,6 +196,8 @@ Files tools also ask once for **Automation → Finder**, only when you run one f
 | Draw on screen (tap to toggle, hold for quick ink) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> |
 | Command palette | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> |
 | Show / hide the shelf | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>F</kbd> |
+| Auto-Kill: open the app list | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>Q</kbd> |
+| Auto-Kill: quit all open apps now | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>Q</kbd> |
 | Cheese Share | none (assign one in Settings) |
 | Your app hotkeys | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + a letter or digit |
 
@@ -231,6 +240,7 @@ Cheese warns you if a combination is already taken by macOS or the menu. The men
 | **App Hotkeys** | Apps with their own <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> shortcut, with key suggestions |
 | **Files** | Finder extension status, and Microsoft Office / LibreOffice for Office → PDF (when installed) |
 | **Share** | This Mac's name, where received files go, the largest transfer accepted (default 10 GB), trusted devices |
+| **Auto-Kill** | Protected apps, and force-quitting apps still open 3 s after a sweep (off by default) |
 | **Permissions** | Live status of Screen Recording and Accessibility, with shortcuts to System Settings |
 | **About** | Version, license, acknowledgements and the GitHub link (also **About Cheese** in the palette) |
 

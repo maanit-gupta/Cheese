@@ -22,6 +22,7 @@ enum PreferenceKey {
     static let shareDeviceName = "shareDeviceName"
     static let shareDestination = "shareDestination"
     static let shareMaxGigabytes = "shareMaxGigabytes"
+    static let autoKillForcesStragglers = "autoKillForcesStragglers"
 
     /// Last-used options of a Files tool, as JSON.
     static func fileToolOptions(_ tool: ToolID) -> String {
@@ -133,6 +134,12 @@ struct Preferences {
     var shareMaxBytes: Int64 {
         let stored = defaults.object(forKey: PreferenceKey.shareMaxGigabytes) as? Int ?? Self.defaultShareMaxGigabytes
         return Int64(min(max(stored, 1), 1000)) * 1_000_000_000
+    }
+
+    /// Auto-Kill force-quits apps still open 3 s after being asked to quit. Off unless the user opts in,
+    /// since that includes apps waiting on "Save changes?".
+    var autoKillForcesStragglers: Bool {
+        defaults.bool(forKey: PreferenceKey.autoKillForcesStragglers)
     }
 
     func isModuleEnabled(_ module: ModuleID) -> Bool {

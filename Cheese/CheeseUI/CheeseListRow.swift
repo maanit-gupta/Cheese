@@ -1,6 +1,7 @@
+import AppKit
 import SwiftUI
 
-/// One row of a list in a panel: symbol, title, grey detail and an optional trailing accessory.
+/// One row of a list in a panel: symbol (or an app's icon), title, grey detail and an optional trailing accessory.
 /// Selected rows fill with the accent color and turn their text white, like the palette and history.
 struct CheeseListRow<Accessory: View>: View {
     let symbol: String
@@ -8,13 +9,22 @@ struct CheeseListRow<Accessory: View>: View {
     var detail: String?
     var isSelected = false
     var isDimmed = false
+    /// Shown in place of the symbol, like an app's icon.
+    var icon: NSImage?
     @ViewBuilder var accessory: Accessory
 
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.medium) {
-            Image(systemName: symbol)
-                .frame(width: DesignTokens.Size.rowIcon)
-                .foregroundStyle(isSelected ? .white : .secondary)
+            if let icon {
+                Image(nsImage: icon)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: DesignTokens.Size.rowIcon, height: DesignTokens.Size.rowIcon)
+            } else {
+                Image(systemName: symbol)
+                    .frame(width: DesignTokens.Size.rowIcon)
+                    .foregroundStyle(isSelected ? .white : .secondary)
+            }
             Text(title)
                 .lineLimit(1)
                 .foregroundStyle(isSelected ? .white : .primary)

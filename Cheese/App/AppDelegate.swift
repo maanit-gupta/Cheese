@@ -145,6 +145,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             files,
             shelf,
             share,
+            AppSweepModule(),
         ]
         let preferences = Preferences()
         return ActionRegistry(
@@ -210,6 +211,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             (.settingsAppHotkeys, "App Hotkeys", "app.badge", .appHotkeys),
             (.settingsFiles, "Files", "doc.on.doc", .files),
             (.settingsShare, "Share", "dot.radiowaves.left.and.right", .share),
+            (.settingsAutoKill, "Auto-Kill", "xmark.app", .autoKill),
             (.settingsPermissions, "Permissions", "lock.shield", .permissions),
             (.settingsAbout, "About", "info.circle", .about),
         ]

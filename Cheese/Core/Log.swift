@@ -21,4 +21,5 @@ extension Logger {
     static let files = Logger(subsystem: subsystem, category: "Files")
     static let shelf = Logger(subsystem: subsystem, category: "Shelf")
     static let share = Logger(subsystem: subsystem, category: "Share")
+    static let appSweep = Logger(subsystem: subsystem, category: "AppSweep")
 }

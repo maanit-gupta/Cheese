@@ -45,8 +45,8 @@ Park files, images and text on a floating shelf, and send them to phones and com
 <kbd>⌃</kbd><kbd>⌥</kbd><kbd>F</kbd> shelf · **Share…** in the menu or any app's Share menu
 
 ## Control
-Snap windows to halves and across displays, open any app with its own shortcut, keep the Mac awake, and run any Cheese action from a command palette.
-<kbd>⌃</kbd><kbd>⌥</kbd> + arrows snap · <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + a letter for your apps · <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> palette · **Keep Awake ▸** in the menu
+Snap windows to halves and across displays, open any app with its own shortcut, quit every open app in one go (keeping the ones you shield), keep the Mac awake, and run any Cheese action from a command palette.
+<kbd>⌃</kbd><kbd>⌥</kbd> + arrows snap · <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + a letter for your apps · <kbd>⌃</kbd><kbd>⌥</kbd><kbd>Q</kbd> auto-kill · <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> palette · **Keep Awake ▸** in the menu
 
 ## Install
 
