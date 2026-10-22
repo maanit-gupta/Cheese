@@ -28,6 +28,9 @@ extension ActionID {
     static let openSettings = Self(rawValue: "openSettings")
     static let showWelcome = Self(rawValue: "showWelcome")
     static let quit = Self(rawValue: "quit")
+    static let keepAwakeIndefinitely = Self(rawValue: "keepAwakeIndefinitely")
+    static let keepAwakeUntil = Self(rawValue: "keepAwakeUntil")
+    static let keepAwakeOff = Self(rawValue: "keepAwakeOff")
 }
 
 /// Where an action was launched from.
@@ -56,6 +59,8 @@ struct CheeseAction: Identifiable {
     let symbol: String
     /// Nil for app-level actions (Settings, Quit) that can't be switched off.
     let module: ModuleID?
+    /// A shorter title for inside a submenu, where the parent names the feature ("Until…" under Keep Awake).
+    var menuTitle: String?
     var shortcut: KeyboardShortcuts.Name?
     /// Extra bindings that also run the action but aren't shown, like Shift + the full-screen shortcut.
     var hiddenShortcuts: [KeyboardShortcuts.Name] = []

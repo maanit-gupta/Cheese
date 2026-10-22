@@ -26,6 +26,21 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         }
     }
 
+    /// Short status text beside the icon, like the keep-awake countdown. Nil shows the icon alone.
+    func setIndicator(_ text: String?) {
+        guard let button = statusItem.button else { return }
+        if let text {
+            statusItem.length = NSStatusItem.variableLength
+            button.font = .monospacedDigitSystemFont(ofSize: NSFont.systemFontSize(for: .small), weight: .medium)
+            button.title = text
+            button.imagePosition = .imageLeading
+        } else {
+            button.title = ""
+            button.imagePosition = .imageOnly
+            statusItem.length = NSStatusItem.squareLength
+        }
+    }
+
     // MARK: NSMenuDelegate
 
     // Modules may have been switched on or off since the menu last opened.

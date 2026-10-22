@@ -13,4 +13,9 @@ extension Logger {
     static let scrollCapture = Logger(subsystem: subsystem, category: "ScrollCapture")
     static let windows = Logger(subsystem: subsystem, category: "Windows")
     static let welcome = Logger(subsystem: subsystem, category: "Welcome")
+    static let keepAwake = Logger(subsystem: subsystem, category: "KeepAwake")
+    static let qr = Logger(subsystem: subsystem, category: "QR")
+    static let appHotkeys = Logger(subsystem: subsystem, category: "AppHotkeys")
+    static let palette = Logger(subsystem: subsystem, category: "Palette")
+    static let draw = Logger(subsystem: subsystem, category: "Draw")
 }

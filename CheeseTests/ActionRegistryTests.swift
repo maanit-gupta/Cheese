@@ -62,6 +62,7 @@ struct ActionCatalogueTests {
             OCRModule(capture: capture),
             ScrollCaptureModule(capture: capture, previewActions: ScrollPreviewWindow.Actions(annotate: { _ in }, recognizeText: { _ in })),
             WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager())),
+            KeepAwakeModule { _ in },
         ]
     }
 
@@ -126,6 +127,14 @@ struct ActionCatalogueTests {
     @Test func clearingHasNoHotkey() {
         #expect(action(.clearHistory)?.shortcut == nil)
         #expect(action(.clearAll)?.shortcut == nil)
+    }
+
+    @Test func keepAwakeHasNoHotkeysAndTurnOffOnlyWhenActive() {
+        let ids: [ActionID] = [.keepAwakeIndefinitely, .keepAwakeUntil, .keepAwakeOff]
+        #expect(ids.allSatisfy { action($0)?.shortcut == nil })
+        #expect(action(.keepAwakeIndefinitely)?.precondition() == true)
+        #expect(action(.keepAwakeOff)?.precondition() == false)
+        #expect(action(.keepAwakeUntil)?.menuTitle == "Until…")
     }
 
     @Test func everyModuleActionIsInTheMenu() {

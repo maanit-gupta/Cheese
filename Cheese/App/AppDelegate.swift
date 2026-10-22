@@ -68,6 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ocr,
             scrollCapture,
             WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager())),
+            KeepAwakeModule { [weak self] text in self?.menuBar?.setIndicator(text) },
         ]
         let preferences = Preferences()
         return ActionRegistry(

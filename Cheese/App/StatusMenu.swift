@@ -25,6 +25,9 @@ final class StatusMenu: NSObject {
         Section(header: "Windows", entries: [
             .submenu(title: "Arrange Window", symbol: "macwindow.on.rectangle", actions: [.snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow]),
         ]),
+        Section(header: "Utilities", entries: [
+            .submenu(title: "Keep Awake", symbol: "cup.and.saucer", actions: [.keepAwakeIndefinitely, .keepAwakeUntil, .keepAwakeOff]),
+        ]),
         Section(entries: [.action(.clearHistory), .action(.clearAll)]),
         Section(entries: [.action(.editShortcuts), .action(.openSettings, keyEquivalent: ","), .action(.showWelcome)]),
         Section(entries: [.action(.quit, keyEquivalent: "q")]),
@@ -79,7 +82,7 @@ final class StatusMenu: NSObject {
             return actionItem(id, keyEquivalent: keyEquivalent)
         case let .submenu(title, symbol, actions):
             let submenu = NSMenu()
-            for item in actions.compactMap({ actionItem($0) }) {
+            for item in actions.compactMap({ actionItem($0, inSubmenu: true) }) {
                 submenu.addItem(item)
             }
             let parent = NSMenuItem(title: title, action: nil, keyEquivalent: "")
@@ -89,9 +92,10 @@ final class StatusMenu: NSObject {
         }
     }
 
-    private func actionItem(_ id: ActionID, keyEquivalent: String = "") -> NSMenuItem? {
+    private func actionItem(_ id: ActionID, keyEquivalent: String = "", inSubmenu: Bool = false) -> NSMenuItem? {
         guard let action = registry.action(id) else { return nil }
-        let item = NSMenuItem(title: action.title, action: #selector(itemSelected(_:)), keyEquivalent: keyEquivalent)
+        let title = inSubmenu ? action.menuTitle ?? action.title : action.title
+        let item = NSMenuItem(title: title, action: #selector(itemSelected(_:)), keyEquivalent: keyEquivalent)
         item.target = self
         item.representedObject = id.rawValue
         item.image = NSImage(systemSymbolName: action.symbol, accessibilityDescription: nil)
