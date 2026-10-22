@@ -94,7 +94,7 @@ struct OptionsPanelView<Tool: FileTool>: View {
                 } footer: {
                     if tool.ordersInputs, inputs.count > 1 {
                         Text("Drag files to change their order.")
-                            .font(.caption)
+                            .font(DesignTokens.Typography.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -106,7 +106,7 @@ struct OptionsPanelView<Tool: FileTool>: View {
                 if let hint = tool.hint {
                     Section {
                         Label(hint, systemImage: "info.circle")
-                            .font(.caption)
+                            .font(DesignTokens.Typography.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -114,21 +114,22 @@ struct OptionsPanelView<Tool: FileTool>: View {
             .formStyle(.grouped)
 
             Divider()
-            HStack {
+            CheeseToolbar {
                 if let problem {
                     Label(problem, systemImage: "exclamationmark.triangle")
-                        .font(.callout)
+                        .font(DesignTokens.Typography.secondary)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
-                Spacer()
+            } trailing: {
                 Button("Cancel", role: .cancel) { actions.close() }
                     .keyboardShortcut(.cancelAction)
                 Button("Run", action: run)
                     .keyboardShortcut(.defaultAction)
                     .disabled(problem != nil)
             }
-            .padding(12)
+            .controlSize(.regular)
+            .padding(.vertical, DesignTokens.Spacing.xxSmall)
         }
         .frame(minWidth: 420, minHeight: 360)
     }
@@ -146,16 +147,16 @@ private struct InputRow: View {
     let remove: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignTokens.Spacing.small) {
             Image(nsImage: NSWorkspace.shared.icon(forFile: url.path(percentEncoded: false)))
                 .resizable()
-                .frame(width: 20, height: 20)
+                .frame(width: DesignTokens.Size.rowIcon, height: DesignTokens.Size.rowIcon)
             Text(url.lastPathComponent)
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer()
             Text(FileSizeText.of(url))
-                .font(.caption)
+                .font(DesignTokens.Typography.caption)
                 .foregroundStyle(.secondary)
             if canRemove {
                 Button(action: remove) {
