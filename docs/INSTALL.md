@@ -157,6 +157,17 @@ Each item shows its current shortcut on the right.
 
 Click the menu bar icon → **Keyboard Shortcuts…**. Click any shortcut, press the new keys, and it takes effect immediately. Click **ⓧ** to turn a shortcut off, or **Restore Defaults** to start over.
 
+### 5. Turn on the Finder menu (optional)
+
+The Files tools (merge, split and compress PDFs, convert Office documents and images, and more) can run from a **Cheese ▸** submenu when you right-click files in Finder. macOS keeps Finder extensions off until you allow them:
+
+1. Open **Settings → Files** and click **Open Extension Settings…**.
+2. Turn on **Cheese** in the list of Finder extensions.
+
+Settings → Files shows **On** once it's enabled. You can also drop files on the menu bar icon, or type "Files:" in the command palette, without the extension.
+
+The Files tools may ask for two more permissions, each only when first needed: **Notifications**, to tell you when a job finishes, and **Automation → Finder**, when you run a tool from the command palette with Finder in front (Cheese reads the selected files). If you turn on Microsoft Office or LibreOffice for Office → PDF, macOS also asks once per Office app.
+
 ## Updating
 
 Run the [one-line install](#option-1-one-line-install-recommended) again, or download the new `Cheese.zip` and replace the app in Applications. Your history, pins, settings and shortcuts are kept.
@@ -178,6 +189,8 @@ Permissions usually carry over because every release is signed with the same cer
    ```sh
    tccutil reset ScreenCapture com.maanitgupta.cheese
    tccutil reset Accessibility com.maanitgupta.cheese
+   tccutil reset AppleEvents com.maanitgupta.cheese
+   rm -rf "$HOME/Library/Group Containers/8H5274FWRC.com.maanitgupta.cheese"
    ```
 
 4. If you turned on launch at login, remove Cheese from **System Settings → General → Login Items**.
@@ -221,6 +234,12 @@ Pages that change while scrolling (auto-playing carousels, lazy-loaded feeds) ca
 
 ### Hindi isn't available for OCR
 Cheese checks which languages the system's text recognizer supports. If Hindi shows as unavailable in **Settings → OCR**, your macOS installation doesn't offer it yet. English still works.
+
+### "Cheese ▸" doesn't appear when I right-click in Finder
+Turn the extension on (see [Turn on the Finder menu](#5-turn-on-the-finder-menu-optional)). If it's on but still missing, relaunch Finder: hold <kbd>⌥</kbd>, right-click Finder in the Dock and choose **Relaunch**. The submenu only appears when a tool fits the selected files.
+
+### A Files job finished but nothing was saved next to my file
+If the file's folder isn't writable (a shared or read-only folder), Cheese saves to **Downloads** instead and says so in the notification. A compressed file that wouldn't be smaller than the original isn't saved either; the notification explains that too.
 
 ### The icon is missing from the menu bar
 On Macs with a notch, extra icons can hide behind it. Quit a few other menu bar apps, or hold <kbd>⌘</kbd> and drag icons to rearrange them. Shortcuts work even while the icon is hidden. To check that Cheese is running, look for it in **Activity Monitor**.

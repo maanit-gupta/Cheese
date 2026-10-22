@@ -194,3 +194,4 @@ Claude Code can build and unit-test but can't grant TCC permissions or judge on-
 GitHub Releases with a zipped `Cheese.app` (never a .dmg), unnotarized. The asset is always named `Cheese.zip` (plus `Cheese.zip.sha256`) so `releases/latest/download/Cheese.zip` and `install.sh` keep working. The README and `docs/INSTALL.md` explain the first-launch Gatekeeper step (System Settings → Privacy & Security → Open Anyway) and the two permissions. MIT `LICENSE` at the repo root. Promo media lives in `docs/media/`.
 
 @CLAUDE-V2.md
+@CLAUDE-V2.5.md

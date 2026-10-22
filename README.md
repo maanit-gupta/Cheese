@@ -7,7 +7,8 @@
 <p align="center">
   <b>Everyday Mac tools in one tiny menu bar app.</b><br>
   Clipboard history · Screenshots · OCR · Scrolling capture · Window snapping<br>
-  Draw on screen · Clipboard as QR · Keep awake · App hotkeys · Command palette
+  Draw on screen · Clipboard as QR · Keep awake · App hotkeys · Command palette<br>
+  Files: offline PDF, document and image tools
 </p>
 
 <p align="center">
@@ -35,10 +36,10 @@
 
 ---
 
-Cheese replaces a handful of single-purpose utilities (a clipboard manager, a screenshot tool, a text grabber, a window manager, a screen annotator, a keep-awake toggle and an app launcher) with one native app. It lives in your menu bar, starts instantly and stays out of the way until you press a shortcut.
+Cheese replaces a handful of single-purpose utilities (a clipboard manager, a screenshot tool, a text grabber, a window manager, a screen annotator, a keep-awake toggle, an app launcher and an online PDF converter) with one native app. It lives in your menu bar, starts instantly and stays out of the way until you press a shortcut.
 
-- **Native.** Swift 6, SwiftUI and AppKit, built on ScreenCaptureKit, Vision and Accessibility. No Electron and no web views.
-- **Private.** Everything stays on your Mac. No accounts, analytics or internet access. The only network use is the optional local Wi-Fi share link for QR codes, which serves one file to your own network for 10 minutes. Items that password managers mark as secret are never recorded or shown.
+- **Native.** Swift 6, SwiftUI and AppKit, built on ScreenCaptureKit, Vision, PDFKit and Accessibility. No Electron. The Files tools render Office documents with small bundled JavaScript libraries in a hidden web view that can't reach the network.
+- **Private.** Everything stays on your Mac. No accounts, analytics or internet access. The only network use is the optional local Wi-Fi share link for QR codes, which serves one file to your own network for 10 minutes. Files are converted on your Mac and never uploaded. Items that password managers mark as secret are never recorded or shown.
 - **Yours to tweak.** Every shortcut can be changed, and the source is MIT licensed.
 
 ## Features
@@ -107,6 +108,34 @@ Cheese replaces a handful of single-purpose utilities (a clipboard manager, a sc
 ### ⌘ Command palette
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, draw mode, QR, keep awake, history and each Settings tab.
 - Each row shows the action's shortcut, so you learn them as you go. Recently used actions come first.
+
+### 📄 Files: PDF, document and image tools
+Like iLovePDF, but **entirely offline**: no file leaves your Mac and nothing touches the network. Results are saved **next to the original** (`Report.pdf` → `Report (compressed).pdf`) and nothing is ever overwritten.
+
+Three ways in, all listing only the tools that fit your files:
+- **Right-click in Finder → Cheese ▸**. Turn it on once in **Settings → Files → Open Extension Settings…** (it lists Cheese among the Finder extensions in System Settings → General → Login Items & Extensions).
+- **Drop files on the menu bar icon.** A menu pops up with the matching tools, grouped under PDF, Convert and Images.
+- **The command palette:** type "Files:". If Finder is in front, Cheese uses its selection (macOS asks once to let Cheese read it); otherwise it asks you to choose files.
+
+Pick a tool and a small panel shows the files (drag to reorder where order matters), the options, and **Run**. Options are remembered per tool. While jobs run, progress shows next to the icon (`3/10`) and the menu gets a **Cancel** item; a notification with **Show in Finder** arrives when they're done.
+
+| | Tools |
+|---|---|
+| **PDF** | Merge (keeps bookmarks) · Split by ranges (`1-3, 5, 8-`), every N pages or each page · **Page editor** to reorder, rotate, delete and extract pages · **Compress to a target size** · Watermark (text or image) · Page numbers |
+| **To PDF** | Images (fit, A4 or Letter; HEIC included) · Word · Excel / CSV · PowerPoint · HTML, Markdown and text |
+| **From PDF** | Images (PNG or JPEG at 72/150/300 DPI) · Word (.docx) · Excel (.xlsx) |
+| **Images** | Convert format (PNG, JPEG, HEIC, TIFF, GIF, BMP, and WebP where macOS can write it) · Resize · Compress (strips location data by default) · Remove background |
+| **Text** | Markdown or HTML → Word |
+
+Watermarks and page numbers keep your PDF's text selectable. Compression only re-renders image-heavy pages; text pages stay sharp.
+
+**Known limits.** Office rendering is built in and approximate:
+- **Word:** page breaks may land differently from Word on long documents; complex floating layouts, SmartArt and charts can be simplified.
+- **Excel:** values only, as plain tables, with no cell colors, fonts or charts. Each sheet starts on a new page.
+- **PowerPoint:** the roughest of the three. Animations, some shapes, SmartArt and embedded media aren't rendered.
+- **PDF → Word / Excel:** layout is approximate, multi-column pages may need cleanup, complex or merged-cell tables won't be perfect, and text inside images isn't converted unless the whole page is a scan (scans are read with on-device OCR).
+
+If **Microsoft Office or LibreOffice** is installed, **Settings → Files** offers to use it for Office → PDF instead (off by default). macOS asks once per app to let Cheese control it, and the app may open while it works. If it fails, Cheese falls back to its built-in renderer and says so.
 
 ### 🧩 Modules
 Don't need a tool? Switch it off in **Settings → General → Modules**. A module that's off has no shortcuts, runs nothing in the background and disappears from the menu and the palette.
@@ -192,7 +221,9 @@ After that, look for the 🧀 wedge in your menu bar. **Click it to open the Che
  Quit Cheese                       ⌘Q
 ```
 
-The shortcuts shown are your current ones, and they update when you change them. **Welcome Guide…** reopens the guide.
+The shortcuts shown are your current ones, and they update when you change them. **Welcome Guide…** reopens the guide. While Files jobs run, a **Files: Merging 3 PDFs… — Cancel** line appears at the top.
+
+Files tools also ask for two optional permissions when first used: **Notifications** (to tell you a job finished) and **Automation → Finder** (only when you run a Files tool from the palette with Finder in front).
 
 ## Keyboard shortcuts
 
@@ -246,7 +277,9 @@ Cheese warns you if a combination is already taken by macOS or the menu. The men
 | **Clipboard** | History size (default 200 unpinned items) |
 | **OCR** | Languages (English, Hindi) and line-break handling |
 | **App Hotkeys** | Apps with their own <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> shortcut, with key suggestions |
+| **Files** | Finder extension status, and Microsoft Office / LibreOffice for Office → PDF (when installed) |
 | **Permissions** | Live status of Screen Recording and Accessibility, with shortcuts to System Settings |
+| **About** | Version, license, and the licenses of the bundled document renderers |
 
 ## Troubleshooting
 
@@ -291,6 +324,18 @@ That's expected. Keeping a Mac awake with the lid closed needs a privileged help
 </details>
 
 <details>
+<summary><b>There's no "Cheese ▸" when I right-click files in Finder</b></summary>
+
+The Finder extension has to be switched on once: **Settings → Files → Open Extension Settings…**, then turn on **Cheese**. If it's on but missing, relaunch Finder (hold <kbd>⌥</kbd>, right-click Finder in the Dock → Relaunch). The submenu only appears when at least one tool fits the selection, and shows "Cheese Files is turned off" if the Files module is off.
+</details>
+
+<details>
+<summary><b>A converted Word, Excel or PowerPoint file doesn't look like the original</b></summary>
+
+The built-in renderer is approximate (see [Known limits](#-files-pdf-document-and-image-tools)). If you have Microsoft Office or LibreOffice, turn on **Settings → Files → Use Microsoft Office or LibreOffice when available** for closer results.
+</details>
+
+<details>
 <summary><b>I can't see the icon in the menu bar</b></summary>
 
 On MacBooks with a notch, a crowded menu bar can hide icons. Quit a few other menu bar apps, or hold <kbd>⌘</kbd> and drag icons to rearrange them. Your shortcuts keep working even while the icon is hidden.
@@ -307,6 +352,8 @@ rm -rf /Applications/Cheese.app "$HOME/Library/Application Support/Cheese"
 defaults delete com.maanitgupta.cheese
 tccutil reset ScreenCapture com.maanitgupta.cheese
 tccutil reset Accessibility com.maanitgupta.cheese
+tccutil reset AppleEvents com.maanitgupta.cheese
+rm -rf "$HOME/Library/Group Containers/8H5274FWRC.com.maanitgupta.cheese"
 ```
 
 If you turned on launch at login, also remove Cheese from **System Settings → General → Login Items**.
@@ -317,11 +364,14 @@ If you turned on launch at login, also remove Cheese from **System Settings → 
 make generate   # regenerate Cheese.xcodeproj from project.yml (XcodeGen)
 make build      # Debug build
 make test       # unit tests (Swift Testing)
+make test-integration   # also the slower Files tests that render through WebKit
 make run        # build and launch
 make release    # Release build → dist/Cheese.zip + SHA-256
 ```
 
-The Xcode project is generated, so edit `project.yml` rather than `Cheese.xcodeproj`. The code is organised by feature (`Clipboard/`, `Capture/`, `OCR/`, `ScrollCapture/`, `Windows/`, `Editor/`, `Draw/`, `QR/`, `KeepAwake/`, `AppHotkeys/`, `Palette/`, `Welcome/`, `Settings/`), with the wiring in `App/`: every action lives once in an `ActionRegistry` that the menu, hotkeys and command palette all read, and each feature is a `CheeseModule` that can be switched off. Pure logic (fuzzy matching, stitching, sticky-header detection, snap geometry, display coordinate conversion, canvas history, stroke smoothing, hit-testing, QR payload planning, share-link rules, keep-awake scheduling, hotkey suggestions and palette ranking) has no AppKit dependencies and is covered by unit tests. [`CLAUDE.md`](CLAUDE.md) and [`CLAUDE-V2.md`](CLAUDE-V2.md) have the full spec and architecture notes.
+The Xcode project is generated, so edit `project.yml` rather than `Cheese.xcodeproj`. The code is organised by feature (`Clipboard/`, `Capture/`, `OCR/`, `ScrollCapture/`, `Windows/`, `Editor/`, `Draw/`, `QR/`, `KeepAwake/`, `AppHotkeys/`, `Palette/`, `Files/`, `Welcome/`, `Settings/`), with the wiring in `App/`: every action lives once in an `ActionRegistry` that the menu, hotkeys and command palette all read, and each feature is a `CheeseModule` that can be switched off. Pure logic (fuzzy matching, stitching, sticky-header detection, snap geometry, display coordinate conversion, canvas history, stroke smoothing, hit-testing, QR payload planning, share-link rules, keep-awake scheduling, hotkey suggestions, palette ranking, and the Files tools' applicability, output naming, page ranges, split and compression planning, layout analysis, table detection and resize math) has no AppKit dependencies and is covered by unit tests. [`CLAUDE.md`](CLAUDE.md), [`CLAUDE-V2.md`](CLAUDE-V2.md) and [`CLAUDE-V2.5.md`](CLAUDE-V2.5.md) have the full spec and architecture notes.
+
+The Finder submenu is a separate, sandboxed `CheeseFinderExtension` target that only builds the menu and hands jobs to the app through the App Group. The vendored JavaScript renderers live in `Cheese/Resources/Renderers/` with exact versions, licenses and the reasons for each choice in [`VENDORED.md`](Cheese/Resources/Renderers/VENDORED.md); a test keeps them under 3 MB. The Files test fixtures are all self-made by `Design/make-files-fixtures.swift` and `.mjs`.
 
 Known global shortcuts that the hotkey suggester should never propose live in [`ReservedShortcuts.json`](Cheese/AppHotkeys/ReservedShortcuts.json). Add an entry there in a pull request; no code changes needed.
 
