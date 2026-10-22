@@ -66,6 +66,11 @@ final class ActionRegistry {
         return bindings
     }
 
+    /// Every shortcut name an action owns, whether or not its module is running.
+    var shortcutNames: [KeyboardShortcuts.Name] {
+        actions.flatMap { [$0.shortcut].compactMap(\.self) + $0.hiddenShortcuts }
+    }
+
     /// Starts and stops modules to match Settings, then registers exactly the hotkeys they own.
     /// Returns whether any module started or stopped.
     @discardableResult

@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 import os
 
 /// Composition root: builds the modules, the action registry over them, and the windows they share.
@@ -11,6 +12,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: SettingsWindowController?
     private var welcomeWindow: WelcomeWindowController?
     private var clipboard: ClipboardModule?
+    private let appHotkeyStore = AppHotkeyStore()
+    private let installedApps = InstalledAppIndex()
     private var defaultsObserver: Task<Void, Never>?
 
     private static var isRunningUnitTests: Bool {
@@ -32,7 +35,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 permissions: permissions,
                 openPermissionSettings: openPermissionSettings,
                 supportedOCRLanguages: OCRLanguageSupport.supportedLanguages,
-                showWelcome: { [weak welcomeWindow] in welcomeWindow?.show() }
+                showWelcome: { [weak welcomeWindow] in welcomeWindow?.show() },
+                appHotkeys: AppHotkeysSettingsModel(store: appHotkeyStore, index: installedApps) { [weak self] in
+                    self?.takenAppHotkeyCharacters() ?? []
+                }
             )
         )
 
@@ -70,6 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager())),
             QRModule(),
             KeepAwakeModule { [weak self] text in self?.menuBar?.setIndicator(text) },
+            AppHotkeysModule(store: appHotkeyStore, index: installedApps),
         ]
         let preferences = Preferences()
         return ActionRegistry(
@@ -79,6 +86,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [permissionPrompter] permission, feature in
             permissionPrompter.presentAlert(for: permission, feature: feature)
         }
+    }
+
+    /// Letters and digits already used with Ctrl+Opt+Cmd: by Cheese's actions, other app hotkeys,
+    /// macOS's own shortcuts, and the bundled list of popular utilities.
+    private func takenAppHotkeyCharacters() -> Set<Character> {
+        let names = (registry?.shortcutNames ?? []) + appHotkeyStore.bindings.map(\.shortcutName)
+        let cheese = names.compactMap { KeyboardShortcuts.getShortcut(for: $0) }
+        return AppHotkeyKeys.takenCharacters(in: cheese + SystemShortcutReader.enabledShortcuts())
+            .union(ReservedShortcuts.takenCharacters(in: ReservedShortcuts.bundled()))
     }
 
     /// Actions that belong to Cheese itself rather than a module, so they can't be switched off.

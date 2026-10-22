@@ -8,6 +8,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
     case windowSnapping
     case qr
     case keepAwake
+    case appHotkeys
 
     var id: Self { self }
 
@@ -20,6 +21,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .windowSnapping: "Window Snapping"
         case .qr: "QR"
         case .keepAwake: "Keep Awake"
+        case .appHotkeys: "App Hotkeys"
         }
     }
 }

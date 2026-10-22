@@ -5,6 +5,7 @@ enum SettingsTab: Hashable {
     case shortcuts
     case clipboard
     case ocr
+    case appHotkeys
     case permissions
 }
 
@@ -32,6 +33,9 @@ struct SettingsView: View {
             }
             Tab("OCR", systemImage: "text.viewfinder", value: .ocr) {
                 OCRSettingsView(supportedLanguages: dependencies.supportedOCRLanguages())
+            }
+            Tab("App Hotkeys", systemImage: "app.badge", value: .appHotkeys) {
+                AppHotkeysSettingsView(model: dependencies.appHotkeys)
             }
             Tab("Permissions", systemImage: "lock.shield", value: .permissions) {
                 PermissionsSettingsView(

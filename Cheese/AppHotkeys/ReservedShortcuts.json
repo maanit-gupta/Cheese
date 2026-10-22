@@ -1,0 +1,7 @@
+[
+  { "key": "8", "modifiers": ["control", "option", "command"], "owner": "macOS: Invert Colors" },
+  { "key": ",", "modifiers": ["control", "option", "command"], "owner": "macOS: Decrease Contrast" },
+  { "key": ".", "modifiers": ["control", "option", "command"], "owner": "macOS: Increase Contrast" },
+  { "key": "leftArrow", "modifiers": ["control", "option", "command"], "owner": "Rectangle: Previous Display" },
+  { "key": "rightArrow", "modifiers": ["control", "option", "command"], "owner": "Rectangle: Next Display" }
+]

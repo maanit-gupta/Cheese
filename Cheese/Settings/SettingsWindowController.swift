@@ -7,6 +7,7 @@ struct SettingsDependencies {
     var openPermissionSettings: @MainActor (Permission) -> Void
     var supportedOCRLanguages: @MainActor () -> Set<OCRLanguage>
     var showWelcome: @MainActor () -> Void
+    var appHotkeys: AppHotkeysSettingsModel
 }
 
 /// Hosts `SettingsView` in a plain window. A SwiftUI `Settings` scene is awkward to open

@@ -64,6 +64,7 @@ struct ActionCatalogueTests {
             WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager())),
             QRModule(),
             KeepAwakeModule { _ in },
+            AppHotkeysModule(store: AppHotkeyStore(defaults: UserDefaults(suiteName: "ActionCatalogueTests") ?? .standard), index: InstalledAppIndex(folders: [])),
         ]
     }
 
