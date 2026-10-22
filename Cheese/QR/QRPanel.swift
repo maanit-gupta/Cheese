@@ -131,22 +131,43 @@ final class QRPanelController {
     // MARK: Content
 
     @concurrent
-    private static func resource(for content: ShareContent) async throws -> ShareResource {
+    static func resource(for content: ShareContent) async throws -> ShareResource {
+        let download = ShareRules.Resource.download.rawValue
         switch content {
         case let .text(text):
-            return ShareResource(contentType: "text/html; charset=utf-8", body: .data(Data(SharePage.html(for: text).utf8)))
+            return ShareResource(contentType: "text/plain; charset=utf-8", body: .data(Data(text.utf8)), items: [.text(text)])
         case let .image(png):
-            return ShareResource(contentType: "image/png", body: .data(png))
+            let name = "Image.png"
+            return ShareResource(
+                contentType: "image/png", body: .data(png), attachmentName: name,
+                items: [.file(.init(name: name, size: Int64(png.count), mimeType: "image/png", href: download))]
+            )
         case let .file(url):
-            let type = UTType(filenameExtension: url.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
-            return ShareResource(contentType: type, body: .file(url), attachmentName: url.lastPathComponent)
+            let type = mimeType(of: url)
+            return ShareResource(
+                contentType: type, body: .file(url), attachmentName: url.lastPathComponent,
+                items: [.file(.init(name: url.lastPathComponent, size: fileSize(of: url), mimeType: type, href: download))]
+            )
         case let .archive(urls):
             let archive = try await ShareArchiver.archive(urls)
             return ShareResource(
                 contentType: "application/zip", body: .file(archive.zip),
-                attachmentName: archive.zip.lastPathComponent, temporaryFiles: [archive.temporaryFolder]
+                attachmentName: archive.zip.lastPathComponent, temporaryFiles: [archive.temporaryFolder],
+                items: urls.map { .file(.init(name: $0.lastPathComponent, size: fileSize(of: $0), mimeType: mimeType(of: $0))) },
+                isArchive: true
             )
         }
+    }
+
+    private nonisolated static func mimeType(of url: URL) -> String {
+        UTType(filenameExtension: url.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
+    }
+
+    /// Nil for a folder.
+    private nonisolated static func fileSize(of url: URL) -> Int64? {
+        let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
+        if values?.isDirectory == true { return nil }
+        return Int64(values?.fileSize ?? 0)
     }
 
     static func preview(of text: String) -> String {

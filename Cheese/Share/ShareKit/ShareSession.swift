@@ -13,6 +13,10 @@ struct ShareResource: Sendable {
     var attachmentName: String?
     /// Temp files made for this share (zips), deleted when it ends.
     var temporaryFiles: [URL] = []
+    /// What the link's page lists. Its files download from `download` under the link.
+    var items: [BrowserSharePageRenderer.Item] = []
+    /// The download is a zip of every listed item.
+    var isArchive = false
 }
 
 /// One live share link: a random token, what it serves, and when it stops working.
@@ -59,6 +63,25 @@ enum ShareRules {
         guard let token = token(fromPath: path) else { return nil }
         return sessions.first { $0.token == token && !$0.isExpired(at: now) }
     }
+
+    /// What a link serves: its page, the page's polled state, and the shared item itself.
+    enum Resource: String, Equatable, Sendable {
+        case page = ""
+        case state
+        case download
+    }
+
+    /// The token and resource a path names: `/<token>`, `/<token>/`, `/<token>/state` or
+    /// `/<token>/download`. Anything else is nil.
+    static func parse(path: String) -> (token: String, resource: Resource)? {
+        let parts = path.split(separator: "/", omittingEmptySubsequences: false).dropFirst()
+        guard path.hasPrefix("/"), let first = parts.first, let token = token(fromPath: "/" + first) else { return nil }
+        switch parts.count {
+        case 1: return (token, .page)
+        case 2: return Resource(rawValue: String(parts[parts.startIndex + 1])).map { (token, $0) }
+        default: return nil
+        }
+    }
 }
 
 /// The parts of HTTP/1.1 the share server needs: a request line in, a status and headers out.
@@ -69,7 +92,7 @@ enum HTTPMessage {
     }
 
     enum Route: Equatable {
-        case serve(token: String)
+        case serve(token: String, ShareRules.Resource)
         case status(Int)
     }
 
@@ -92,12 +115,14 @@ enum HTTPMessage {
         return RequestHead(method: String(parts[0]), path: String(parts[1]))
     }
 
-    /// GET only, one path per live share; everything else is an error status.
+    /// GET only, for a live share's page, state or download; everything else is an error status.
     static func route(_ head: RequestHead?, sessions: [ShareSession], now: Date) -> Route {
         guard let head else { return .status(400) }
         guard head.method == "GET" else { return .status(405) }
-        guard let session = ShareRules.session(forPath: head.path, in: sessions, now: now) else { return .status(404) }
-        return .serve(token: session.token)
+        guard let (token, resource) = ShareRules.parse(path: head.path),
+              let session = sessions.first(where: { $0.token == token && !$0.isExpired(at: now) })
+        else { return .status(404) }
+        return .serve(token: session.token, resource)
     }
 
     static func reason(for status: Int) -> String {
@@ -136,63 +161,5 @@ enum HTTPMessage {
         allowed.insert(charactersIn: "-._~")
         let encoded = name.addingPercentEncoding(withAllowedCharacters: allowed) ?? fallback
         return "attachment; filename=\"\(fallback)\"; filename*=UTF-8''\(encoded)"
-    }
-}
-
-/// The mobile page a shared text opens as: the text and a Copy button.
-enum SharePage {
-    static func html(for text: String) -> String {
-        """
-        <!doctype html>
-        <html lang="en">
-        <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Shared from Cheese</title>
-        <style>
-        :root { color-scheme: light dark; }
-        body { font: 17px -apple-system, system-ui, sans-serif; margin: 0; padding: 16px; }
-        textarea { box-sizing: border-box; width: 100%; height: 70vh; font: inherit; padding: 12px;
-          border-radius: 12px; border: 1px solid #8884; resize: vertical; }
-        button { margin-top: 12px; width: 100%; font: 600 17px -apple-system, system-ui, sans-serif;
-          padding: 14px; border: 0; border-radius: 12px; background: #f5b400; color: #222; }
-        </style>
-        </head>
-        <body>
-        <textarea id="text" readonly>\(escape(text))</textarea>
-        <button id="copy" type="button">Copy</button>
-        <script>
-        const button = document.getElementById("copy");
-        const area = document.getElementById("text");
-        button.addEventListener("click", async () => {
-          try {
-            await navigator.clipboard.writeText(area.value);
-          } catch {
-            area.select();
-            area.setSelectionRange(0, area.value.length);
-            document.execCommand("copy");
-          }
-          button.textContent = "Copied";
-        });
-        </script>
-        </body>
-        </html>
-        """
-    }
-
-    static func escape(_ text: String) -> String {
-        var escaped = ""
-        escaped.reserveCapacity(text.count)
-        for character in text {
-            switch character {
-            case "&": escaped += "&amp;"
-            case "<": escaped += "&lt;"
-            case ">": escaped += "&gt;"
-            case "\"": escaped += "&quot;"
-            case "'": escaped += "&#39;"
-            default: escaped.append(character)
-            }
-        }
-        return escaped
     }
 }

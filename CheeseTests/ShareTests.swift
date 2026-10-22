@@ -383,10 +383,27 @@ struct BrowserRouteTests {
         #expect(BrowserTransfer.route(path: "/api/localsend/v2/info", token: token) == nil)
     }
 
-    @Test func pageLoadsNothingRemote() {
-        #expect(!BrowserPage.html.contains("http://"))
-        #expect(!BrowserPage.html.contains("https://"))
-        #expect(!BrowserPage.html.contains("<script src"))
+    @MainActor @Test func pageListsWhatsOfferedAndCountsDownOnceThePanelCloses() throws {
+        let browser = BrowserTransfer(hooks: BrowserTransfer.Hooks(
+            destination: { FileManager.default.temporaryDirectory }, maxBytes: { 1 },
+            onText: { _ in }, onFileReceived: { _ in }, deviceName: { "Studio" }
+        ))
+        browser.offer([.text("hi")])
+        var page = browser.page()
+        #expect(page.deviceName == "Studio")
+        #expect(page.basePath == "/\(browser.token)/")
+        #expect(page.acceptsUploads)
+        #expect(page.items == [.text("hi")])
+        #expect(page.expiresIn == nil)
+        #expect(page.downloadAllHref == nil)
+
+        let now = Date.now
+        browser.expiresAt = now.addingTimeInterval(120)
+        page = browser.page(now: now)
+        #expect(page.expiresIn == 120)
+        browser.reset()
+        #expect(browser.page().items.isEmpty)
+        #expect(browser.expiresAt == nil)
     }
 }
 
@@ -420,9 +437,10 @@ struct ShareLoopbackTests {
         defer { server.stopAll() }
         let port = try #require(url.port.flatMap { UInt16(exactly: $0) })
         let endpoint = HTTPClient.Endpoint(host: "127.0.0.1", port: port, usesTLS: false)
-        let hit = try await HTTPClient.send("GET", to: endpoint, target: "/\(session.token)")
+        let hit = try await HTTPClient.send("GET", to: endpoint, target: "/\(session.token)/download")
         #expect(hit.status == 200)
         #expect(hit.body == Data("shared".utf8))
+        #expect(try await HTTPClient.send("GET", to: endpoint, target: "/\(session.token)").headers["content-type"]?.hasPrefix("text/html") == true)
         #expect(try await HTTPClient.send("GET", to: endpoint, target: "/nope").status == 404)
         #expect(try await HTTPClient.send("POST", to: endpoint, target: "/\(session.token)").status == 405)
     }
@@ -507,7 +525,10 @@ struct ShareLoopbackTests {
 
         let page = try await HTTPClient.send("GET", to: endpoint, target: base + "/")
         #expect(page.status == 200)
-        #expect(String(decoding: page.body, as: UTF8.self).contains("Cheese Share"))
+        let html = String(decoding: page.body, as: UTF8.self)
+        #expect(html.contains("<title>Cheese Share</title>"))
+        #expect(html.contains("Tap to choose photos or files"))
+        #expect(html.contains("From Mac.txt"))
 
         let upload = try await HTTPClient.send(
             "POST", to: endpoint, target: base + "/upload?name=" + "../../photo 1.jpg".addingPercentEncoding(withAllowedCharacters: .alphanumerics)!,
@@ -520,12 +541,16 @@ struct ShareLoopbackTests {
         #expect(try await HTTPClient.send("POST", to: endpoint, target: base + "/text", body: .data(Data("hi Mac".utf8))).status == 204)
         #expect(texts == ["hi Mac"])
 
-        let items = try await HTTPClient.send("GET", to: endpoint, target: base + "/items")
-        let list = try JSONDecoder().decode([BrowserPage.Item].self, from: items.body)
-        #expect(list.map(\.name) == ["From Mac.txt", "a link"])
-        #expect(list.last?.text == "a link")
-        let file = try #require(list.first)
-        let download = try await HTTPClient.send("GET", to: endpoint, target: base + "/download/\(file.id)")
+        let state = try await HTTPClient.send("GET", to: endpoint, target: base + "/state")
+        let decoded = try JSONDecoder().decode(BrowserSharePageRenderer.State.self, from: state.body)
+        #expect(decoded.html.contains("From Mac.txt"))
+        #expect(decoded.html.contains("<div class=\"txt\">a link</div>"))
+        #expect(decoded.expiresIn == nil)
+        let file = try #require(browser.offered.first)
+        #expect(decoded.html.contains("href=\"\(base)/download/\(file.id.uuidString)\""))
+        // One file: there's nothing to zip.
+        #expect(try await HTTPClient.send("GET", to: endpoint, target: base + "/download-all").status == 404)
+        let download = try await HTTPClient.send("GET", to: endpoint, target: base + "/download/\(file.id.uuidString)")
         #expect(download.status == 200)
         #expect(download.body == Data("download me".utf8))
         #expect(download.headers["content-disposition"]?.contains("From Mac.txt") == true)

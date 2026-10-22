@@ -49,7 +49,8 @@ then shows what LocalSend devices see.
 
 `PhonePageInBrowserTests` serves the real phone page and waits; `scripts/phone-page-webkit.mjs` drives it in
 WebKit as an iPhone 13 (Playwright, installed for the promo render): upload a photo, send text, download
-what the Mac offers. Run both together:
+what the Mac offers and copy its text over plain HTTP. It leaves `webkit.png` and `webkit-dark.png` in the
+folder. Run both together:
 
 ```sh
 D=$(mktemp -d)

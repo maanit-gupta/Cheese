@@ -3,10 +3,13 @@ import os
 
 /// Share links for Show Clipboard as QR, on `HTTPServer`. It listens only on the LAN address,
 /// serves GET for live share tokens and nothing else, and shuts down when the last share ends.
+/// A link opens the Share page, which lists what's shared and downloads it from `<link>/download`.
 @MainActor
 final class ShareServer {
     /// Called when a share ends, with its token.
     var onShareEnded: (String) -> Void = { _ in }
+    /// The name the page says it's connected to.
+    var deviceName: () -> String = { Preferences().shareDeviceName }
 
     private var sessions: [String: ShareSession] = [:]
     private var expiryTasks: [String: Task<Void, Never>] = [:]
@@ -63,20 +66,38 @@ final class ShareServer {
     }
 
     private func respond(to request: HTTPRequest) -> HTTPResponse {
-        let head = HTTPMessage.RequestHead(method: request.method, path: request.target)
+        let head = HTTPMessage.RequestHead(method: request.method, path: request.path)
         switch HTTPMessage.route(head, sessions: Array(sessions.values), now: .now) {
         case let .status(status):
             return .status(status)
-        case let .serve(token):
-            guard let resource = sessions[token]?.resource else { return .status(404) }
-            var headers: [(String, String)] = [("Content-Type", resource.contentType), ("Cache-Control", "no-store")]
-            if let name = resource.attachmentName {
-                headers.append(("Content-Disposition", HTTPMessage.contentDisposition(attachmentName: name)))
+        case let .serve(token, resource):
+            guard let session = sessions[token] else { return .status(404) }
+            switch resource {
+            case .page: return .html(BrowserSharePageRenderer.html(page(for: session)))
+            case .state: return .json(BrowserSharePageRenderer.state(page(for: session)))
+            case .download: return download(session.resource)
             }
-            switch resource.body {
-            case let .data(data): return HTTPResponse(status: 200, headers: headers, body: .data(data))
-            case let .file(url): return HTTPResponse(status: 200, headers: headers, body: .file(url))
-            }
+        }
+    }
+
+    func page(for session: ShareSession, now: Date = .now) -> BrowserSharePageRenderer.Page {
+        BrowserSharePageRenderer.Page(
+            deviceName: deviceName(),
+            basePath: "/\(session.token)/",
+            items: session.resource.items,
+            downloadAllHref: session.resource.isArchive ? ShareRules.Resource.download.rawValue : nil,
+            expiresIn: Int(session.expiresAt.timeIntervalSince(now).rounded(.up))
+        )
+    }
+
+    private func download(_ resource: ShareResource) -> HTTPResponse {
+        var headers: [(String, String)] = [("Content-Type", resource.contentType), ("Cache-Control", "no-store")]
+        if let name = resource.attachmentName {
+            headers.append(("Content-Disposition", HTTPMessage.contentDisposition(attachmentName: name)))
+        }
+        switch resource.body {
+        case let .data(data): return HTTPResponse(status: 200, headers: headers, body: .data(data))
+        case let .file(url): return HTTPResponse(status: 200, headers: headers, body: .file(url))
         }
     }
 }

@@ -162,7 +162,13 @@ struct HTTPMessageTests {
     }
 
     @Test func routesGETForLiveTokensOnly() {
-        #expect(HTTPMessage.route(.init(method: "GET", path: "/\(token)"), sessions: sessions, now: .now) == .serve(token: token))
+        #expect(HTTPMessage.route(.init(method: "GET", path: "/\(token)"), sessions: sessions, now: .now) == .serve(token: token, .page))
+        #expect(HTTPMessage.route(.init(method: "GET", path: "/\(token)/"), sessions: sessions, now: .now) == .serve(token: token, .page))
+        #expect(HTTPMessage.route(.init(method: "GET", path: "/\(token)/state"), sessions: sessions, now: .now) == .serve(token: token, .state))
+        #expect(HTTPMessage.route(.init(method: "GET", path: "/\(token)/download"), sessions: sessions, now: .now) == .serve(token: token, .download))
+        #expect(HTTPMessage.route(.init(method: "GET", path: "/\(token)/other"), sessions: sessions, now: .now) == .status(404))
+        #expect(HTTPMessage.route(.init(method: "GET", path: "/\(token)/download/x"), sessions: sessions, now: .now) == .status(404))
+        #expect(HTTPMessage.route(.init(method: "GET", path: "/\(token)//download"), sessions: sessions, now: .now) == .status(404))
         #expect(HTTPMessage.route(.init(method: "GET", path: "/"), sessions: sessions, now: .now) == .status(404))
         #expect(HTTPMessage.route(.init(method: "GET", path: "/favicon.ico"), sessions: sessions, now: .now) == .status(404))
         #expect(HTTPMessage.route(.init(method: "POST", path: "/\(token)"), sessions: sessions, now: .now) == .status(405))
@@ -182,21 +188,6 @@ struct HTTPMessageTests {
         #expect(!tricky.contains("\r") && !tricky.contains("\n"))
         #expect(tricky.hasPrefix("attachment; filename=\"a _b___X: y.txt\""))
         #expect(HTTPMessage.contentDisposition(attachmentName: "नमस्ते.txt").contains("filename*=UTF-8''%E0%A4%A8"))
-    }
-}
-
-struct SharePageTests {
-    @Test func escapesTheText() {
-        let html = SharePage.html(for: "<script>alert('x') & \"y\"</script>")
-        #expect(html.contains("&lt;script&gt;alert(&#39;x&#39;) &amp; &quot;y&quot;&lt;/script&gt;"))
-        #expect(!html.contains("<script>alert"))
-    }
-
-    @Test func hasACopyButtonAndMobileViewport() {
-        let html = SharePage.html(for: "hello")
-        #expect(html.contains("name=\"viewport\""))
-        #expect(html.contains(">Copy</button>"))
-        #expect(html.contains(">hello</textarea>"))
     }
 }
 
@@ -250,13 +241,24 @@ struct ShareServerTests {
 
     @Test func servesTheShareAndNothingElse() async throws {
         let server = ShareServer()
+        server.deviceName = { "Test Mac" }
         defer { server.stopAll() }
-        let html = Data(SharePage.html(for: "hello").utf8)
-        let (session, url) = try await server.share(ShareResource(contentType: "text/html; charset=utf-8", body: .data(html)), on: "127.0.0.1")
+        let resource = try await QRPanelController.resource(for: .text("hello <b>"))
+        let (session, url) = try await server.share(resource, on: "127.0.0.1")
 
+        // The link opens the Share page, with the text on it.
         let ok = try await get(url)
         #expect(ok.status == 200)
-        #expect(ok.body == html)
+        let page = String(decoding: ok.body, as: UTF8.self)
+        #expect(page.contains("Connected to <b>Test Mac</b>"))
+        #expect(page.contains("<div class=\"txt\">hello &lt;b&gt;</div>"))
+        #expect(page.contains("data-base=\"/\(session.token)/\""))
+        #expect(!page.contains("id=\"files\""))
+
+        let state = try await get(url.appending(path: "state"))
+        let decoded = try JSONDecoder().decode(BrowserSharePageRenderer.State.self, from: state.body)
+        #expect((1...600).contains(decoded.expiresIn ?? 0))
+        #expect(decoded.html.contains("Copy Text"))
 
         var other = URLComponents(url: url, resolvingAgainstBaseURL: false)
         other?.path = "/nope"
@@ -289,7 +291,7 @@ struct ShareServerTests {
         let resource = ShareResource(contentType: "text/plain", body: .file(file), attachmentName: "notes.txt", temporaryFiles: [folder])
         let (session, url) = try await server.share(resource, on: "127.0.0.1")
 
-        let response = try await get(url)
+        let response = try await get(url.appending(path: "download"))
         #expect(response.status == 200)
         #expect(response.body == contents)
         #expect((response.headers["Content-Disposition"] as? String)?.hasPrefix("attachment; filename=\"notes.txt\"") == true)
@@ -309,5 +311,33 @@ struct ShareServerTests {
         #expect(archive.zip.lastPathComponent == "Photos.zip")
         let data = try Data(contentsOf: archive.zip)
         #expect(data.starts(with: [0x50, 0x4B, 0x03, 0x04]))
+    }
+
+    @Test func linkPagesListWhatsShared() async throws {
+        let folder = makeTemporaryDirectory()
+        let a = folder.appending(path: "a.pdf")
+        let b = folder.appending(path: "b.txt")
+        try Data(count: 2_400).write(to: a)
+        try Data(count: 10).write(to: b)
+        defer { try? FileManager.default.removeItem(at: folder) }
+
+        let one = try await QRPanelController.resource(for: .file(a))
+        #expect(one.items == [.file(.init(name: "a.pdf", size: 2_400, mimeType: "application/pdf", href: "download"))])
+        #expect(!one.isArchive)
+
+        let image = try await QRPanelController.resource(for: .image(png: Data(count: 50)))
+        #expect(image.items == [.file(.init(name: "Image.png", size: 50, mimeType: "image/png", href: "download"))])
+
+        let several = try await QRPanelController.resource(for: .archive([a, b]))
+        defer { several.temporaryFiles.forEach { try? FileManager.default.removeItem(at: $0) } }
+        #expect(several.isArchive)
+        #expect(several.items.count == 2)
+        let server = ShareServer()
+        server.deviceName = { "Mac" }
+        let session = ShareSession(token: ShareRules.makeToken(), resource: several, expiresAt: .now.addingTimeInterval(90))
+        let html = BrowserSharePageRenderer.html(server.page(for: session))
+        #expect(html.contains("Download All (.zip)"))
+        #expect(html.contains("href=\"/\(session.token)/download\" download>"))
+        #expect(html.contains("data-expires=\"90\""))
     }
 }

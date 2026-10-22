@@ -139,6 +139,7 @@ final class ShareService {
     func panelOpened() {
         idleTask?.cancel()
         idleTask = nil
+        browser.expiresAt = nil
         if isListening {
             discovery.announce()
             return
@@ -149,6 +150,8 @@ final class ShareService {
     /// The panel closed: stop after `idleLifetime` unless it opens again, or something is still moving.
     func panelClosed() {
         idleTask?.cancel()
+        let lifetime = hooks.idleLifetime.components
+        browser.expiresAt = .now.addingTimeInterval(TimeInterval(lifetime.seconds) + TimeInterval(lifetime.attoseconds) / 1e18)
         idleTask = Task { [weak self] in
             try? await Task.sleep(for: self?.hooks.idleLifetime ?? Self.idleLifetime)
             guard !Task.isCancelled, let self else { return }
