@@ -146,6 +146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             (.settingsOCR, "OCR", "text.viewfinder", .ocr),
             (.settingsAppHotkeys, "App Hotkeys", "app.badge", .appHotkeys),
             (.settingsPermissions, "Permissions", "lock.shield", .permissions),
+            (.settingsAbout, "About", "info.circle", .about),
         ]
         return tabs.map { id, title, symbol, tab in
             CheeseAction(id: id, title: "Settings: \(title)", symbol: symbol, module: nil) { [weak self] _ in

@@ -7,6 +7,7 @@ enum SettingsTab: Hashable {
     case ocr
     case appHotkeys
     case permissions
+    case about
 }
 
 /// Which tab Settings shows, so the status menu can open it straight on Shortcuts.
@@ -42,6 +43,9 @@ struct SettingsView: View {
                     permissions: dependencies.permissions,
                     openSystemSettings: dependencies.openPermissionSettings
                 )
+            }
+            Tab("About", systemImage: "info.circle", value: .about) {
+                AboutSettingsView()
             }
         }
         .frame(width: 520, height: 440)

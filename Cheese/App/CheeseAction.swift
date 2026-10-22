@@ -40,6 +40,7 @@ extension ActionID {
     static let settingsOCR = Self(rawValue: "settingsOCR")
     static let settingsAppHotkeys = Self(rawValue: "settingsAppHotkeys")
     static let settingsPermissions = Self(rawValue: "settingsPermissions")
+    static let settingsAbout = Self(rawValue: "settingsAbout")
 
     /// "Files: Merge PDFs…" and the other Files tools.
     static func files(_ tool: ToolID) -> Self {

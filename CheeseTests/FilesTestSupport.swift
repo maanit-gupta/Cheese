@@ -65,3 +65,19 @@ extension TestPDFs {
         return url
     }
 }
+
+/// The self-made fixtures in Fixtures/Files, copied to a temp folder so outputs land beside them.
+enum FilesFixture {
+    private final class BundleToken {}
+
+    static func copy(_ name: String) throws -> URL {
+        let ext = (name as NSString).pathExtension
+        let base = (name as NSString).deletingPathExtension
+        guard let source = Bundle(for: BundleToken.self).url(forResource: base, withExtension: ext, subdirectory: "Fixtures/Files") else {
+            throw CocoaError(.fileNoSuchFile)
+        }
+        let destination = makeTemporaryDirectory().appending(path: name)
+        try FileManager.default.copyItem(at: source, to: destination)
+        return destination
+    }
+}

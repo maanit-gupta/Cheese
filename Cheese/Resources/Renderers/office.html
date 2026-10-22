@@ -1,0 +1,33 @@
+<!doctype html>
+<!-- Cheese's Office renderer page. Loaded from the app bundle into a hidden web view that can't
+     reach the network; Swift sends a document in and turns the rendered pages into PDF. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    html, body { margin: 0; padding: 0; background: #fff; }
+    /* docx-preview draws pages on a gray desk with shadows; print them plain. */
+    .docx-wrapper { background: #fff !important; padding: 0 !important; display: block !important; }
+    .docx-wrapper > section.docx { box-shadow: none !important; margin: 0 !important; }
+    section.slide { position: relative; overflow: hidden; }
+    /* pptx-to-html puts the slide background in a z-index:-1 child; without its own stacking
+       context the slide's white fill would paint over it. */
+    section.slide .slide { isolation: isolate; }
+    /* Excel: plain tables, one sheet per printed page. */
+    section.sheet { font: 9pt -apple-system, "Helvetica Neue", Helvetica, sans-serif; }
+    section.sheet + section.sheet { break-before: page; page-break-before: always; }
+    section.sheet h2 { font-size: 12pt; margin: 0 0 8pt; }
+    section.sheet table { border-collapse: collapse; }
+    section.sheet td, section.sheet th { border: 0.5pt solid #aaa; padding: 2pt 5pt; white-space: nowrap; vertical-align: top; }
+    section.sheet tr { break-inside: avoid; page-break-inside: avoid; }
+</style>
+<script src="jszip.min.js"></script>
+<script src="docx-preview.min.js"></script>
+<script src="xlsx.full.min.js"></script>
+<script src="office.js"></script>
+</head>
+<body>
+<div id="styles"></div>
+<div id="pages"></div>
+</body>
+</html>
