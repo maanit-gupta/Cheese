@@ -112,12 +112,12 @@ private struct HUDView: View {
     let stop: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignTokens.Spacing.large) {
             ProgressView()
                 .controlSize(.small)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.hairline) {
                 Text("Scrolling capture")
-                    .font(.headline)
+                    .font(DesignTokens.Typography.heading)
                 Text(progress.height > 0 ? "\(progress.height) px · Esc or Return to stop" : "Esc or Return to stop")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
@@ -125,9 +125,9 @@ private struct HUDView: View {
             Button("Stop", action: stop)
                 .buttonStyle(.borderedProminent)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, DesignTokens.Spacing.xLarge)
+        .padding(.vertical, DesignTokens.Spacing.medium)
+        .cheeseSurface(in: RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
         .fixedSize()
     }
 }
