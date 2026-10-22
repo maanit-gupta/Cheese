@@ -35,7 +35,7 @@ struct HistoryView: View {
     }
 
     private var searchField: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: DesignTokens.Spacing.xSmall) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
             TextField("Search clipboard history", text: $model.query)
@@ -43,14 +43,14 @@ struct HistoryView: View {
                 .font(.title3)
                 .focused($isSearchFocused)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, DesignTokens.Spacing.large)
+        .padding(.vertical, DesignTokens.Spacing.medium)
     }
 
     private func list(_ items: [ClipItem], selectedID: UUID?) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 2) {
+                LazyVStack(spacing: DesignTokens.Spacing.hairline) {
                     ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                         HistoryRow(
                             item: item,
@@ -69,7 +69,7 @@ struct HistoryView: View {
                         .contextMenu { contextMenu(for: item) }
                     }
                 }
-                .padding(6)
+                .padding(DesignTokens.Spacing.xSmall)
             }
             .onChange(of: selectedID) { _, id in
                 guard let id else { return }
@@ -93,13 +93,10 @@ struct HistoryView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 6) {
-            Image(systemName: "doc.on.clipboard")
-                .font(.largeTitle)
-                .foregroundStyle(.tertiary)
-            Text(model.query.isEmpty ? "Nothing copied yet" : "No matches")
-                .foregroundStyle(.secondary)
-        }
+        CheeseEmptyState(
+            symbol: model.query.isEmpty ? "doc.on.clipboard" : "magnifyingglass",
+            title: model.query.isEmpty ? "Nothing copied yet" : "No matches"
+        )
     }
 }
 
@@ -110,16 +107,16 @@ private struct HistoryRow: View {
     let imageURL: URL?
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignTokens.Spacing.small) {
             HistoryItemIcon(item: item, imageURL: imageURL)
                 .frame(width: 20, height: 20)
             Text(item.title.isEmpty ? " " : item.title)
                 .lineLimit(1)
                 .truncationMode(.tail)
-            Spacer(minLength: 4)
+            Spacer(minLength: DesignTokens.Spacing.xxSmall)
             if item.isPinned {
                 Image(systemName: "pin.fill")
-                    .font(.caption)
+                    .font(DesignTokens.Typography.caption)
                     .accessibilityLabel("Pinned")
             }
             if let number {
@@ -128,11 +125,11 @@ private struct HistoryRow: View {
                     .foregroundStyle(isSelected ? .primary : .secondary)
             }
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, DesignTokens.Spacing.small)
         .padding(.vertical, 5)
         .foregroundStyle(isSelected ? Color.white : Color.primary)
         .background(
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
                 .fill(isSelected ? Color.accentColor : Color.clear)
         )
     }
