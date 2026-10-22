@@ -90,6 +90,15 @@ enum DrawTool: String, CaseIterable, Sendable {
         }
     }
 
+    /// Shape tools grab an item pressed on instead of drawing over it, so what was just drawn can
+    /// be moved, resized or deleted without switching to Select.
+    var grabsItems: Bool {
+        switch self {
+        case .rectangle, .ellipse, .line, .arrow: true
+        default: false
+        }
+    }
+
     /// Laser, spotlight and zoom draw transient layers, never items.
     var isPresenter: Bool {
         self == .laser || self == .spotlight || self == .zoom

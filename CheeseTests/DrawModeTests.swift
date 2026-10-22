@@ -176,6 +176,37 @@ struct DrawModeControllerTests {
         #expect(items == [original])
     }
 
+    @Test func shapeToolsGrabItemsInsteadOfDrawingOverThem() {
+        controller.chooseTool(.rectangle)
+        drag(from: CGPoint(x: 0, y: 0), to: CGPoint(x: 100, y: 100))
+        let original = items[0]
+
+        // Pressing on the outline moves the rectangle; nothing new is drawn over it.
+        controller.chooseTool(.arrow)
+        drag(from: CGPoint(x: 100, y: 50), to: CGPoint(x: 150, y: 50))
+        #expect(items.count == 1)
+        #expect(items[0].geometryBounds.origin == CGPoint(x: 50, y: 0))
+        controller.undo()
+        #expect(items == [original])
+
+        // A grabbed item can be deleted straight away.
+        controller.mouseDown(on: page, at: CGPoint(x: 0, y: 50), event: mouse(.leftMouseDown))
+        controller.mouseUp(on: page, at: CGPoint(x: 0, y: 50), event: mouse(.leftMouseUp))
+        #expect(controller.handleKeyDown(key("\u{7f}", keyCode: 51)))
+        #expect(items.isEmpty)
+        controller.undo()
+        #expect(items == [original])
+    }
+
+    @Test func shapesCanStillStartInsideAnOutline() {
+        controller.chooseTool(.rectangle)
+        drag(from: CGPoint(x: 0, y: 0), to: CGPoint(x: 100, y: 100))
+        controller.chooseTool(.arrow)
+        drag(from: CGPoint(x: 50, y: 50), to: CGPoint(x: 200, y: 50))
+        #expect(items.count == 2)
+        #expect(items[0].geometryBounds.origin == .zero)
+    }
+
     @Test func resizeFromAHandle() {
         controller.chooseTool(.rectangle)
         controller.settings.width = 2

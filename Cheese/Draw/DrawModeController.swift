@@ -55,6 +55,8 @@ final class DrawModeController {
     private var editing: TextEditing?
     private var toolBeforePassThrough = DrawTool.pen
     private var pointer: (page: CanvasPageID, point: CGPoint)?
+    /// With a shape tool, whether the pointer is over an item it would grab.
+    private var isOverGrabbableItem = false
     private var screenObserver: Task<Void, Never>?
     private let zoomStream = ZoomStream()
     /// The draft shape's ID stays the same while it's dragged out.
@@ -169,7 +171,10 @@ final class DrawModeController {
     // MARK: Tools
 
     var cursor: NSCursor {
-        switch settings.tool {
+        if settings.tool.grabsItems, isOverGrabbableItem {
+            return .openHand
+        }
+        return switch settings.tool {
         case .select, .passThrough, .spotlight: .arrow
         case .text: .iBeam
         case .laser, .zoom: Self.hiddenCursor
@@ -196,6 +201,7 @@ final class DrawModeController {
         if tool != .select {
             selection = nil
         }
+        isOverGrabbableItem = false
         settings.tool = tool
         applyTool()
         refreshAll()
@@ -235,7 +241,7 @@ final class DrawModeController {
         if let selection, selection.page == page {
             let selected = state.items.filter { selection.ids.contains($0.id) }
             state.selectedBounds = selected.map(\.bounds)
-            state.showsHandles = selected.count == 1 && settings.tool == .select
+            state.showsHandles = selected.count == 1 && (settings.tool == .select || settings.tool.grabsItems)
         }
         return state
     }
@@ -280,6 +286,14 @@ final class DrawModeController {
             interaction = .erasing(page: page, last: point, removed: [])
             erase(on: page, to: point)
         case .rectangle, .ellipse, .line, .arrow:
+            if grabbableItem(at: point, on: page, items: items) {
+                selectMouseDown(on: page, at: point, items: items, event: event, purpose: .grab)
+                return
+            }
+            if selection != nil {
+                selection = nil
+                refreshAll()
+            }
             draftID = UUID()
             interaction = .shaping(page: page, start: point, end: point, constrained: event.modifierFlags.contains(.shift))
         case .text:
@@ -305,15 +319,28 @@ final class DrawModeController {
         }
     }
 
-    private func selectMouseDown(on page: CanvasPageID, at point: CGPoint, items: [CanvasItem], event: NSEvent) {
+    /// The resize handle under `point` when exactly one item is selected on `page`.
+    private func selectedHandle(at point: CGPoint, on page: CanvasPageID) -> (handle: CanvasHitTester.Handle, item: CanvasItem)? {
+        guard let selection, selection.page == page, selection.ids.count == 1, let id = selection.ids.first,
+              let item = document.item(id, on: page),
+              let handle = CanvasHitTester.handle(at: point, of: item.bounds.insetBy(dx: -4, dy: -4), radius: CanvasView.handleSize)
+        else { return nil }
+        return (handle, item)
+    }
+
+    /// Whether a shape tool pressed at `point` grabs an item (or the selected item's handle) rather than drawing.
+    private func grabbableItem(at point: CGPoint, on page: CanvasPageID, items: [CanvasItem]) -> Bool {
+        selectedHandle(at: point, on: page) != nil
+            || CanvasHitTester.topItem(at: point, in: items, tolerance: Self.selectTolerance, purpose: .grab) != nil
+    }
+
+    private func selectMouseDown(on page: CanvasPageID, at point: CGPoint, items: [CanvasItem], event: NSEvent, purpose: CanvasHitTester.Purpose = .select) {
         let shift = event.modifierFlags.contains(.shift)
-        if let selection, selection.page == page, selection.ids.count == 1, let id = selection.ids.first,
-           let item = document.item(id, on: page),
-           let handle = CanvasHitTester.handle(at: point, of: item.bounds.insetBy(dx: -4, dy: -4), radius: CanvasView.handleSize) {
-            interaction = .resizing(page: page, handle: handle, original: item)
+        if let grabbed = selectedHandle(at: point, on: page) {
+            interaction = .resizing(page: page, handle: grabbed.handle, original: grabbed.item)
             return
         }
-        guard let hit = CanvasHitTester.topItem(at: point, in: items, tolerance: Self.selectTolerance) else {
+        guard let hit = CanvasHitTester.topItem(at: point, in: items, tolerance: Self.selectTolerance, purpose: purpose) else {
             if !shift {
                 selection = nil
             }
@@ -661,6 +688,13 @@ final class DrawModeController {
 
     func pointerMoved(on page: CanvasPageID, to point: CGPoint) {
         pointer = (page, point)
+        if settings.tool.grabsItems {
+            let overItem = grabbableItem(at: point, on: page, items: document.items(on: page))
+            if overItem != isOverGrabbableItem {
+                isOverGrabbableItem = overItem
+                cursor.set()
+            }
+        }
         if settings.tool == .laser {
             view(page)?.presenter.addLaserPoint(point, at: CACurrentMediaTime())
         }

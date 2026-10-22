@@ -8,6 +8,9 @@ enum CanvasHitTester {
         case select
         /// Erasing: an outlined shape is only touched on its outline.
         case erase
+        /// Pressing with a shape tool: like erasing, an outlined shape counts only on its outline,
+        /// so a new shape or arrow can still start inside it.
+        case grab
     }
 
     enum Handle: CaseIterable, Sendable {
@@ -55,10 +58,10 @@ enum CanvasHitTester {
     }
 
     /// The top-most item under `point`. Highlighters sit beneath everything else, so they're checked last.
-    static func topItem(at point: CGPoint, in items: [CanvasItem], tolerance: CGFloat) -> CanvasItem? {
+    static func topItem(at point: CGPoint, in items: [CanvasItem], tolerance: CGFloat, purpose: Purpose = .select) -> CanvasItem? {
         let others = items.filter { !$0.isHighlighter }
         let highlighters = items.filter(\.isHighlighter)
-        return (others.reversed() + highlighters.reversed()).first { hits($0, at: point, tolerance: tolerance, purpose: .select) }
+        return (others.reversed() + highlighters.reversed()).first { hits($0, at: point, tolerance: tolerance, purpose: purpose) }
     }
 
     /// Items an eraser of `radius` touches moving from `start` to `end`.
