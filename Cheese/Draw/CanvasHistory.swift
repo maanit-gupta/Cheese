@@ -72,6 +72,15 @@ struct CanvasHistory: Equatable, Sendable {
         return command
     }
 
+    /// Takes back the last command as if it never happened: reverted, with nothing to redo.
+    /// For a click that turns out to be the first half of a double-click.
+    @discardableResult
+    mutating func retract(_ document: inout CanvasDocument) -> CanvasCommand? {
+        guard let command = undoStack.popLast() else { return nil }
+        command.revert(in: &document)
+        return command
+    }
+
     @discardableResult
     mutating func redo(_ document: inout CanvasDocument) -> CanvasCommand? {
         guard let command = redoStack.popLast() else { return nil }

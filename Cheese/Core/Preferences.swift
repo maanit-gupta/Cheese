@@ -18,6 +18,7 @@ enum PreferenceKey {
     }
 
     static let filesNativeFallback = "filesNativeFallback"
+    static let drawLetterKeys = "drawLetterKeys"
 
     /// Last-used options of a Files tool, as JSON.
     static func fileToolOptions(_ tool: ToolID) -> String {
@@ -101,6 +102,11 @@ struct Preferences {
     /// Use Microsoft Office or LibreOffice for Office → PDF when installed. Off unless the user opts in.
     var usesNativeOfficeApps: Bool {
         defaults.bool(forKey: PreferenceKey.filesNativeFallback)
+    }
+
+    /// Single-letter tool keys in draw mode (P, H, E…). Off unless the user turns them on.
+    var usesDrawLetterKeys: Bool {
+        defaults.bool(forKey: PreferenceKey.drawLetterKeys)
     }
 
     func isModuleEnabled(_ module: ModuleID) -> Bool {

@@ -29,7 +29,7 @@ struct CanvasColor: Hashable, Sendable {
         return copy
     }
 
-    /// The nine presets, picked with `1`–`9`.
+    /// The nine presets: the radial menu's ring (the first eight), the toolbar, and `1`–`9` with letter keys on.
     static let presets: [CanvasColor] = [
         CanvasColor(hex: 0xFF3B30), // red
         CanvasColor(hex: 0xFF9500), // orange
@@ -65,6 +65,8 @@ struct CanvasStyle: Hashable, Sendable {
     var isFilled = false
     /// Text only.
     var fontSize: CGFloat = 24
+    /// A soft glow around the ink.
+    var isNeon = false
 }
 
 enum ShapeKind: Hashable, Sendable {
@@ -72,17 +74,85 @@ enum ShapeKind: Hashable, Sendable {
     case ellipse
 }
 
+/// A stamp's symbol. Numbered steps count up on each click.
+enum Stamp: Hashable, Sendable {
+    case check
+    case cross
+    case star
+    case question
+    case number(Int)
+}
+
+/// Which stamp the stamp tool places; `.number` picks the next step number itself.
+enum StampKind: String, CaseIterable, Sendable {
+    case check
+    case cross
+    case star
+    case question
+    case number
+
+    var title: String {
+        switch self {
+        case .check: "Check"
+        case .cross: "Cross"
+        case .star: "Star"
+        case .question: "Question"
+        case .number: "Numbered Steps"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .check: "checkmark"
+        case .cross: "xmark"
+        case .star: "star.fill"
+        case .question: "questionmark"
+        case .number: "1.circle.fill"
+        }
+    }
+
+    var next: StampKind {
+        let all = Self.allCases
+        let index = all.firstIndex(of: self) ?? 0
+        return all[(index + 1) % all.count]
+    }
+
+    /// The stamp to place, given the steps already on the page: numbers continue from the highest.
+    func stamp(after items: [CanvasItem]) -> Stamp {
+        switch self {
+        case .check: .check
+        case .cross: .cross
+        case .star: .star
+        case .question: .question
+        case .number: .number(Self.nextStepNumber(in: items))
+        }
+    }
+
+    static func nextStepNumber(in items: [CanvasItem]) -> Int {
+        let highest = items.compactMap { item -> Int? in
+            if case let .stamp(.number(number), _, _) = item.kind { return number }
+            return nil
+        }.max() ?? 0
+        return highest + 1
+    }
+}
+
 /// One object on the canvas. Geometry is in the display's view coordinates (points, y down).
 struct CanvasItem: Identifiable, Equatable, Sendable {
     enum Kind: Equatable, Sendable {
-        /// Freehand input points; drawn smoothed. Highlighter strokes render beneath everything else.
-        case stroke(points: [CGPoint], isHighlighter: Bool)
+        /// Freehand input points, drawn as a variable-width outline. `pressures` is empty unless the
+        /// device reported real pressure. Highlighter strokes render beneath everything else.
+        case stroke(points: [CGPoint], pressures: [CGFloat], isHighlighter: Bool)
         case shape(ShapeKind, rect: CGRect)
         case line(from: CGPoint, to: CGPoint)
         case arrow(from: CGPoint, to: CGPoint)
         /// `rect` is measured from the text when it's committed.
         case text(String, rect: CGRect)
         case sticky(String, rect: CGRect, color: CanvasColor)
+        /// A closed outline through `points`: triangles and tilted quadrilaterals from the magic pen.
+        case polygon(points: [CGPoint])
+        /// A symbol in a square of side `size` centered on `center`.
+        case stamp(Stamp, center: CGPoint, size: CGFloat)
     }
 
     /// The default sticky note size, in points.
@@ -102,7 +172,7 @@ struct CanvasItem: Identifiable, Equatable, Sendable {
     }
 
     var isHighlighter: Bool {
-        if case .stroke(_, true) = kind { return true }
+        if case .stroke(_, _, true) = kind { return true }
         return false
     }
 
@@ -121,22 +191,28 @@ struct CanvasItem: Identifiable, Equatable, Sendable {
     /// The bare geometry, without stroke width.
     var geometryBounds: CGRect {
         switch kind {
-        case let .stroke(points, _):
+        case let .stroke(points, _, _), let .polygon(points):
             return Self.boundingBox(of: points)
         case let .shape(_, rect), let .text(_, rect), let .sticky(_, rect, _):
             return rect.standardized
         case let .line(from, to), let .arrow(from, to):
             return Self.boundingBox(of: [from, to])
+        case let .stamp(_, center, size):
+            return CGRect(x: center.x - size / 2, y: center.y - size / 2, width: size, height: size)
         }
     }
 
     /// What the item covers on screen: geometry plus half the stroke. Used for selection boxes and handles.
     var bounds: CGRect {
         switch kind {
-        case .text, .sticky:
+        case .text, .sticky, .stamp:
             return geometryBounds
         case .shape where style.isFilled:
             return geometryBounds.insetBy(dx: -style.width / 2, dy: -style.width / 2)
+        case .stroke where !isHighlighter:
+            // Slow ink swells to half again its nominal width.
+            let pad = renderedWidth * 0.75
+            return geometryBounds.insetBy(dx: -pad, dy: -pad)
         default:
             let pad = renderedWidth / 2
             return geometryBounds.insetBy(dx: -pad, dy: -pad)
@@ -176,8 +252,12 @@ struct CanvasItem: Identifiable, Equatable, Sendable {
         }
         var copy = self
         switch kind {
-        case let .stroke(points, isHighlighter):
-            copy.kind = .stroke(points: points.map(transform), isHighlighter: isHighlighter)
+        case let .stroke(points, pressures, isHighlighter):
+            copy.kind = .stroke(points: points.map(transform), pressures: pressures, isHighlighter: isHighlighter)
+        case let .polygon(points):
+            copy.kind = .polygon(points: points.map(transform))
+        case let .stamp(stamp, center, size):
+            copy.kind = .stamp(stamp, center: transform(center), size: max(8, size * min(abs(scaleX), abs(scaleY))))
         case let .shape(shape, oldRect):
             copy.kind = .shape(shape, rect: rect(oldRect))
         case let .line(from, to):

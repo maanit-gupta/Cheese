@@ -45,12 +45,21 @@ enum CanvasHitTester {
         // Cheap reject first.
         guard item.bounds.insetBy(dx: -tolerance, dy: -tolerance).contains(point) else { return false }
         switch item.kind {
-        case let .stroke(points, _):
+        case let .stroke(points, _, _):
             return distance(from: point, toPolyline: StrokeSmoother.smoothed(points, samplesPerCurve: 3)) <= reach
         case let .line(from, to), let .arrow(from, to):
             return distance(from: point, toSegment: from, to) <= reach
-        case .text, .sticky:
+        case .text, .sticky, .stamp:
             return true
+        case let .polygon(points):
+            guard let first = points.first else { return false }
+            if purpose == .select || item.style.isFilled {
+                let path = CGMutablePath()
+                path.addLines(between: points)
+                path.closeSubpath()
+                if path.contains(point) { return true }
+            }
+            return distance(from: point, toPolyline: points + [first]) <= reach
         case let .shape(kind, rect):
             let inside = purpose == .select || item.style.isFilled
             return hitsShape(kind, rect: rect.standardized, at: point, reach: reach, countsInside: inside)
@@ -135,13 +144,12 @@ enum CanvasHitTester {
         return CGRect(x: start.x, y: start.y, width: dx, height: dy).standardized
     }
 
-    /// `end` snapped so the line from `start` lies on a 45° step.
-    static func snappedEnd(from start: CGPoint, to end: CGPoint) -> CGPoint {
+    /// `end` snapped so the line from `start` lies on a multiple of `step` (45° by default).
+    static func snappedEnd(from start: CGPoint, to end: CGPoint, step: CGFloat = .pi / 4) -> CGPoint {
         let dx = end.x - start.x
         let dy = end.y - start.y
         let length = hypot(dx, dy)
-        guard length > 0 else { return end }
-        let step = CGFloat.pi / 4
+        guard length > 0, step > 0 else { return end }
         let angle = (atan2(dy, dx) / step).rounded() * step
         return CGPoint(x: start.x + cos(angle) * length, y: start.y + sin(angle) * length)
     }

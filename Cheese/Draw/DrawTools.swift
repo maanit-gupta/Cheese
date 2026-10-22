@@ -13,12 +13,13 @@ enum DrawTool: String, CaseIterable, Sendable {
     case arrow
     case text
     case sticky
+    case stamp
     case laser
     case spotlight
     case zoom
 
-    /// The single-letter key that picks the tool while drawing.
-    var key: Character {
+    /// The single-letter key that picks the tool while drawing, when Settings turns letter keys on.
+    var key: Character? {
         switch self {
         case .select: "V"
         case .passThrough: "M"
@@ -31,6 +32,7 @@ enum DrawTool: String, CaseIterable, Sendable {
         case .arrow: "A"
         case .text: "T"
         case .sticky: "N"
+        case .stamp: nil
         case .laser: "L"
         case .spotlight: "S"
         case .zoom: "Z"
@@ -41,7 +43,7 @@ enum DrawTool: String, CaseIterable, Sendable {
         switch self {
         case .select: "Select"
         case .passThrough: "Pass-Through"
-        case .pen: "Pen"
+        case .pen: "Magic Pen"
         case .highlighter: "Highlighter"
         case .eraser: "Eraser"
         case .rectangle: "Rectangle"
@@ -50,6 +52,7 @@ enum DrawTool: String, CaseIterable, Sendable {
         case .arrow: "Arrow"
         case .text: "Text"
         case .sticky: "Sticky Note"
+        case .stamp: "Stamps"
         case .laser: "Laser Pointer"
         case .spotlight: "Spotlight"
         case .zoom: "Zoom"
@@ -60,7 +63,7 @@ enum DrawTool: String, CaseIterable, Sendable {
         switch self {
         case .select: "cursorarrow"
         case .passThrough: "cursorarrow.rays"
-        case .pen: "pencil.tip"
+        case .pen: "pencil.and.scribble"
         case .highlighter: "highlighter"
         case .eraser: "eraser"
         case .rectangle: "rectangle"
@@ -69,6 +72,7 @@ enum DrawTool: String, CaseIterable, Sendable {
         case .arrow: "arrow.up.right"
         case .text: "textformat"
         case .sticky: "note.text"
+        case .stamp: "seal"
         case .laser: "smallcircle.filled.circle"
         case .spotlight: "flashlight.on.fill"
         case .zoom: "plus.magnifyingglass"
@@ -78,14 +82,27 @@ enum DrawTool: String, CaseIterable, Sendable {
     /// Tools with a flyout of options (color, width, fill, font size, sticky color).
     var hasOptions: Bool {
         switch self {
-        case .pen, .highlighter, .rectangle, .ellipse, .line, .arrow, .text, .sticky: true
+        case .pen, .highlighter, .rectangle, .ellipse, .line, .arrow, .text, .sticky, .stamp: true
         default: false
         }
     }
 
     var usesWidth: Bool {
         switch self {
-        case .pen, .highlighter, .rectangle, .ellipse, .line, .arrow: true
+        case .pen, .highlighter, .rectangle, .ellipse, .line, .arrow, .stamp: true
+        default: false
+        }
+    }
+
+    /// Freehand tools: input runs through the ink engine.
+    var isInk: Bool {
+        self == .pen || self == .highlighter
+    }
+
+    /// Tools where holding ⌘ erases instead.
+    var allowsModifierErasing: Bool {
+        switch self {
+        case .pen, .highlighter, .rectangle, .ellipse, .line, .arrow, .stamp: true
         default: false
         }
     }
@@ -107,6 +124,31 @@ enum DrawTool: String, CaseIterable, Sendable {
     static func forKey(_ character: Character) -> DrawTool? {
         let upper = Character(character.uppercased())
         return allCases.first { $0.key == upper }
+    }
+}
+
+/// The radial menu's slices, clockwise from the top.
+enum RadialSlice: Int, CaseIterable, Sendable {
+    case pen
+    case highlighter
+    case eraser
+    case text
+    case stamps
+    case sticky
+    case zoom
+    case laser
+
+    var tool: DrawTool {
+        switch self {
+        case .pen: .pen
+        case .highlighter: .highlighter
+        case .eraser: .eraser
+        case .text: .text
+        case .stamps: .stamp
+        case .sticky: .sticky
+        case .zoom: .zoom
+        case .laser: .laser
+        }
     }
 }
 
@@ -146,6 +188,13 @@ final class DrawSettings {
     var color = CanvasColor.presets[0]
     var width: CGFloat = 5
     var isFilled = false
+    /// Pen only: a soft glow around the ink.
+    var isNeon = false
+    /// Strokes fade away 3 s after the pen lifts instead of staying.
+    var isDisappearingInk = false
+    var stampKind = StampKind.check
+    /// The rail shrinks to a pill while drawing and grows back on hover.
+    var isToolbarCollapsed = false
     var fontSize: CGFloat = 28
     var stickyColor = CanvasColor.stickyColors[0]
     var board = BoardMode.off
@@ -161,9 +210,21 @@ final class DrawSettings {
         CanvasStyle(color: color, width: width, isFilled: isFilled, fontSize: fontSize)
     }
 
-    /// `[` and `]`: about 25% thinner or thicker, within range.
+    /// Scroll or `[` and `]`: about 25% thinner or thicker, within range.
     func adjustWidth(thicker: Bool) {
         let next = thicker ? max(width + 1, (width * 1.25).rounded()) : min(width - 1, (width / 1.25).rounded())
         width = min(max(next, Self.widthRange.lowerBound), Self.widthRange.upperBound)
+    }
+}
+
+extension DrawSettings {
+    /// The next preset color after the current one (or the first, for a custom color).
+    func cycleColor(forward: Bool) {
+        let presets = CanvasColor.presets
+        guard let index = presets.firstIndex(of: color) else {
+            color = presets[0]
+            return
+        }
+        color = presets[(index + (forward ? 1 : presets.count - 1)) % presets.count]
     }
 }

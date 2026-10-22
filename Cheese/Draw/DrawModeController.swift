@@ -3,6 +3,10 @@ import os
 
 /// Draw on screen: transparent overlays on every display plus the toolbar. Drawings are kept in
 /// memory while draw mode is off and come back when it's turned on again.
+///
+/// Everyday drawing needs only the mouse and at most one held modifier: the magic pen snaps rough
+/// shapes, ⇧ draws straight, ⌘ erases, ⌥ highlights, scrolling sizes the brush, and holding the
+/// right button opens a radial menu of tools and colors.
 @MainActor
 final class DrawModeController {
     /// What draw mode needs from the rest of Cheese, wired up in `App/`.
@@ -12,19 +16,53 @@ final class DrawModeController {
         var openEditor: (CapturedImage) -> Void
         var isScreenRecordingGranted: () -> Bool
         var explainMissingScreenRecording: (_ feature: String) -> Void
+        /// Settings → General → "Advanced: single-letter tool keys".
+        var usesLetterKeys: () -> Bool = { Preferences().usesDrawLetterKeys }
     }
 
     /// Clearing more objects than this asks first.
     static let clearAllConfirmationThreshold = 20
     static let selectTolerance: CGFloat = 6
     static let eraserRadius: CGFloat = 10
-    /// Freehand points closer together than this are merged.
+    /// Freehand samples closer together than this are merged.
     static let strokeMinimumDistance: CGFloat = 0.75
+    /// Holding the pen still this long at the end of a stroke snaps it into a clean shape.
+    static let magicPause: Duration = .milliseconds(400)
+    /// Pointer movement smaller than this doesn't count as moving during that pause.
+    static let pauseTolerance: CGFloat = 3
+    /// The radial menu draws after the right button has been held this long; flicks don't wait for it.
+    static let radialMenuDelay: Duration = .milliseconds(140)
+    /// ⇧ snaps straight lines to multiples of this angle.
+    static let straightLineStep = CGFloat.pi / 12
     private static let hiddenCursor = NSCursor(image: NSImage(size: NSSize(width: 1, height: 1)), hotSpot: .zero)
+
+    /// The stroke being drawn with the pen or highlighter.
+    private struct ActiveInk {
+        var page: CanvasPageID
+        /// Filtered samples; the raw pointer position is added at the end when drawing.
+        var samples: [InkSample]
+        var latest: InkSample
+        var filter = OneEuroFilter()
+        var isHighlighter: Bool
+        var style: CanvasStyle
+        /// With ⇧ held: where the straight line ends.
+        var straightEnd: CGPoint?
+        /// The clean shape the magic pen snapped to, if the pen paused.
+        var snapped: CanvasItem?
+        var pauseAnchor: CGPoint
+
+        var start: CGPoint { samples.first?.point ?? latest.point }
+
+        /// Every sample with the pointer's latest position last, so ink always reaches the cursor.
+        var allSamples: [InkSample] {
+            guard let last = samples.last, last.point != latest.point else { return samples }
+            return samples + [latest]
+        }
+    }
 
     private enum Interaction {
         case idle
-        case drawing(page: CanvasPageID, points: [CGPoint])
+        case inking(ActiveInk)
         case shaping(page: CanvasPageID, start: CGPoint, end: CGPoint, constrained: Bool)
         case erasing(page: CanvasPageID, last: CGPoint, removed: [IndexedItem])
         case moving(page: CanvasPageID, start: CGPoint, originals: [CanvasItem], moved: Bool)
@@ -41,6 +79,15 @@ final class DrawModeController {
         var item: CanvasItem
         /// Not in the document yet; added when editing ends.
         var isNew: Bool
+    }
+
+    /// A right-button press: a flick or, once held, the radial menu.
+    private struct RadialGesture {
+        var page: CanvasPageID
+        var start: CGPoint
+        var startTime: TimeInterval
+        /// Where the menu is drawn, once it's shown.
+        var menuCenter: CGPoint?
     }
 
     let settings = DrawSettings()
@@ -61,6 +108,20 @@ final class DrawModeController {
     private let zoomStream = ZoomStream()
     /// The draft shape's ID stays the same while it's dragged out.
     private var draftID = UUID()
+    private var modifiers: NSEvent.ModifierFlags = []
+    private var pauseTask: Task<Void, Never>?
+    private var radial: RadialGesture?
+    private var radialTask: Task<Void, Never>?
+    private var hotkeyGesture = DrawHotkeyGesture()
+    /// While the draw hotkey is held its own modifiers (⌃⌥) are down; they mustn't turn the pen into a highlighter.
+    private var isHotkeyHeld = false
+    private var widthScroll: CGFloat = 0
+    private var colorScroll: CGFloat = 0
+    private var isPinchZooming = false
+    /// The dot a single click just left, removed again if that click turns out to be a double-click.
+    private var lastDot: (id: UUID, page: CanvasPageID)?
+    /// Bumped on every enter and exit, so a fade-out that finishes late doesn't hide a fresh session.
+    private var transition = 0
 
     init(services: Services) {
         self.services = services
@@ -76,12 +137,27 @@ final class DrawModeController {
     func enter() {
         guard !isActive else { return }
         isActive = true
+        transition += 1
+        // Draw mode always opens ready to draw, even if it was left in pass-through.
+        if settings.tool == .passThrough {
+            settings.tool = toolBeforePassThrough
+        }
+        settings.isToolbarCollapsed = false
         rebuildOverlays()
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         for overlay in overlays.values {
+            overlay.view.showsVignette = true
+            overlay.window.alphaValue = 0
             overlay.window.orderFrontRegardless()
         }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = reduceMotion ? 0.12 : 0.25
+            for overlay in overlays.values {
+                overlay.window.animator().alphaValue = 1
+            }
+        }
         if let screen = Screens.underMouse {
-            toolbar.show(on: screen)
+            toolbar.show(on: screen, animated: !reduceMotion)
         }
         applyTool()
         refreshAll()
@@ -96,18 +172,38 @@ final class DrawModeController {
         guard isActive else { return }
         endTextEditing()
         finishInteraction(constrained: false)
+        cancelRadial()
+        hotkeyGesture.cancel()
+        isHotkeyHeld = false
         selection = nil
         isActive = false
+        isPinchZooming = false
+        transition += 1
+        let generation = transition
         screenObserver?.cancel()
         screenObserver = nil
         Task { await zoomStream.stop() }
         for overlay in overlays.values {
-            overlay.view.presenter.hideAll()
-            overlay.view.setLaserAnimating(false)
-            overlay.window.orderOut(nil)
+            overlay.view.clearTransients()
         }
-        toolbar.hide()
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let windows = overlays.values.map(\.window)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = reduceMotion ? 0.1 : 0.2
+            for window in windows {
+                window.animator().alphaValue = 0
+            }
+        } completionHandler: { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.transition == generation else { return }
+                for window in windows {
+                    window.orderOut(nil)
+                }
+            }
+        }
+        toolbar.hide(animated: !reduceMotion)
         NSCursor.arrow.set()
+        refreshAll()
         Logger.draw.info("Draw mode off")
     }
 
@@ -150,6 +246,7 @@ final class DrawModeController {
                 guard let self, self.isActive else { continue }
                 self.rebuildOverlays()
                 for overlay in self.overlays.values {
+                    overlay.window.alphaValue = 1
                     overlay.window.orderFrontRegardless()
                 }
                 self.applyTool()
@@ -168,13 +265,60 @@ final class DrawModeController {
         }
     }
 
+    // MARK: The draw hotkey: tap to toggle, hold for quick ink
+
+    /// The hotkey went down. `time` is in the same clock as event timestamps (system uptime).
+    func hotkeyPressed(at time: TimeInterval) {
+        switch hotkeyGesture.press(at: time, isActive: isActive, isPassThrough: settings.tool == .passThrough) {
+        case .enter:
+            enter()
+        case .resumeDrawing:
+            chooseTool(toolBeforePassThrough)
+        case .none:
+            break
+        }
+        isHotkeyHeld = hotkeyGesture.isHeld
+    }
+
+    func hotkeyReleased(at time: TimeInterval) {
+        isHotkeyHeld = false
+        switch hotkeyGesture.release(at: time) {
+        case .exit:
+            exit()
+        case .passThrough:
+            guard isActive else { return }
+            chooseTool(.passThrough)
+        case .stay, .none:
+            break
+        }
+    }
+
     // MARK: Tools
+
+    /// The modifiers that mean something while drawing; the hotkey's own are ignored while it's held.
+    private func effectiveModifiers(_ flags: NSEvent.ModifierFlags) -> NSEvent.ModifierFlags {
+        var flags = flags.intersection(.deviceIndependentFlagsMask)
+        if isHotkeyHeld {
+            flags.subtract([.control, .option])
+        }
+        return flags
+    }
 
     var cursor: NSCursor {
         if settings.tool.grabsItems, isOverGrabbableItem {
             return .openHand
         }
+        let flags = effectiveModifiers(modifiers)
+        if settings.tool.allowsModifierErasing, flags.contains(.command) {
+            return BrushCursor.cursor(.eraser, diameter: Self.eraserRadius * 2, color: settings.color)
+        }
         return switch settings.tool {
+        case .pen where flags.contains(.option), .highlighter:
+            BrushCursor.cursor(.highlighter, diameter: settings.width * CanvasItem.highlighterWidthFactor, color: settings.color)
+        case .pen:
+            BrushCursor.cursor(.pen, diameter: settings.width, color: settings.color)
+        case .eraser:
+            BrushCursor.cursor(.eraser, diameter: Self.eraserRadius * 2, color: settings.color)
         case .select, .passThrough, .spotlight: .arrow
         case .text: .iBeam
         case .laser, .zoom: Self.hiddenCursor
@@ -225,21 +369,40 @@ final class DrawModeController {
         cursor.set()
     }
 
+    func modifiersChanged(_ flags: NSEvent.ModifierFlags) {
+        modifiers = flags
+        cursor.set()
+    }
+
     // MARK: Rendering
 
     func renderState(for page: CanvasPageID) -> CanvasRenderState {
-        var state = CanvasRenderState(items: document.items(on: page), board: settings.board)
-        if case let .shaping(shapePage, start, end, constrained) = interaction, shapePage == page {
-            state.draft = shapeItem(from: start, to: end, constrained: constrained)
+        var state = CanvasRenderState(board: settings.board)
+        var floatingIDs: Set<UUID> = []
+        var drafts: [CanvasItem] = []
+        switch interaction {
+        case let .moving(movingPage, _, originals, moved) where movingPage == page && moved:
+            floatingIDs = Set(originals.map(\.id))
+        case let .resizing(resizingPage, _, original) where resizingPage == page:
+            floatingIDs = [original.id]
+        case let .shaping(shapePage, start, end, constrained) where shapePage == page:
+            drafts += [shapeItem(from: start, to: end, constrained: constrained)].compactMap(\.self)
+        default:
+            break
         }
+        var hiddenID: UUID?
         if let editing, editing.page == page {
-            state.hiddenItemID = editing.item.id
-            if editing.isNew {
-                state.draft = editing.item
+            hiddenID = editing.item.id
+            // The editor shows the text; a note still needs its paper behind it.
+            if case .sticky = editing.item.kind {
+                drafts.append(editing.item.withText(""))
             }
         }
+        let items = document.items(on: page)
+        state.items = items.filter { !floatingIDs.contains($0.id) && $0.id != hiddenID }
+        state.floating = items.filter { floatingIDs.contains($0.id) && $0.id != hiddenID } + drafts
         if let selection, selection.page == page {
-            let selected = state.items.filter { selection.ids.contains($0.id) }
+            let selected = items.filter { selection.ids.contains($0.id) }
             state.selectedBounds = selected.map(\.bounds)
             state.showsHandles = selected.count == 1 && (settings.tool == .select || settings.tool.grabsItems)
         }
@@ -251,12 +414,12 @@ final class DrawModeController {
     }
 
     private func refresh(_ page: CanvasPageID) {
-        view(page)?.needsDisplay = true
+        view(page)?.refresh()
     }
 
     private func refreshAll() {
         for overlay in overlays.values {
-            overlay.view.needsDisplay = true
+            overlay.view.refresh()
         }
     }
 
@@ -268,20 +431,33 @@ final class DrawModeController {
     // MARK: Mouse
 
     func mouseDown(on page: CanvasPageID, at point: CGPoint, event: NSEvent) {
+        let flags = effectiveModifiers(event.modifierFlags)
+        modifiers = event.modifierFlags
         if editing != nil {
             endTextEditing()
             // Clicking away from a text box or note only commits it.
-            if settings.tool == .text || settings.tool == .sticky || settings.tool == .select {
+            if settings.tool == .text || settings.tool == .sticky || settings.tool == .select || settings.tool.isInk {
                 return
             }
         }
+        if isActive {
+            toolbar.noteDrawing()
+        }
         let items = document.items(on: page)
+        if settings.tool.allowsModifierErasing, flags.contains(.command) {
+            interaction = .erasing(page: page, last: point, removed: [])
+            erase(on: page, to: point)
+            return
+        }
         switch settings.tool {
         case .select:
             selectMouseDown(on: page, at: point, items: items, event: event)
         case .pen, .highlighter:
-            interaction = .drawing(page: page, points: [point])
-            view(page)?.setLiveStroke([point], style: settings.style, isHighlighter: settings.tool == .highlighter)
+            if event.clickCount >= 2 {
+                textBoxFromDoubleClick(on: page, at: point, items: items)
+                return
+            }
+            beginInk(on: page, at: point, event: event, isHighlighter: settings.tool == .highlighter || flags.contains(.option))
         case .eraser:
             interaction = .erasing(page: page, last: point, removed: [])
             erase(on: page, to: point)
@@ -295,14 +471,12 @@ final class DrawModeController {
                 refreshAll()
             }
             draftID = UUID()
-            interaction = .shaping(page: page, start: point, end: point, constrained: event.modifierFlags.contains(.shift))
+            interaction = .shaping(page: page, start: point, end: point, constrained: flags.contains(.shift))
         case .text:
             if let hit = CanvasHitTester.topItem(at: point, in: items, tolerance: Self.selectTolerance), case .text = hit.kind {
                 beginEditing(hit, on: page, isNew: false)
             } else {
-                let size = CanvasRenderer.textSize("", fontSize: settings.fontSize)
-                let rect = CGRect(x: point.x, y: point.y - size.height / 2, width: size.width, height: size.height)
-                beginEditing(CanvasItem(kind: .text("", rect: rect), style: settings.style), on: page, isNew: true)
+                beginNewTextBox(on: page, at: point)
             }
         case .sticky:
             if let hit = CanvasHitTester.topItem(at: point, in: items, tolerance: Self.selectTolerance), case .sticky = hit.kind {
@@ -312,6 +486,8 @@ final class DrawModeController {
                 let rect = CGRect(x: point.x - size.width / 2, y: point.y - size.height / 2, width: size.width, height: size.height)
                 beginEditing(CanvasItem(kind: .sticky("", rect: rect, color: settings.stickyColor), style: settings.style), on: page, isNew: true)
             }
+        case .stamp:
+            placeStamp(on: page, at: point, items: items)
         case .laser:
             view(page)?.presenter.addLaserPoint(point, at: CACurrentMediaTime())
         case .passThrough, .spotlight, .zoom:
@@ -338,6 +514,7 @@ final class DrawModeController {
         let shift = event.modifierFlags.contains(.shift)
         if let grabbed = selectedHandle(at: point, on: page) {
             interaction = .resizing(page: page, handle: grabbed.handle, original: grabbed.item)
+            refresh(page)
             return
         }
         guard let hit = CanvasHitTester.topItem(at: point, in: items, tolerance: Self.selectTolerance, purpose: purpose) else {
@@ -372,14 +549,14 @@ final class DrawModeController {
     }
 
     func mouseDragged(on page: CanvasPageID, at point: CGPoint, event: NSEvent) {
-        let shift = event.modifierFlags.contains(.shift)
+        let flags = effectiveModifiers(event.modifierFlags)
+        let shift = flags.contains(.shift)
         switch interaction {
         case .idle:
             pointerMoved(on: page, to: point)
-        case .drawing(let page, var points):
-            points.append(point)
-            interaction = .drawing(page: page, points: points)
-            view(page)?.setLiveStroke(points, style: settings.style, isHighlighter: settings.tool == .highlighter)
+        case var .inking(ink):
+            continueInk(&ink, at: point, event: event, straight: shift)
+            interaction = .inking(ink)
         case let .shaping(page, start, _, _):
             interaction = .shaping(page: page, start: start, end: point, constrained: shift)
             refresh(page)
@@ -389,6 +566,7 @@ final class DrawModeController {
             let offset = CGSize(width: point.x - start.x, height: point.y - start.y)
             document.replace(originals.map { $0.translated(by: offset) }, on: page)
             interaction = .moving(page: page, start: start, originals: originals, moved: true)
+            // The moving items leave the bitmap on the first drag, then draw live above it.
             refresh(page)
         case let .resizing(page, handle, original):
             // Text keeps its proportions, since its font scales with height.
@@ -401,7 +579,11 @@ final class DrawModeController {
     }
 
     func mouseUp(on page: CanvasPageID, at point: CGPoint, event: NSEvent) {
-        finishInteraction(constrained: event.modifierFlags.contains(.shift))
+        if case var .inking(ink) = interaction {
+            ink.latest = InkSample(point: point, pressure: ink.latest.pressure, time: event.timestamp)
+            interaction = .inking(ink)
+        }
+        finishInteraction(constrained: effectiveModifiers(event.modifierFlags).contains(.shift))
     }
 
     /// Commits whatever the pointer was doing as one undoable step.
@@ -411,13 +593,8 @@ final class DrawModeController {
         switch finished {
         case .idle:
             return
-        case let .drawing(page, points):
-            view(page)?.setLiveStroke(nil, style: settings.style, isHighlighter: false)
-            let filtered = StrokeSmoother.filtered(points, minimumDistance: Self.strokeMinimumDistance)
-            guard !filtered.isEmpty else { break }
-            let item = CanvasItem(kind: .stroke(points: filtered, isHighlighter: settings.tool == .highlighter), style: settings.style)
-            history.perform(.addItem(item, page: page), on: &document)
-            refresh(page)
+        case let .inking(ink):
+            finishInk(ink)
         case let .shaping(page, start, end, wasConstrained):
             guard hypot(end.x - start.x, end.y - start.y) >= 3,
                   let item = shapeItem(from: start, to: end, constrained: constrained || wasConstrained)
@@ -435,10 +612,12 @@ final class DrawModeController {
             guard moved else { break }
             let after = originals.compactMap { document.item($0.id, on: page) }
             history.record(.transformItems(before: originals, after: after, page: page))
+            refresh(page)
         case let .resizing(page, _, original):
             if let after = document.item(original.id, on: page), after != original {
                 history.record(.transformItems(before: [original], after: [after], page: page))
             }
+            refresh(page)
         }
         syncHistoryState()
     }
@@ -470,11 +649,201 @@ final class DrawModeController {
         interaction = .erasing(page: page, last: point, removed: removed)
     }
 
+    // MARK: Ink
+
+    private func beginInk(on page: CanvasPageID, at point: CGPoint, event: NSEvent, isHighlighter: Bool) {
+        if selection != nil {
+            selection = nil
+            refreshAll()
+        }
+        var style = settings.style
+        style.isNeon = settings.isNeon && !isHighlighter
+        let sample = InkSample(point: point, pressure: CGFloat(event.pressure), time: event.timestamp)
+        var ink = ActiveInk(page: page, samples: [], latest: sample, isHighlighter: isHighlighter, style: style, pauseAnchor: point)
+        ink.samples = [InkSample(point: ink.filter.filter(point, at: sample.time), pressure: sample.pressure, time: sample.time)]
+        interaction = .inking(ink)
+        // Every sample, not just one per frame: fast strokes keep their shape.
+        NSEvent.isMouseCoalescingEnabled = false
+        showLiveInk(ink)
+        schedulePause(for: ink)
+    }
+
+    private func continueInk(_ ink: inout ActiveInk, at point: CGPoint, event: NSEvent, straight: Bool) {
+        let sample = InkSample(point: point, pressure: CGFloat(event.pressure), time: event.timestamp)
+        ink.latest = sample
+        let filtered = ink.filter.filter(point, at: sample.time)
+        if let last = ink.samples.last, hypot(filtered.x - last.point.x, filtered.y - last.point.y) >= Self.strokeMinimumDistance {
+            ink.samples.append(InkSample(point: filtered, pressure: sample.pressure, time: sample.time))
+        }
+        ink.straightEnd = straight ? CanvasHitTester.snappedEnd(from: ink.start, to: point, step: Self.straightLineStep) : nil
+        if hypot(point.x - ink.pauseAnchor.x, point.y - ink.pauseAnchor.y) > Self.pauseTolerance {
+            ink.pauseAnchor = point
+            // Moving on after a snap goes back to freehand.
+            if ink.snapped != nil {
+                ink.snapped = nil
+                view(ink.page)?.setSnapPreview(nil)
+            }
+            schedulePause(for: ink)
+        }
+        showLiveInk(ink)
+    }
+
+    private func inkOptions(_ ink: ActiveInk, pressures: [CGFloat]) -> StrokeBuilder.Options {
+        ink.isHighlighter
+            ? .highlighter(width: ink.style.width * CanvasItem.highlighterWidthFactor)
+            : .pen(width: ink.style.width, simulatesPressure: !StrokeBuilder.hasAnalogPressure(pressures))
+    }
+
+    private func showLiveInk(_ ink: ActiveInk) {
+        guard let view = view(ink.page) else { return }
+        let samples: [InkSample] = if let end = ink.straightEnd {
+            [InkSample(point: ink.start, pressure: 0.5, time: 0), InkSample(point: end, pressure: 0.5, time: 0)]
+        } else {
+            ink.allSamples
+        }
+        let pressures = samples.map(\.pressure)
+        let analog = StrokeBuilder.hasAnalogPressure(pressures)
+        view.setLiveInk(LiveInk(
+            points: samples.map(\.point),
+            pressures: analog ? pressures : [],
+            options: inkOptions(ink, pressures: analog ? pressures : []),
+            color: ink.isHighlighter ? ink.style.color.withAlpha(CanvasItem.highlighterAlpha) : ink.style.color,
+            isNeon: ink.style.isNeon
+        ))
+    }
+
+    private func schedulePause(for ink: ActiveInk) {
+        pauseTask?.cancel()
+        guard !ink.isHighlighter, ink.straightEnd == nil else { return }
+        pauseTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.magicPause)
+            guard !Task.isCancelled else { return }
+            self?.pauseElapsed()
+        }
+    }
+
+    /// The pen has been held still: if the stroke so far is a rough shape, snap it into a clean one.
+    func pauseElapsed() {
+        guard case var .inking(ink) = interaction, !ink.isHighlighter, ink.snapped == nil, ink.straightEnd == nil,
+              let shape = ShapeRecognizer.recognize(ink.allSamples.map(\.point))
+        else { return }
+        let item = Self.item(for: shape, style: ink.style)
+        ink.snapped = item
+        interaction = .inking(ink)
+        view(ink.page)?.setSnapPreview(item)
+    }
+
+    static func item(for shape: RecognizedShape, style: CanvasStyle) -> CanvasItem {
+        let kind: CanvasItem.Kind = switch shape {
+        case let .line(from, to): .line(from: from, to: to)
+        case let .arrow(from, to): .arrow(from: from, to: to)
+        case let .rectangle(rect): .shape(.rectangle, rect: rect)
+        case let .ellipse(rect): .shape(.ellipse, rect: rect)
+        case let .polygon(points): .polygon(points: points)
+        }
+        var style = style
+        style.isFilled = false
+        return CanvasItem(kind: kind, style: style)
+    }
+
+    private func finishInk(_ ink: ActiveInk) {
+        NSEvent.isMouseCoalescingEnabled = true
+        pauseTask?.cancel()
+        pauseTask = nil
+        let page = ink.page
+        view(page)?.setLiveInk(nil)
+        view(page)?.setSnapPreview(nil)
+        lastDot = nil
+
+        let samples = ink.allSamples
+        let item: CanvasItem
+        if let end = ink.straightEnd {
+            item = ink.isHighlighter
+                ? CanvasItem(kind: .stroke(points: [ink.start, end], pressures: [], isHighlighter: true), style: ink.style)
+                : CanvasItem(kind: .line(from: ink.start, to: end), style: ink.style)
+        } else if let snapped = ink.snapped {
+            item = snapped
+        } else {
+            if !ink.isHighlighter, scratchOut(samples, on: page) {
+                return
+            }
+            let pressures = samples.map(\.pressure)
+            item = CanvasItem(
+                kind: .stroke(points: samples.map(\.point), pressures: StrokeBuilder.hasAnalogPressure(pressures) ? pressures : [], isHighlighter: ink.isHighlighter),
+                style: ink.style
+            )
+        }
+        if settings.isDisappearingInk {
+            view(page)?.showDisappearing(item)
+            return
+        }
+        history.perform(.addItem(item, page: page), on: &document)
+        if item.geometryBounds.width < 2, item.geometryBounds.height < 2 {
+            lastDot = (item.id, page)
+        }
+        refresh(page)
+    }
+
+    /// A fast zig-zag over ink deletes the ink it crosses. Returns whether it did.
+    private func scratchOut(_ samples: [InkSample], on page: CanvasPageID) -> Bool {
+        guard ShapeRecognizer.isScratchOut(samples) else { return false }
+        let items = document.items(on: page)
+        var touched: Set<UUID> = []
+        for (from, to) in zip(samples, samples.dropFirst()) {
+            touched.formUnion(CanvasHitTester.itemsErased(from: from.point, to: to.point, radius: settings.width / 2, in: items))
+        }
+        guard !touched.isEmpty else { return false }
+        let removed = document.indexedItems(withIDs: touched, on: page)
+        history.perform(.removeItems(removed, page: page), on: &document)
+        refresh(page)
+        return true
+    }
+
+    /// Double-clicking empty space with the pen starts a text box there; on text, it edits it.
+    private func textBoxFromDoubleClick(on page: CanvasPageID, at point: CGPoint, items: [CanvasItem]) {
+        // The first click of the pair left a dot; take it back.
+        if let dot = lastDot, dot.page == page, case let .addItem(added, addedPage)? = history.undoStack.last,
+           added.id == dot.id, addedPage == page {
+            history.retract(&document)
+            syncHistoryState()
+            refresh(page)
+        }
+        lastDot = nil
+        let remaining = document.items(on: page)
+        if let hit = CanvasHitTester.topItem(at: point, in: remaining, tolerance: Self.selectTolerance), hit.text != nil {
+            beginEditing(hit, on: page, isNew: false)
+        } else {
+            beginNewTextBox(on: page, at: point)
+        }
+    }
+
+    // MARK: Stamps
+
+    static func stampSize(forWidth width: CGFloat) -> CGFloat {
+        20 + width * 3.2
+    }
+
+    private func placeStamp(on page: CanvasPageID, at point: CGPoint, items: [CanvasItem]) {
+        let stamp = settings.stampKind.stamp(after: items)
+        var style = settings.style
+        style.isNeon = false
+        let item = CanvasItem(kind: .stamp(stamp, center: point, size: Self.stampSize(forWidth: settings.width)), style: style)
+        history.perform(.addItem(item, page: page), on: &document)
+        syncHistoryState()
+        refresh(page)
+    }
+
     // MARK: Text and sticky notes
 
+    private func beginNewTextBox(on page: CanvasPageID, at point: CGPoint) {
+        let size = CanvasRenderer.textSize("", fontSize: settings.fontSize)
+        let rect = CGRect(x: point.x, y: point.y - size.height / 2, width: size.width, height: size.height)
+        beginEditing(CanvasItem(kind: .text("", rect: rect), style: settings.style), on: page, isNew: true)
+    }
+
     private func beginEditing(_ item: CanvasItem, on page: CanvasPageID, isNew: Bool) {
-        guard let view = view(page) else { return }
         editing = TextEditing(page: page, item: item, isNew: isNew)
+        guard let view = view(page) else { return }
         switch item.kind {
         case let .text(text, rect):
             view.beginTextEditing(text: text, frame: rect, fontSize: item.style.fontSize, color: item.style.color, isSticky: false)
@@ -486,6 +855,8 @@ final class DrawModeController {
         }
         refresh(page)
     }
+
+    var isEditingText: Bool { editing != nil }
 
     /// Commits the text being edited. Empty text boxes are dropped; notes stay even when empty.
     func endTextEditing() {
@@ -520,15 +891,24 @@ final class DrawModeController {
         focusCanvasUnderPointer()
     }
 
+    /// Types `text` into the box being edited. For tests, which have no text view on screen.
+    func setEditingText(_ text: String) {
+        guard let current = editing else { return }
+        editing?.item = current.item.withText(text)
+    }
+
     // MARK: Keyboard
 
-    /// Single-letter tool keys and the rest. Returns whether the key was used.
+    /// Esc, Delete and the ⌘ shortcuts; single-letter tool keys only when Settings turns them on.
+    /// Returns whether the key was used.
     func handleKeyDown(_ event: NSEvent) -> Bool {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let characters = event.charactersIgnoringModifiers ?? ""
 
         if event.keyCode == 53 {
-            if editing != nil {
+            if radial != nil {
+                cancelRadial()
+            } else if editing != nil {
                 endTextEditing()
             } else {
                 exit()
@@ -551,9 +931,10 @@ final class DrawModeController {
               characters.count == 1, let character = characters.first
         else { return false }
 
+        let letterKeys = services.usesLetterKeys()
         // In pass-through only M (back to drawing) works.
         if settings.tool == .passThrough {
-            guard DrawTool.forKey(character) == .passThrough else { return false }
+            guard letterKeys, DrawTool.forKey(character) == .passThrough else { return false }
             togglePassThrough()
             return true
         }
@@ -561,6 +942,7 @@ final class DrawModeController {
             deleteSelection()
             return true
         }
+        guard letterKeys else { return false }
         if let tool = DrawTool.forKey(character) {
             tool == .passThrough ? togglePassThrough() : chooseTool(tool)
             return true
@@ -579,6 +961,7 @@ final class DrawModeController {
         default:
             return false
         }
+        cursor.set()
         return true
     }
 
@@ -592,6 +975,82 @@ final class DrawModeController {
         refresh(selection.page)
     }
 
+    // MARK: Radial menu
+
+    func radialBegan(on page: CanvasPageID, at point: CGPoint, time: TimeInterval) {
+        guard settings.tool != .passThrough else { return }
+        endTextEditing()
+        finishInteraction(constrained: false)
+        cancelRadial()
+        radial = RadialGesture(page: page, start: point, startTime: time)
+        radialTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.radialMenuDelay)
+            guard !Task.isCancelled else { return }
+            self?.showRadialMenu()
+        }
+    }
+
+    private func showRadialMenu() {
+        guard var radial, let view = view(radial.page) else { return }
+        let menu = view.radialMenu
+        let center = menu.geometry.clampedCenter(radial.start, in: view.bounds)
+        radial.menuCenter = center
+        self.radial = radial
+        menu.show(at: center, color: settings.color, width: settings.width, scale: view.window?.backingScaleFactor ?? 2)
+        NSCursor.arrow.set()
+        if let pointer, pointer.page == radial.page {
+            radialMoved(on: radial.page, to: pointer.point)
+        }
+    }
+
+    func radialMoved(on page: CanvasPageID, to point: CGPoint) {
+        pointer = (page, point)
+        guard let radial, radial.page == page, let center = radial.menuCenter, let menu = view(page)?.radialMenu else { return }
+        menu.highlight(menu.geometry.target(at: CGVector(dx: point.x - center.x, dy: point.y - center.y)))
+    }
+
+    func radialEnded(on page: CanvasPageID, at point: CGPoint, time: TimeInterval) {
+        guard let radial else { return }
+        cancelRadial()
+        if let center = radial.menuCenter {
+            let geometry = view(radial.page)?.radialMenu.geometry ?? RadialMenuGeometry()
+            apply(geometry.target(at: CGVector(dx: point.x - center.x, dy: point.y - center.y)))
+        } else if let slice = RadialMenuGeometry.flick(
+            displacement: CGVector(dx: point.x - radial.start.x, dy: point.y - radial.start.y),
+            duration: time - radial.startTime
+        ) {
+            apply(.slice(slice))
+        }
+        cursor.set()
+    }
+
+    private func cancelRadial() {
+        radialTask?.cancel()
+        radialTask = nil
+        if let radial {
+            view(radial.page)?.radialMenu.hide()
+        }
+        radial = nil
+    }
+
+    private func apply(_ target: RadialMenuGeometry.Target) {
+        switch target {
+        case .cancel:
+            break
+        case let .slice(index):
+            guard let slice = RadialSlice(rawValue: index) else { return }
+            // Picking Stamps again moves on to the next stamp.
+            if slice.tool == .stamp, settings.tool == .stamp {
+                settings.stampKind = settings.stampKind.next
+            } else {
+                chooseTool(slice.tool)
+            }
+        case let .color(index):
+            guard CanvasColor.presets.indices.contains(index) else { return }
+            settings.color = CanvasColor.presets[index]
+        }
+    }
+
     // MARK: Toolbar commands
 
     func undo() {
@@ -599,6 +1058,7 @@ final class DrawModeController {
         finishInteraction(constrained: false)
         guard history.undo(&document) != nil else { return }
         selection = nil
+        lastDot = nil
         syncHistoryState()
         refreshAll()
     }
@@ -608,6 +1068,7 @@ final class DrawModeController {
         finishInteraction(constrained: false)
         guard history.redo(&document) != nil else { return }
         selection = nil
+        lastDot = nil
         syncHistoryState()
         refreshAll()
     }
@@ -622,6 +1083,7 @@ final class DrawModeController {
         }
         history.perform(.clearAll(previous: document), on: &document)
         selection = nil
+        lastDot = nil
         syncHistoryState()
         refreshAll()
         focusCanvasUnderPointer()
@@ -642,6 +1104,11 @@ final class DrawModeController {
         refreshAll()
     }
 
+    func toggleDisappearingInk() {
+        settings.isDisappearingInk.toggle()
+        focusCanvasUnderPointer()
+    }
+
     /// Copies the display under the pointer, drawings included, or opens it in the editor with Shift.
     func snapshot(shiftHeld: Bool) {
         endTextEditing()
@@ -653,9 +1120,17 @@ final class DrawModeController {
             services.explainMissingScreenRecording("Snapshots of drawings")
             return
         }
+        // The vignette only marks draw mode; it isn't part of the picture.
+        overlay.view.showsVignette = false
         overlay.view.displayIfNeeded()
+        CATransaction.flush()
         let windowID = CGWindowID(overlay.window.windowNumber)
         Task {
+            defer {
+                if isActive {
+                    overlay.view.showsVignette = true
+                }
+            }
             do {
                 let image = try await services.captureDisplay(displayID, windowID)
                 if shiftHeld {
@@ -675,16 +1150,87 @@ final class DrawModeController {
         ToolbarActions(
             chooseTool: { [weak self] tool in self?.chooseTool(tool, fromToolbar: true) },
             cycleBoard: { [weak self] in self?.cycleBoard() },
+            toggleDisappearingInk: { [weak self] in self?.toggleDisappearingInk() },
             undo: { [weak self] in self?.undo() },
             redo: { [weak self] in self?.redo() },
             clearAll: { [weak self] in self?.clearAll() },
             snapshot: { [weak self] shiftHeld in self?.snapshot(shiftHeld: shiftHeld) },
             exit: { [weak self] in self?.exit() },
-            returnFocus: { [weak self] in self?.focusCanvasUnderPointer() }
+            returnFocus: { [weak self] in
+                self?.focusCanvasUnderPointer()
+                self?.cursor.set()
+            }
         )
     }
 
+    // MARK: Scrolling and pinching
+
+    func scrolled(on page: CanvasPageID, at point: CGPoint, delta: CGFloat, precise: Bool, modifiers flags: NSEvent.ModifierFlags) {
+        pointer = (page, point)
+        // A trackpad sends many small deltas; a wheel sends a notch at a time.
+        let units = precise ? delta / 12 : (delta == 0 ? 0 : (delta > 0 ? 1 : -1))
+        if radial == nil {
+            switch settings.tool {
+            case .spotlight:
+                let range = DrawSettings.spotlightRadiusRange
+                let step = precise ? delta : delta * 8
+                settings.spotlightRadius = min(max(settings.spotlightRadius + step, range.lowerBound), range.upperBound)
+                updatePresenters()
+                return
+            case .zoom:
+                let range = DrawSettings.zoomRange
+                let step = precise ? delta : delta * 8
+                settings.zoomFactor = min(max(settings.zoomFactor * (1 + step * 0.01), range.lowerBound), range.upperBound)
+                updatePresenters()
+                return
+            default:
+                break
+            }
+        }
+        if effectiveModifiers(flags).contains(.shift), radial == nil {
+            colorScroll += units
+            while abs(colorScroll) >= 1 {
+                settings.cycleColor(forward: colorScroll > 0)
+                colorScroll -= colorScroll > 0 ? 1 : -1
+            }
+        } else {
+            widthScroll += units
+            while abs(widthScroll) >= 1 {
+                settings.adjustWidth(thicker: widthScroll > 0)
+                widthScroll -= widthScroll > 0 ? 1 : -1
+            }
+        }
+        if let radial {
+            view(radial.page)?.radialMenu.updateBrush(color: settings.color, width: settings.width)
+        } else {
+            cursor.set()
+        }
+    }
+
+    /// A trackpad pinch shows the zoom lens around the cursor while it lasts.
+    func pinched(on page: CanvasPageID, at point: CGPoint, magnification: CGFloat, phase: NSEvent.Phase) {
+        pointer = (page, point)
+        if phase.contains(.began) {
+            guard services.isScreenRecordingGranted() else {
+                services.explainMissingScreenRecording("Pinch to zoom")
+                return
+            }
+            isPinchZooming = true
+        }
+        guard isPinchZooming else { return }
+        let range = DrawSettings.zoomRange
+        settings.zoomFactor = min(max(settings.zoomFactor * (1 + magnification), range.lowerBound), range.upperBound)
+        if phase.contains(.ended) || phase.contains(.cancelled) {
+            isPinchZooming = false
+        }
+        updatePresenters()
+    }
+
     // MARK: Laser, spotlight and zoom
+
+    private var showsLens: Bool {
+        isActive && (settings.tool == .zoom || isPinchZooming)
+    }
 
     func pointerMoved(on page: CanvasPageID, to point: CGPoint) {
         pointer = (page, point)
@@ -698,31 +1244,15 @@ final class DrawModeController {
         if settings.tool == .laser {
             view(page)?.presenter.addLaserPoint(point, at: CACurrentMediaTime())
         }
-        if settings.tool == .spotlight || settings.tool == .zoom {
+        if settings.tool == .spotlight || showsLens {
             updatePresenters()
         }
     }
 
     func pointerExited(_ page: CanvasPageID) {
-        if pointer?.page == page, settings.tool == .zoom {
+        if pointer?.page == page, showsLens {
             view(page)?.presenter.hideLens()
         }
-    }
-
-    func scrolled(on page: CanvasPageID, at point: CGPoint, deltaY: CGFloat, precise: Bool) {
-        let step = precise ? deltaY : deltaY * 8
-        switch settings.tool {
-        case .spotlight:
-            let range = DrawSettings.spotlightRadiusRange
-            settings.spotlightRadius = min(max(settings.spotlightRadius + step, range.lowerBound), range.upperBound)
-        case .zoom:
-            let range = DrawSettings.zoomRange
-            settings.zoomFactor = min(max(settings.zoomFactor * (1 + step * 0.01), range.lowerBound), range.upperBound)
-        default:
-            return
-        }
-        pointer = (page, point)
-        updatePresenters()
     }
 
     /// Where the pointer is right now, in the coordinates of the canvas under it.
@@ -734,7 +1264,7 @@ final class DrawModeController {
     }
 
     private func updatePresenters() {
-        if pointer == nil, isActive, settings.tool.isPresenter {
+        if pointer == nil, isActive, settings.tool.isPresenter || isPinchZooming {
             pointer = currentPointer()
         }
         for (page, overlay) in overlays {
@@ -747,7 +1277,7 @@ final class DrawModeController {
             }
         }
         updateLens()
-        guard isActive, settings.tool == .zoom else {
+        guard showsLens else {
             if zoomStream.displayID != nil {
                 Task { await zoomStream.stop() }
             }
@@ -762,7 +1292,7 @@ final class DrawModeController {
     private func updateLens() {
         for (page, overlay) in overlays {
             let presenter = overlay.view.presenter
-            guard isActive, settings.tool == .zoom, let pointer, pointer.page == page else {
+            guard showsLens, let pointer, pointer.page == page else {
                 presenter.hideLens()
                 continue
             }

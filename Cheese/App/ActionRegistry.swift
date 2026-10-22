@@ -101,10 +101,27 @@ final class ActionRegistry {
         }
         for (name, id) in bindings where hotkeyTasks[name] == nil {
             hotkeyTasks[name] = Task { [weak self] in
-                for await _ in KeyboardShortcuts.events(.keyDown, for: name) {
-                    self?.perform(id)
+                for await event in KeyboardShortcuts.events(for: name) {
+                    self?.handleHotkey(event, for: id)
                 }
             }
         }
+    }
+
+    /// Presses run the action; releases only matter to actions that handle the hotkey themselves.
+    func handleHotkey(_ event: KeyboardShortcuts.EventType, for id: ActionID) {
+        guard let action = action(id) else { return }
+        guard let handler = action.hotkeyHandler else {
+            if event == .keyDown {
+                perform(id)
+            }
+            return
+        }
+        guard isAvailable(action) else { return }
+        if event == .keyDown, let missing = permissions.missing(from: action.requiredPermissions).first {
+            onMissingPermission(missing, action.alertName)
+            return
+        }
+        handler(event)
     }
 }

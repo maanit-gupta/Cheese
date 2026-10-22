@@ -5,6 +5,7 @@ import SwiftUI
 struct ToolbarActions {
     var chooseTool: (DrawTool) -> Void
     var cycleBoard: () -> Void
+    var toggleDisappearingInk: () -> Void
     var undo: () -> Void
     var redo: () -> Void
     var clearAll: () -> Void
@@ -15,33 +16,108 @@ struct ToolbarActions {
     var returnFocus: () -> Void
 }
 
-/// The Miro-style vertical tool rail: non-activating, above the overlays, draggable anywhere.
+/// The vertical tool rail: non-activating, above the overlays, draggable anywhere. Secondary to
+/// the radial menu and modifiers, so it shrinks to a pill a few seconds into drawing and grows
+/// back on hover.
 @MainActor
 final class ToolbarPanel {
+    /// How long into drawing the rail waits before shrinking to a pill.
+    static let collapseDelay: Duration = .seconds(3)
+
     private let panel: ToolbarWindow
+    private let settings: DrawSettings
+    private var collapseTask: Task<Void, Never>?
+    private var isHovering = false
+    /// Bumped on every show and hide, so a slide-out that finishes late doesn't hide a fresh rail.
+    private var transition = 0
 
     init(settings: DrawSettings, actions: ToolbarActions) {
+        self.settings = settings
         panel = ToolbarWindow()
         let hosting = NSHostingController(rootView: ToolbarView(settings: settings, actions: actions))
         hosting.sizingOptions = [.preferredContentSize]
         panel.contentViewController = hosting
+        hosting.rootView.onHover = { [weak self] hovering in self?.hoverChanged(hovering) }
     }
 
     var windowNumber: Int { panel.windowNumber }
 
-    /// Shows the rail at the left edge of `screen`, vertically centered.
-    func show(on screen: NSScreen) {
+    /// Slides the rail in at the left edge of `screen`, vertically centered.
+    func show(on screen: NSScreen, animated: Bool) {
+        transition += 1
+        collapseTask?.cancel()
+        collapseTask = nil
         if let fitting = panel.contentViewController?.view.fittingSize, fitting.width > 0, fitting.height > 0 {
             panel.setContentSize(fitting)
         }
         let size = panel.frame.size
         let visible = screen.visibleFrame
-        panel.setFrameOrigin(NSPoint(x: visible.minX + 12, y: visible.midY - size.height / 2))
+        let target = NSPoint(x: visible.minX + 12, y: visible.midY - size.height / 2)
+        panel.setFrameOrigin(animated ? NSPoint(x: target.x - size.width * 0.6, y: target.y) : target)
+        panel.alphaValue = 0
         panel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = animated ? 0.28 : 0.12
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().alphaValue = 1
+            if animated {
+                panel.animator().setFrameOrigin(target)
+            }
+        }
     }
 
-    func hide() {
-        panel.orderOut(nil)
+    func hide(animated: Bool) {
+        transition += 1
+        let generation = transition
+        collapseTask?.cancel()
+        collapseTask = nil
+        isHovering = false
+        let panel = panel
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = animated ? 0.2 : 0.1
+            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            panel.animator().alphaValue = 0
+            if animated {
+                panel.animator().setFrameOrigin(NSPoint(x: panel.frame.minX - panel.frame.width * 0.6, y: panel.frame.minY))
+            }
+        } completionHandler: { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.transition == generation else { return }
+                panel.orderOut(nil)
+            }
+        }
+    }
+
+    /// The user started a stroke: shrink to a pill after a few seconds, unless the pointer is on the rail.
+    func noteDrawing() {
+        guard !settings.isToolbarCollapsed, collapseTask == nil, !isHovering else { return }
+        collapseTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.collapseDelay)
+            guard !Task.isCancelled, let self else { return }
+            self.collapseTask = nil
+            guard !self.isHovering else { return }
+            self.setCollapsed(true)
+        }
+    }
+
+    private func hoverChanged(_ hovering: Bool) {
+        isHovering = hovering
+        if hovering {
+            collapseTask?.cancel()
+            collapseTask = nil
+            setCollapsed(false)
+        }
+    }
+
+    private func setCollapsed(_ collapsed: Bool) {
+        guard settings.isToolbarCollapsed != collapsed else { return }
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        withAnimation(reduceMotion ? nil : .spring(duration: 0.3, bounce: 0.15)) {
+            settings.isToolbarCollapsed = collapsed
+            if collapsed {
+                settings.isFlyoutOpen = false
+            }
+        }
     }
 }
 
@@ -62,20 +138,51 @@ private final class ToolbarWindow: NSPanel {
 
     // The canvas keeps keyboard focus; the rail only takes clicks.
     override var canBecomeKey: Bool { false }
+
+    // Growing or shrinking (the pill, a flyout) keeps the top edge where it is, so the rail
+    // doesn't jump under the pointer.
+    override func setFrame(_ frameRect: NSRect, display flag: Bool) {
+        var rect = frameRect
+        if isVisible, rect.size != frame.size, rect.origin == frame.origin {
+            rect.origin.y = frame.maxY - rect.height
+        }
+        super.setFrame(rect, display: flag)
+    }
 }
 
 private struct ToolbarView: View {
     @Bindable var settings: DrawSettings
     let actions: ToolbarActions
+    var onHover: (Bool) -> Void = { _ in }
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            rail
-            if settings.showsFlyout {
-                ToolFlyout(settings: settings, returnFocus: actions.returnFocus)
+            if settings.isToolbarCollapsed {
+                pill
+                    .transition(.opacity.combined(with: .scale(scale: 0.8, anchor: .topLeading)))
+            } else {
+                rail
+                    .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .topLeading)))
+                if settings.showsFlyout {
+                    ToolFlyout(settings: settings, returnFocus: actions.returnFocus)
+                }
             }
         }
         .padding(6)
+        .onHover { onHover($0) }
+    }
+
+    /// The collapsed rail: the current tool, color and size. Hover to expand.
+    private var pill: some View {
+        VStack(spacing: 6) {
+            Image(systemName: settings.tool.symbol)
+                .font(.system(size: 14))
+            BrushDot(color: settings.color, width: settings.width)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 6)
+        .background(.regularMaterial, in: Capsule())
+        .help("\(settings.tool.title) · \(Int(settings.width)) pt")
     }
 
     private var rail: some View {
@@ -100,17 +207,26 @@ private struct ToolbarView: View {
                 .foregroundStyle(.secondary)
                 .help("Exit Draw Mode (Esc)")
             }
+            BrushDot(color: settings.color, width: settings.width)
+                .frame(height: 24)
+                .help("\(Int(settings.width)) pt. Scroll to resize, ⇧-scroll to change color, or hold the right button for the radial menu")
             section([.select, .passThrough])
             section([.pen, .highlighter, .eraser])
             section([.rectangle, .ellipse, .line, .arrow])
-            section([.text, .sticky])
+            section([.text, .sticky, .stamp])
             section([.laser, .spotlight, .zoom])
             Divider().frame(width: 28)
             RailButton(
                 symbol: settings.board == .blackboard ? "square.fill" : settings.board == .whiteboard ? "square.lefthalf.filled" : "square.dashed",
-                help: "\(settings.board.title) (B)",
+                help: settings.board.title,
                 isActive: settings.board != .off,
                 action: actions.cycleBoard
+            )
+            RailButton(
+                symbol: settings.isDisappearingInk ? "timer" : "timer.circle",
+                help: settings.isDisappearingInk ? "Disappearing Ink: On" : "Disappearing Ink: Off",
+                isActive: settings.isDisappearingInk,
+                action: actions.toggleDisappearingInk
             )
             Divider().frame(width: 28)
             RailButton(symbol: "arrow.uturn.backward", help: "Undo (⌘Z)", action: actions.undo)
@@ -131,10 +247,24 @@ private struct ToolbarView: View {
     private func section(_ tools: [DrawTool]) -> some View {
         Divider().frame(width: 28)
         ForEach(tools, id: \.self) { tool in
-            RailButton(symbol: tool.symbol, help: "\(tool.title) (\(tool.key))", isActive: settings.tool == tool) {
+            RailButton(symbol: tool.symbol, help: tool.title, isActive: settings.tool == tool) {
                 actions.chooseTool(tool)
             }
         }
+    }
+}
+
+/// The brush as a dot: its color, at its width.
+private struct BrushDot: View {
+    let color: CanvasColor
+    let width: CGFloat
+
+    var body: some View {
+        Circle()
+            .fill(Color(CanvasRenderer.nsColor(color)))
+            .overlay(Circle().strokeBorder(.secondary.opacity(0.6), lineWidth: 1))
+            .frame(width: min(max(width, 4), 22), height: min(max(width, 4), 22))
+            .frame(width: 24, height: 24)
     }
 }
 
@@ -174,8 +304,15 @@ private struct ToolFlyout: View {
                 ColorPicker("Custom", selection: customColor, supportsOpacity: false)
                     .font(.caption)
             }
+            if settings.tool == .stamp {
+                stampPicker
+            }
             if settings.tool.usesWidth {
                 widthControls
+            }
+            if settings.tool == .pen {
+                Toggle("Neon", isOn: $settings.isNeon)
+                    .onChange(of: settings.isNeon) { _, _ in returnFocus() }
             }
             if settings.tool == .rectangle || settings.tool == .ellipse {
                 Toggle("Fill", isOn: $settings.isFilled)
@@ -196,9 +333,27 @@ private struct ToolFlyout: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 
+    private var stampPicker: some View {
+        HStack(spacing: 6) {
+            ForEach(StampKind.allCases, id: \.self) { kind in
+                Button {
+                    settings.stampKind = kind
+                    returnFocus()
+                } label: {
+                    Image(systemName: kind.symbol)
+                        .frame(width: 26, height: 26)
+                        .background(settings.stampKind == kind ? Color.accentColor.opacity(0.25) : .clear, in: RoundedRectangle(cornerRadius: 6))
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help(kind.title)
+            }
+        }
+    }
+
     private var widthControls: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Width: \(Int(settings.width)) pt  ([ and ])")
+            Text(settings.tool == .stamp ? "Size: \(Int(settings.width)) (scroll)" : "Width: \(Int(settings.width)) pt (scroll)")
                 .font(.caption)
             HStack(spacing: 10) {
                 ForEach(DrawSettings.widthPresets, id: \.self) { width in
@@ -238,7 +393,7 @@ private struct Swatches: View {
 
     var body: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.fixed(26), spacing: 8), count: 5), alignment: .leading, spacing: 8) {
-            ForEach(Array(colors.enumerated()), id: \.offset) { index, color in
+            ForEach(Array(colors.enumerated()), id: \.offset) { _, color in
                 Button {
                     selection = color
                     returnFocus()
@@ -250,7 +405,6 @@ private struct Swatches: View {
                         .frame(width: 22, height: 22)
                 }
                 .buttonStyle(.plain)
-                .help(colors == CanvasColor.presets ? "Color \(index + 1)" : "")
             }
         }
     }

@@ -8,6 +8,8 @@ struct GeneralSettingsView: View {
     @AppStorage(PreferenceKey.screenshotSaveFolder)
     private var saveFolderPath = Preferences.defaultSaveFolder.path(percentEncoded: false)
 
+    @AppStorage(PreferenceKey.drawLetterKeys) private var drawLetterKeys = false
+
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var launchAtLoginMessage: String?
 
@@ -34,6 +36,16 @@ struct GeneralSettingsView: View {
                         Button("Choose…", action: chooseSaveFolder)
                     }
                 }
+            }
+
+            Section {
+                Toggle("Advanced: single-letter tool keys", isOn: $drawLetterKeys)
+            } header: {
+                Text("Draw on Screen")
+            } footer: {
+                Text("Draw mode works with the mouse alone: hold the right button for tools and colors, ⇧ for straight lines, ⌘ to erase, ⌥ to highlight, and scroll to size the brush. Turn this on to also pick tools with letters (P, H, E, R…).")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section {

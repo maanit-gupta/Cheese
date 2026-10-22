@@ -7,7 +7,7 @@ private let red = CanvasStyle(color: CanvasColor.presets[0], width: 4)
 private let page: CanvasPageID = 1
 
 private func stroke(_ points: [CGPoint], highlighter: Bool = false) -> CanvasItem {
-    CanvasItem(kind: .stroke(points: points, isHighlighter: highlighter), style: red)
+    CanvasItem(kind: .stroke(points: points, pressures: [], isHighlighter: highlighter), style: red)
 }
 
 private func rect(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat, filled: Bool = false) -> CanvasItem {
@@ -144,7 +144,7 @@ struct CanvasItemTests {
 
     @Test func translateMovesAllGeometry() {
         let moved = stroke([CGPoint(x: 1, y: 2), CGPoint(x: 3, y: 4)]).translated(by: CGSize(width: 10, height: 20))
-        #expect(moved.kind == .stroke(points: [CGPoint(x: 11, y: 22), CGPoint(x: 13, y: 24)], isHighlighter: false))
+        #expect(moved.kind == .stroke(points: [CGPoint(x: 11, y: 22), CGPoint(x: 13, y: 24)], pressures: [], isHighlighter: false))
     }
 
     @Test func resizeMapsOldBoundsOntoNew() {

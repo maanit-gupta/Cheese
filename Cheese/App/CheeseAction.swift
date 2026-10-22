@@ -86,6 +86,11 @@ struct CheeseAction: Identifiable {
     var featureName: String?
     /// Beyond its module being on, whether the action can run right now.
     var precondition: @MainActor () -> Bool = { true }
+    /// Listed in the command palette. Draw mode isn't: it's entered from its hotkey or the menu bar.
+    var showsInPalette = true
+    /// Gets the hotkey's presses and releases instead of `perform` running on each press,
+    /// for actions that tell a tap from a hold.
+    var hotkeyHandler: (@MainActor (KeyboardShortcuts.EventType) -> Void)?
     let perform: @MainActor (ActionContext) -> Void
 
     var alertName: String { featureName ?? title }

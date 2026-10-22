@@ -6,6 +6,7 @@ enum EditorTool: String, CaseIterable, Identifiable, Sendable {
     case arrow
     case rectangle
     case text
+    case pen
     case highlighter
     case pixelate
     case crop
@@ -17,6 +18,7 @@ enum EditorTool: String, CaseIterable, Identifiable, Sendable {
         case .arrow: "Arrow"
         case .rectangle: "Rectangle"
         case .text: "Text"
+        case .pen: "Pen"
         case .highlighter: "Highlighter"
         case .pixelate: "Pixelate"
         case .crop: "Crop"
@@ -28,6 +30,7 @@ enum EditorTool: String, CaseIterable, Identifiable, Sendable {
         case .arrow: "arrow.up.right"
         case .rectangle: "rectangle"
         case .text: "textformat"
+        case .pen: "pencil.tip"
         case .highlighter: "highlighter"
         case .pixelate: "checkerboard.rectangle"
         case .crop: "crop"
@@ -73,6 +76,8 @@ final class EditorModel {
             return .arrow(from: start, to: end, color: color, lineWidth: lineWidth)
         case .rectangle:
             return .rectangle(CanvasGeometry.rect(from: start, to: end, imagePixelSize: pixelSize), color: color, lineWidth: lineWidth)
+        case .pen:
+            return .ink(points: path, color: color, lineWidth: lineWidth)
         case .highlighter:
             return .highlight(points: path, color: color.withAlpha(0.4), lineWidth: highlighterWidth)
         case .pixelate:
@@ -93,8 +98,8 @@ final class EditorModel {
             let rect = CanvasGeometry.rect(from: start, to: end, imagePixelSize: pixelSize)
             guard rect.width >= 8, rect.height >= 8 else { return }
             apply { $0.crop = rect.integral }
-        case .highlighter:
-            guard let annotation = annotation(from: start, to: end, path: path) else { return }
+        case .pen, .highlighter:
+            guard !path.isEmpty, let annotation = annotation(from: start, to: end, path: path) else { return }
             apply { $0.annotations.append(annotation) }
         case .arrow, .rectangle, .pixelate:
             guard distance >= 4 * base.scale, let annotation = annotation(from: start, to: end, path: path) else { return }

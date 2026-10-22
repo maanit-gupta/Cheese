@@ -96,6 +96,8 @@ private struct EditorCanvas: View {
     @State private var dragStart: CGPoint?
     @State private var dragEnd: CGPoint?
     @State private var dragPath: [CGPoint] = []
+    /// Freehand input is smoothed the same way as draw on screen's.
+    @State private var inkFilter = OneEuroFilter()
     @FocusState private var isTextFocused: Bool
 
     var body: some View {
@@ -134,17 +136,21 @@ private struct EditorCanvas: View {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
                 let point = imagePoint(value.location, fitted: fitted)
+                let time = value.time.timeIntervalSinceReferenceDate
                 if dragStart == nil {
-                    dragStart = imagePoint(value.startLocation, fitted: fitted)
-                    dragPath = [dragStart ?? point]
+                    let start = imagePoint(value.startLocation, fitted: fitted)
+                    dragStart = start
+                    inkFilter = OneEuroFilter()
+                    dragPath = [inkFilter.filter(start, at: time)]
                 }
                 dragEnd = point
-                dragPath.append(point)
+                dragPath.append(inkFilter.filter(point, at: time))
             }
             .onEnded { value in
                 let start = dragStart ?? imagePoint(value.startLocation, fitted: fitted)
                 let end = imagePoint(value.location, fitted: fitted)
-                model.finishDrag(from: start, to: end, path: dragPath)
+                // The stroke ends exactly where the pointer did.
+                model.finishDrag(from: start, to: end, path: Array(dragPath.dropLast()) + [end])
                 dragStart = nil
                 dragEnd = nil
                 dragPath = []
@@ -195,9 +201,11 @@ private struct EditorCanvas: View {
         case let .rectangle(rect, color, lineWidth):
             context.stroke(Path(rect), with: .color(Color(cgColor: color.cgColor)), lineWidth: lineWidth)
         case let .highlight(points, color, lineWidth):
-            var path = Path()
-            path.addLines(points)
-            context.stroke(path, with: .color(Color(cgColor: color.cgColor)), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round))
+            let path = AnnotationRenderer.inkPath(points: points, options: .highlighter(width: lineWidth))
+            context.fill(Path(path), with: .color(Color(cgColor: color.cgColor)))
+        case let .ink(points, color, lineWidth):
+            let path = AnnotationRenderer.inkPath(points: points, options: .pen(width: lineWidth))
+            context.fill(Path(path), with: .color(Color(cgColor: color.cgColor)))
         case let .pixelate(rect, _):
             context.fill(Path(rect), with: .color(.gray.opacity(0.5)))
             context.stroke(Path(rect), with: .color(.white), style: StrokeStyle(lineWidth: model.base.scale, dash: [4 * model.base.scale]))

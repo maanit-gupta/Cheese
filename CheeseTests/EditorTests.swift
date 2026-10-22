@@ -182,6 +182,16 @@ struct AnnotationRendererTests {
         }
     }
 
+    @Test func penInkCoversItsPath() throws {
+        let base = try makeTestImage()
+        let stroke = Annotation.ink(points: (0...20).map { CGPoint(x: 110 + CGFloat($0) * 4, y: 50) }, color: .blue, lineWidth: 8)
+        let bitmap = Bitmap(try #require(AnnotationRenderer.render(base, document: EditorDocument(annotations: [stroke]), applyCrop: false)))
+        let middle = bitmap.pixel(150, 50)
+        #expect(middle[2] > 200 && middle[0] < 60)
+        // Well off the path, the image is untouched.
+        #expect(bitmap.pixel(150, 80) == bitmap.pixel(150, 90))
+    }
+
     @Test func highlighterTintsWithoutHiding() throws {
         let base = try makeTestImage()
         let stroke = Annotation.highlight(points: [CGPoint(x: 110, y: 50), CGPoint(x: 190, y: 50)], color: RGBAColor.yellow.withAlpha(0.4), lineWidth: 10)
@@ -209,6 +219,16 @@ struct EditorModelTests {
         #expect(model.document.annotations.isEmpty)
         model.redo()
         #expect(model.document.annotations.count == 1)
+    }
+
+    @Test func penDragsMakeInkAndClicksMakeDots() throws {
+        let model = try model()
+        model.tool = .pen
+        let path = [CGPoint(x: 10, y: 10), CGPoint(x: 30, y: 20), CGPoint(x: 60, y: 25)]
+        model.finishDrag(from: path[0], to: path[2], path: path)
+        #expect(model.document.annotations == [.ink(points: path, color: .red, lineWidth: 4)])
+        model.finishDrag(from: CGPoint(x: 5, y: 5), to: CGPoint(x: 5, y: 5), path: [CGPoint(x: 5, y: 5)])
+        #expect(model.document.annotations.count == 2)
     }
 
     @Test func textToolPlacesAndCommitsText() throws {

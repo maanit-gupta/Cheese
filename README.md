@@ -54,7 +54,7 @@ Cheese replaces a drawer full of single-purpose utilities (a clipboard manager, 
 | **🪟&nbsp;Windows&nbsp;&amp;&nbsp;apps** | [Window snapping](#window-snapping) | Halves, maximize, restore and multi-display moves | <kbd>⌃</kbd><kbd>⌥</kbd> + arrows |
 | | [App hotkeys](#app-hotkeys) | Open or switch to any app with its own shortcut | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + key |
 | | [Command palette](#command-palette) | Search and run every Cheese action | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> |
-| **🎨&nbsp;Present** | [Draw on screen](#-draw-on-screen) | Pens, shapes, sticky notes, laser, spotlight and zoom over everything | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> |
+| **🎨&nbsp;Present** | [Draw on screen](#-draw-on-screen) | Smooth ink, magic shapes, stamps, laser, spotlight and zoom over everything | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> |
 | **📄&nbsp;Files** | [PDF, document and image tools](#-files-offline-pdf-document-and-image-tools) | Merge, split, compress, convert and edit, fully offline | Finder · drop on icon · palette |
 | **☕&nbsp;Utilities** | [Keep awake](#keep-awake) | Stop your Mac sleeping, indefinitely or until a set time | Menu · palette |
 
@@ -104,28 +104,36 @@ Every tool is also in the menu bar menu, so shortcuts are optional.
 - Add an app and Cheese **suggests a free, memorable key** (Figma → <kbd>F</kbd>, Microsoft Word → <kbd>W</kbd>), skipping keys that Cheese, macOS or popular utilities already use. Accept it, ask for another, or record your own.
 
 ### Command palette
-- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, draw mode, QR, keep awake, Files tools, history and each Settings tab.
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, QR, keep awake, Files tools, history and each Settings tab. (Draw mode stays out of it, and the palette doesn't open while you're drawing.)
 - Each row shows the action's shortcut, so you learn them as you go. Recently used actions come first.
 
 ## 🎨 Draw on screen
-- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> puts a transparent canvas over every display, including full-screen apps, with a Miro-style tool rail on the left (drag it anywhere).
-- Pen, highlighter, eraser, rectangle, ellipse, line, arrow, text and sticky notes. Hold <kbd>⇧</kbd> for squares, circles and 45° lines.
-- With a shape tool, press on something you've drawn to move, resize or delete it, with no need to switch to Select. Press on empty space (or inside an outline) to draw.
-- Presenting? **Laser pointer**, **spotlight** and **zoom** (scroll to resize or magnify), plus a whiteboard or blackboard behind your drawings.
-- **Pass-through** (<kbd>M</kbd>) lets you click and type in the apps underneath while drawings stay visible.
-- **Snapshot** (<kbd>⌘</kbd><kbd>⇧</kbd><kbd>S</kbd>) copies the screen with your drawings; Shift-click it to annotate instead.
-- <kbd>Esc</kbd> hides the canvas. Drawings come back next time, until you **Clear All** or quit.
+- **Tap** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> to put a transparent canvas over every display, including full-screen apps. **Hold** it for quick ink: draw while it's held, and when you let go the ink stays and your clicks go back to the apps underneath. Handy for circling something during a call.
+- Ink is smooth and keeps up with fast strokes: it thins as you speed up, thickens with pressure on a Force Touch trackpad or tablet, and tapers at the ends. The cursor becomes the brush.
+- **Magic pen:** draw a rough rectangle, circle, triangle, line or arrow and **hold still for a moment** before letting go. It snaps into a clean shape. Handwriting stays as you wrote it.
+- **Scratch out** ink with a quick zig-zag over it.
+- Everything works with the mouse alone:
 
-| Key | Tool | Key | Tool |
-|---|---|---|---|
-| <kbd>V</kbd> | Select, move, resize | <kbd>T</kbd> | Text |
-| <kbd>M</kbd> | Pass-through | <kbd>N</kbd> | Sticky note |
-| <kbd>P</kbd> | Pen | <kbd>L</kbd> | Laser pointer |
-| <kbd>H</kbd> | Highlighter | <kbd>S</kbd> | Spotlight |
-| <kbd>E</kbd> | Eraser | <kbd>Z</kbd> | Zoom |
-| <kbd>R</kbd> / <kbd>O</kbd> | Rectangle / ellipse | <kbd>B</kbd> | Board: off → white → black |
-| <kbd>I</kbd> / <kbd>A</kbd> | Line / arrow | <kbd>1</kbd>–<kbd>9</kbd> | Color preset |
-| <kbd>[</kbd> / <kbd>]</kbd> | Thinner / thicker | <kbd>⌘</kbd><kbd>Z</kbd> / <kbd>⌘</kbd><kbd>⇧</kbd><kbd>Z</kbd> | Undo / redo |
+| Do this | To |
+|---|---|
+| Hold the **right button** (or two-finger click) | Open the radial menu: magic pen, highlighter, eraser, text, stamps, sticky note, zoom and laser, with colors around the edge. Release over one, or just **flick** toward it |
+| Hold <kbd>⇧</kbd> while drawing | Draw a straight line (snaps to 15°) |
+| Hold <kbd>⌘</kbd> while drawing | Erase whatever you touch |
+| Hold <kbd>⌥</kbd> while drawing | Highlight |
+| Scroll | Change the brush size |
+| <kbd>⇧</kbd> + scroll | Change the color |
+| Pinch (trackpad) | Zoom lens around the cursor |
+| Double-click empty space | Type text there |
+| <kbd>⌘</kbd><kbd>Z</kbd> / <kbd>⌘</kbd><kbd>⇧</kbd><kbd>Z</kbd> | Undo / redo |
+| <kbd>Esc</kbd> | Hide the canvas. Drawings come back next time, until you **Clear All** or quit |
+
+- **Stamps:** ✓, ✗, ⭐, ❓ and numbered steps (①②③…, counting up with each click).
+- **Disappearing ink** (toolbar): strokes fade 3 seconds after you lift the pen, which is great while presenting. **Neon** (in the pen's options) gives ink a glow.
+- Presenting? **Laser pointer**, **spotlight** and **zoom** (scroll to resize or magnify), plus a whiteboard or blackboard behind your drawings.
+- The tool rail on the left shrinks to a small pill while you draw; hover over it for shapes, select, pass-through, boards, undo, clear and snapshot.
+- **Pass-through** lets you click and type in the apps underneath while drawings stay visible.
+- **Snapshot** (<kbd>⌘</kbd><kbd>⇧</kbd><kbd>S</kbd>) copies the screen with your drawings; Shift-click it to annotate instead.
+- Prefer single-letter tool keys (P, H, E, R…)? Turn on **Settings → General → Advanced: single-letter tool keys**.
 
 ## 📄 Files: offline PDF, document and image tools
 Like iLovePDF, but **entirely offline**: no file leaves your Mac and nothing touches the network. Results are saved **next to the original** (`Report.pdf` → `Report (compressed).pdf`) and nothing is ever overwritten.
@@ -266,7 +274,7 @@ Files tools also ask for two optional permissions when first used: **Notificatio
 | Maximize | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↑</kbd> |
 | Snap bottom half | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↓</kbd> |
 | Restore window | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌫</kbd> |
-| Toggle draw on screen | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> |
+| Draw on screen (tap to toggle, hold for quick ink) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> |
 | Command palette | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> |
 | Your app hotkeys | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + a letter or digit |
 
@@ -396,7 +404,7 @@ make run        # build and launch
 make release    # Release build → dist/Cheese.zip + SHA-256
 ```
 
-The Xcode project is generated, so edit `project.yml` rather than `Cheese.xcodeproj`. The code is organised by feature (`Clipboard/`, `Capture/`, `OCR/`, `ScrollCapture/`, `Windows/`, `Editor/`, `Draw/`, `QR/`, `KeepAwake/`, `AppHotkeys/`, `Palette/`, `Files/`, `Welcome/`, `Settings/`), with the wiring in `App/`: every action lives once in an `ActionRegistry` that the menu, hotkeys and command palette all read, and each feature is a `CheeseModule` that can be switched off. Pure logic (fuzzy matching, stitching, sticky-header detection, snap geometry, display coordinate conversion, canvas history, stroke smoothing, hit-testing, QR payload planning, share-link rules, keep-awake scheduling, hotkey suggestions, palette ranking, and the Files tools' applicability, output naming, page ranges, split and compression planning, layout analysis, table detection and resize math) has no AppKit dependencies and is covered by unit tests.
+The Xcode project is generated, so edit `project.yml` rather than `Cheese.xcodeproj`. The code is organised by feature (`Clipboard/`, `Capture/`, `OCR/`, `ScrollCapture/`, `Windows/`, `Editor/`, `Draw/`, `QR/`, `KeepAwake/`, `AppHotkeys/`, `Palette/`, `Files/`, `Welcome/`, `Settings/`), with the wiring in `App/`: every action lives once in an `ActionRegistry` that the menu, hotkeys and command palette all read, and each feature is a `CheeseModule` that can be switched off. Pure logic (fuzzy matching, stitching, sticky-header detection, snap geometry, display coordinate conversion, canvas history, stroke smoothing, the ink engine (1€ filter and variable-width outlines), shape recognition, the radial menu, hit-testing, QR payload planning, share-link rules, keep-awake scheduling, hotkey suggestions, palette ranking, and the Files tools' applicability, output naming, page ranges, split and compression planning, layout analysis, table detection and resize math) has no AppKit dependencies and is covered by unit tests.
 
 The Finder submenu is a separate, sandboxed `CheeseFinderExtension` target that only builds the menu and hands jobs to the app through the App Group. The vendored JavaScript renderers live in `Cheese/Resources/Renderers/` with exact versions, licenses and the reasons for each choice in [`VENDORED.md`](Cheese/Resources/Renderers/VENDORED.md); a test keeps them under 3 MB. The Files test fixtures are all self-made by `Design/make-files-fixtures.swift` and `.mjs`.
 

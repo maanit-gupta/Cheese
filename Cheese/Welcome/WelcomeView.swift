@@ -88,7 +88,7 @@ private struct IntroPage: View {
         ("text.viewfinder", "Copy text from anything", "OCR any part of the screen. QR codes and barcodes too.", .ocrRegion),
         ("rectangle.expand.vertical", "Scrolling capture", "Cheese scrolls the page for you and stitches one tall image.", .scrollingCapture),
         ("rectangle.split.2x1", "Window snapping", "Halves, maximize and multi-display moves from the keyboard.", .snapLeft),
-        ("pencil.and.scribble", "Draw on screen", "Pens, shapes, sticky notes and a laser pointer over everything.", .drawOnScreen),
+        ("pencil.and.scribble", "Draw on screen", "Smooth ink, magic shapes and a laser pointer over everything. Hold the right button for tools.", .drawOnScreen),
         ("command", "Command palette", "Search every Cheese action, plus QR sharing and Keep Awake.", .commandPalette),
     ]
 

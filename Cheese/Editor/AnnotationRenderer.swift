@@ -53,25 +53,26 @@ enum AnnotationRenderer {
             drawText(string, at: origin, color: color, fontSize: fontSize, in: context)
 
         case let .highlight(points, color, lineWidth):
-            guard let first = points.first else { return }
-            context.setStrokeColor(color.cgColor)
-            context.setLineWidth(lineWidth)
-            context.setLineCap(.round)
-            context.setLineJoin(.round)
+            guard !points.isEmpty else { return }
+            context.setFillColor(color.cgColor)
             context.setBlendMode(.multiply)
-            context.beginPath()
-            context.move(to: first)
-            if points.count == 1 {
-                context.addLine(to: first)
-            }
-            for point in points.dropFirst() {
-                context.addLine(to: point)
-            }
-            context.strokePath()
+            context.addPath(inkPath(points: points, options: .highlighter(width: lineWidth)))
+            context.fillPath()
+
+        case let .ink(points, color, lineWidth):
+            guard !points.isEmpty else { return }
+            context.setFillColor(color.cgColor)
+            context.addPath(inkPath(points: points, options: .pen(width: lineWidth)))
+            context.fillPath()
 
         case let .pixelate(rect, blockSize):
             pixelate(rect, blockSize: blockSize, in: context, imageHeight: imageHeight)
         }
+    }
+
+    /// The pen and highlighter share draw on screen's ink engine, so both feel the same.
+    static func inkPath(points: [CGPoint], options: StrokeBuilder.Options) -> CGPath {
+        StrokeBuilder.path(points: points, options: options)
     }
 
     static func arrowHeadLength(for lineWidth: CGFloat) -> CGFloat {

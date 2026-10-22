@@ -31,7 +31,10 @@ enum Annotation: Equatable, Sendable {
     case arrow(from: CGPoint, to: CGPoint, color: RGBAColor, lineWidth: CGFloat)
     case rectangle(CGRect, color: RGBAColor, lineWidth: CGFloat)
     case text(String, at: CGPoint, color: RGBAColor, fontSize: CGFloat)
+    /// Freehand: a translucent, constant-width ink outline, multiplied over the image.
     case highlight(points: [CGPoint], color: RGBAColor, lineWidth: CGFloat)
+    /// Freehand pen: a variable-width ink outline from the same engine as draw on screen.
+    case ink(points: [CGPoint], color: RGBAColor, lineWidth: CGFloat)
     case pixelate(CGRect, blockSize: CGFloat)
 }
 

@@ -9,10 +9,13 @@ struct DrawToolTests {
             .rectangle: "R", .ellipse: "O", .line: "I", .arrow: "A", .text: "T", .sticky: "N",
             .laser: "L", .spotlight: "S", .zoom: "Z",
         ]
-        #expect(expected.count == DrawTool.allCases.count)
-        for tool in DrawTool.allCases {
-            #expect(tool.key == expected[tool])
-            #expect(DrawTool.forKey(Character(tool.key.lowercased())) == tool)
+        // Stamps came with v2.1, which moved tool picking to the radial menu: no letter.
+        #expect(DrawTool.stamp.key == nil)
+        #expect(expected.count == DrawTool.allCases.count - 1)
+        for tool in DrawTool.allCases where tool != .stamp {
+            let key = tool.key ?? " "
+            #expect(key == expected[tool])
+            #expect(DrawTool.forKey(Character(key.lowercased())) == tool)
         }
         // B (boards) and digits aren't tools.
         #expect(DrawTool.forKey("b") == nil)
@@ -57,7 +60,8 @@ struct DrawModeControllerTests {
         captureDisplay: { _, _ in throw CaptureError.displayNotFound },
         openEditor: { _ in },
         isScreenRecordingGranted: { false },
-        explainMissingScreenRecording: { _ in }
+        explainMissingScreenRecording: { _ in },
+        usesLetterKeys: { true }
     ))
 
     private func mouse(_ type: NSEvent.EventType, shift: Bool = false, clicks: Int = 1) -> NSEvent {

@@ -88,28 +88,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ))
         let files = FilesModule { [weak self] text in self?.menuBar?.setIndicator(text, for: .files) }
         self.files = files
+        let draw = DrawModule(services: DrawModeController.Services(
+            captureDisplay: { displayID, overlay in
+                try await captureService.captureDisplay(displayID, includingCheeseWindows: [overlay])
+            },
+            openEditor: { image in editor.open(image) },
+            isScreenRecordingGranted: { [permissions] in permissions.isGranted(.screenRecording) },
+            explainMissingScreenRecording: { [permissionPrompter] feature in
+                permissionPrompter.presentAlert(for: .screenRecording, feature: feature)
+            }
+        ))
         let modules: [any CheeseModule] = [
             clipboard,
             ScreenshotsModule(capture: capture, editor: editor),
             ocr,
             scrollCapture,
             WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager())),
-            DrawModule(services: DrawModeController.Services(
-                captureDisplay: { displayID, overlay in
-                    try await captureService.captureDisplay(displayID, includingCheeseWindows: [overlay])
-                },
-                openEditor: { image in editor.open(image) },
-                isScreenRecordingGranted: { [permissions] in permissions.isGranted(.screenRecording) },
-                explainMissingScreenRecording: { [permissionPrompter] feature in
-                    permissionPrompter.presentAlert(for: .screenRecording, feature: feature)
-                }
-            )),
+            draw,
             QRModule(),
             KeepAwakeModule { [weak self] text in self?.menuBar?.setIndicator(text, for: .keepAwake) },
             AppHotkeysModule(store: appHotkeyStore, index: installedApps),
+            // Draw mode never routes through the palette, and the palette stays shut while drawing.
             CommandPaletteModule(
                 availableActions: { [weak self] in self?.registry?.availableActions ?? [] },
-                perform: { [weak self] id, context in self?.registry?.perform(id, context: context) }
+                perform: { [weak self] id, context in self?.registry?.perform(id, context: context) },
+                isSuppressed: { [draw] in draw.isDrawing }
             ),
             files,
         ]
