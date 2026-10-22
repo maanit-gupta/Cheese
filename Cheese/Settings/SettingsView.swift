@@ -6,6 +6,7 @@ enum SettingsTab: Hashable {
     case shortcuts
     case clipboard
     case ocr
+    case windows
     case appHotkeys
     case files
     case share
@@ -27,17 +28,23 @@ struct SettingsView: View {
 
     var body: some View {
         TabView(selection: $navigation.tab) {
-            Tab("General", systemImage: "gearshape", value: .general) {
-                GeneralSettingsView(showWelcome: dependencies.showWelcome)
+            // Grouped only because a tab builder takes at most ten children.
+            Group {
+                Tab("General", systemImage: "gearshape", value: SettingsTab.general) {
+                    GeneralSettingsView(showWelcome: dependencies.showWelcome)
+                }
+                Tab("Shortcuts", systemImage: "keyboard", value: SettingsTab.shortcuts) {
+                    ShortcutsSettingsView()
+                }
+                Tab("Clipboard", systemImage: "doc.on.clipboard", value: SettingsTab.clipboard) {
+                    ClipboardSettingsView()
+                }
+                Tab("OCR", systemImage: "text.viewfinder", value: SettingsTab.ocr) {
+                    OCRSettingsView(supportedLanguages: dependencies.supportedOCRLanguages())
+                }
             }
-            Tab("Shortcuts", systemImage: "keyboard", value: .shortcuts) {
-                ShortcutsSettingsView()
-            }
-            Tab("Clipboard", systemImage: "doc.on.clipboard", value: .clipboard) {
-                ClipboardSettingsView()
-            }
-            Tab("OCR", systemImage: "text.viewfinder", value: .ocr) {
-                OCRSettingsView(supportedLanguages: dependencies.supportedOCRLanguages())
+            Tab("Windows", systemImage: "macwindow.on.rectangle", value: .windows) {
+                WindowsSettingsView()
             }
             Tab("App Hotkeys", systemImage: "app.badge", value: .appHotkeys) {
                 AppHotkeysSettingsView(model: dependencies.appHotkeys)

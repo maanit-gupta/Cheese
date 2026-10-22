@@ -53,6 +53,10 @@ extension ActionID {
     static let killBackgroundApps = Self(rawValue: "killBackgroundApps")
     static let forceKillAllApps = Self(rawValue: "forceKillAllApps")
     static let settingsAutoKill = Self(rawValue: "settingsAutoKill")
+    static let fillAllWindows = Self(rawValue: "fillAllWindows")
+    static let fillCurrentWindow = Self(rawValue: "fillCurrentWindow")
+    static let restoreAllWindows = Self(rawValue: "restoreAllWindows")
+    static let settingsWindows = Self(rawValue: "settingsWindows")
 
     /// "Files: Merge PDFs…" and the other Files tools.
     static func files(_ tool: ToolID) -> Self {

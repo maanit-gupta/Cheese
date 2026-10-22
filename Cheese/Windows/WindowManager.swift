@@ -67,6 +67,43 @@ final class WindowManager: WindowControlling {
         NSScreen.screens.map { Screens.quartzRect(fromAppKit: $0.visibleFrame) }
     }
 
+    func standardWindows() -> [AXWindow] {
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        return NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular && !$0.isTerminated && $0.processIdentifier != ownPID }
+            .flatMap { app -> [AXWindow] in
+                let pid = app.processIdentifier
+                let appElement = AXUIElementCreateApplication(pid)
+                // A hung app shouldn't stall the whole fill.
+                AXUIElementSetMessagingTimeout(appElement, Self.batchMessagingTimeout)
+                guard let value = copyAttribute(kAXWindowsAttribute, of: appElement),
+                      CFGetTypeID(value) == CFArrayGetTypeID(),
+                      let windows = value as? [AXUIElement]
+                else { return [] }
+                return windows.compactMap { element in
+                    AXUIElementSetMessagingTimeout(element, Self.batchMessagingTimeout)
+                    return isFillable(element) ? AXWindow(app: appElement, element: element, pid: pid) : nil
+                }
+            }
+    }
+
+    func processID(of window: AXWindow) -> pid_t {
+        window.pid
+    }
+
+    /// Seconds to wait on each app during a batch fill, instead of the system's default of about six.
+    private static let batchMessagingTimeout: Float = 0.5
+
+    /// An ordinary document window that can be resized: not a panel, sheet or dialog, and not
+    /// minimized or in native full screen.
+    private func isFillable(_ element: AXUIElement) -> Bool {
+        stringAttribute(kAXRoleAttribute, of: element) == kAXWindowRole
+            && stringAttribute(kAXSubroleAttribute, of: element) == kAXStandardWindowSubrole
+            && boolAttribute(kAXMinimizedAttribute, of: element) != true
+            && boolAttribute("AXFullScreen", of: element) != true
+            && isSettable(kAXSizeAttribute, of: element)
+    }
+
     // MARK: AX helpers
 
     /// Apps with "enhanced user interface" on (set by assistive tools) animate every frame change,
@@ -98,6 +135,10 @@ final class WindowManager: WindowControlling {
     private func elementAttribute(_ attribute: String, of element: AXUIElement) -> AXUIElement? {
         guard let value = copyAttribute(attribute, of: element), CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
         return unsafeDowncast(value, to: AXUIElement.self)
+    }
+
+    private func stringAttribute(_ attribute: String, of element: AXUIElement) -> String? {
+        copyAttribute(attribute, of: element) as? String
     }
 
     private func boolAttribute(_ attribute: String, of element: AXUIElement) -> Bool? {

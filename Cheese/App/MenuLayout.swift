@@ -27,6 +27,13 @@ enum MenuLayout {
         .submenu(title: "Files", symbol: "doc.on.doc", children: filesChildren),
         .action(.showShare),
         .action(.toggleShelf),
+        // These act on other apps' windows. Opening this menu doesn't activate Cheese, so the
+        // frontmost window is still the one the user was working in.
+        .submenu(title: "Windows", symbol: "macwindow.on.rectangle", children: [
+            .action(.fillAllWindows), .action(.fillCurrentWindow), .action(.restoreAllWindows),
+            .separator,
+            .action(.snapLeft), .action(.snapRight), .action(.maximize), .action(.snapBottom), .action(.restoreWindow),
+        ]),
         .submenu(title: "Tools", symbol: "wrench.and.screwdriver", children: [
             .action(.autoKillPanel),
             .action(.killAllApps),
@@ -34,11 +41,6 @@ enum MenuLayout {
             .action(.showClipboardQR),
             .submenu(title: "Keep Awake", symbol: "cup.and.saucer", children: [
                 .action(.keepAwakeIndefinitely), .action(.keepAwakeUntil), .action(.keepAwakeOff),
-            ]),
-            // Snapping acts on the frontmost app's window. Opening this menu doesn't activate
-            // Cheese, so that's still the window the user was working in.
-            .submenu(title: "Arrange Window", symbol: "macwindow.on.rectangle", children: [
-                .action(.snapLeft), .action(.snapRight), .action(.maximize), .action(.snapBottom), .action(.restoreWindow),
             ]),
         ]),
         .separator,

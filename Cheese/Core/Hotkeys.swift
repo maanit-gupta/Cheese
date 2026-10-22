@@ -20,6 +20,8 @@ enum Hotkey: CaseIterable, Sendable {
     case showShare
     case autoKill
     case killAllApps
+    case fillAllWindows
+    case fillCurrentWindow
 
     var name: KeyboardShortcuts.Name {
         switch self {
@@ -40,6 +42,8 @@ enum Hotkey: CaseIterable, Sendable {
         case .showShare: .showShare
         case .autoKill: .autoKill
         case .killAllApps: .killAllApps
+        case .fillAllWindows: .fillAllWindows
+        case .fillCurrentWindow: .fillCurrentWindow
         }
     }
 
@@ -62,6 +66,8 @@ enum Hotkey: CaseIterable, Sendable {
         case .showShare: "Open Cheese Share"
         case .autoKill: "Auto-Kill: open the app list"
         case .killAllApps: "Auto-Kill: quit all open apps now"
+        case .fillAllWindows: "Fill all windows to the screen"
+        case .fillCurrentWindow: "Fill the current window to the screen"
         }
     }
 }
@@ -88,6 +94,8 @@ extension KeyboardShortcuts.Name {
     static let autoKill = Self("autoKill", initial: .init(.q, modifiers: modifiers))
     /// The panel's shortcut plus Shift: quits everything unshielded straight away, with no panel.
     static let killAllApps = Self("killAllApps", initial: .init(.q, modifiers: modifiers.union(.shift)))
+    static let fillAllWindows = Self("fillAllWindows", initial: .init(.m, modifiers: modifiers))
+    static let fillCurrentWindow = Self("fillCurrentWindow", initial: .init(.m, modifiers: modifiers.union(.shift)))
 }
 
 extension KeyboardShortcuts.Name {

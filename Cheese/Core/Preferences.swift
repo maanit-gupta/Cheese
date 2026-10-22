@@ -23,6 +23,8 @@ enum PreferenceKey {
     static let shareDestination = "shareDestination"
     static let shareMaxGigabytes = "shareMaxGigabytes"
     static let autoKillForcesStragglers = "autoKillForcesStragglers"
+    static let windowFillMode = "windowFillMode"
+    static let stageManagerStripInset = "stageManagerStripInset"
 
     /// Last-used options of a Files tool, as JSON.
     static func fileToolOptions(_ tool: ToolID) -> String {
@@ -140,6 +142,20 @@ struct Preferences {
     /// since that includes apps waiting on "Save changes?".
     var autoKillForcesStragglers: Bool {
         defaults.bool(forKey: PreferenceKey.autoKillForcesStragglers)
+    }
+
+    static let defaultWindowFillMode = WindowFillMode.stageManagerSafe
+
+    /// How Fill to Screen sizes windows.
+    var windowFillMode: WindowFillMode {
+        defaults.string(forKey: PreferenceKey.windowFillMode).flatMap(WindowFillMode.init(rawValue:)) ?? Self.defaultWindowFillMode
+    }
+
+    /// The room Fill to Screen leaves for the Stage Manager strip, in points, within the allowed range.
+    var stageManagerStripInset: CGFloat {
+        let stored = defaults.object(forKey: PreferenceKey.stageManagerStripInset) as? Double ?? Double(StageManagerLayout.defaultStripInset)
+        let range = StageManagerLayout.stripInsetRange
+        return min(max(CGFloat(stored), range.lowerBound), range.upperBound)
     }
 
     func isModuleEnabled(_ module: ModuleID) -> Bool {

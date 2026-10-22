@@ -24,9 +24,11 @@ struct HotkeyTests {
             .toggleShelf: .f,
             .autoKill: .q,
             .killAllApps: .q,
+            .fillAllWindows: .m,
+            .fillCurrentWindow: .m,
         ]
-        // The instant variants are their panel's shortcut plus Shift.
-        let withShift: Set<Hotkey> = [.killAllApps]
+        // These are a sibling's shortcut plus Shift.
+        let withShift: Set<Hotkey> = [.killAllApps, .fillCurrentWindow]
         // Share has no default shortcut; the user can assign one.
         let unbound: Set<Hotkey> = [.showShare]
         #expect(unbound.allSatisfy { $0.name.initialShortcut == nil })

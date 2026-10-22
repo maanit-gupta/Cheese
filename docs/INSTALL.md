@@ -150,7 +150,8 @@ Look for the cheese wedge near the clock.
 | **Files ▸** | Every Files tool; pick one, then the files |
 | **Share…** | Cheese Share: send to phones and computers nearby |
 | **Shelf** | The floating drop shelf |
-| **Tools ▸** | Show Clipboard as QR, Keep Awake ▸, Arrange Window ▸ |
+| **Windows ▸** | Fill every window to the screen (Stage Manager aware), fill or restore one, and snap to halves |
+| **Tools ▸** | Auto-Kill Apps…, Kill All Open Apps Now, Show Clipboard as QR, Keep Awake ▸ |
 | **Clear History** | Empties history (hold <kbd>⌥</kbd> for **Clear All…**, which also removes pins) |
 | **Settings… / Quit Cheese** | |
 

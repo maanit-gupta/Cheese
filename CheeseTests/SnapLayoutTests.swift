@@ -161,6 +161,8 @@ private final class FakeWindows: WindowControlling {
     func key(for window: Window) -> Window { window }
     func frame(of window: Window) -> CGRect? { frames[window] }
     func visibleFrames() -> [CGRect] { displays }
+    func standardWindows() -> [Window] { frames.keys.sorted { $0.id < $1.id } }
+    func processID(of window: Window) -> pid_t { pid_t(window.id) }
 
     func setFrame(_ frame: CGRect, of window: Window) -> CGRect? {
         let size = fixedSizes.contains(window) ? frames[window]?.size ?? frame.size : frame.size

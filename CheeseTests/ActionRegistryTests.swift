@@ -123,6 +123,13 @@ struct ActionCatalogueTests {
         #expect(action(id)?.alertName == "Window snapping")
     }
 
+    @Test(arguments: [ActionID.fillAllWindows, .fillCurrentWindow, .restoreAllWindows])
+    func fillToScreenNeedsAccessibility(_ id: ActionID) {
+        #expect(action(id)?.requiredPermissions == [.accessibility])
+        #expect(action(id)?.module == .windowSnapping)
+        #expect(action(id)?.alertName == "Fill to Screen")
+    }
+
     @Test func ocrAlertNamesTheFeature() {
         #expect(action(.ocrRegion)?.alertName == "Copying text from the screen")
     }
@@ -319,14 +326,18 @@ struct MenuLayoutTests {
     @Test func everythingAvailableShowsTheWholeGroupedMenu() {
         let visible = MenuLayout.visible(MenuLayout.standard) { _ in true }
         #expect(titles(visible) == [
-            "openHistory", "Capture▸", "drawOnScreen", "Files▸", "showShare", "toggleShelf", "Tools▸",
+            "openHistory", "Capture▸", "drawOnScreen", "Files▸", "showShare", "toggleShelf", "Windows▸", "Tools▸",
             "—", "clearHistory", "alt:clearAll", "openSettings", "quit",
+        ])
+        #expect(titles(submenu("Windows", in: visible) ?? []) == [
+            "fillAllWindows", "fillCurrentWindow", "restoreAllWindows", "—",
+            "snapLeft", "snapRight", "maximize", "snapBottom", "restoreWindow",
         ])
         #expect(titles(submenu("Capture", in: visible) ?? []) == [
             "captureRegion", "captureWindow", "captureFullScreen", "ocrRegion", "scrollingCapture",
         ])
         #expect(titles(submenu("Tools", in: visible) ?? []) == [
-            "autoKillPanel", "killAllApps", "—", "showClipboardQR", "Keep Awake▸", "Arrange Window▸",
+            "autoKillPanel", "killAllApps", "—", "showClipboardQR", "Keep Awake▸",
         ])
     }
 

@@ -66,6 +66,13 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - Press <kbd>→</kbd> again on the right half to jump to the next display, Windows-style.
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌫</kbd> puts the window back where it was.
 
+### Fill to Screen (Stage Manager aware)
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>M</kbd> resizes **every window of every open app** to fill its display. Windows are resized, never put into native full screen, so they stay on your desktop and Stage Manager's strip of recent apps stays visible: click any tile and its window comes up filling the screen.
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>M</kbd> does the same for just the window you're in (<kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌫</kbd> puts it back).
+- **Restore All Windows** (in **Windows ▸** and the palette) puts every window back where it was before the fill, even if you filled twice.
+- While Stage Manager shows its strip, windows leave room for it (196 pt on the left, or the right when the Dock is on the left). **Settings → Windows** changes the width (140–260 pt) or fills the whole screen regardless. With Stage Manager off, or its strip hidden, windows fill the whole visible screen.
+- Panels, dialogs, minimized windows and windows already in full screen are left alone, and so are apps on other Spaces.
+
 ### App hotkeys
 - **Settings → App Hotkeys** gives any app a <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + letter shortcut that opens it, or brings it to the front if it's running.
 - Add an app and Cheese **suggests a free, memorable key** (Figma → <kbd>F</kbd>, Microsoft Word → <kbd>W</kbd>), skipping keys that Cheese, macOS or popular utilities already use. Accept it, ask for another, or record your own.
@@ -156,7 +163,9 @@ Click the 🧀 in the menu bar for every tool, so shortcuts are optional:
  Files                              ▸   every Files tool
  Share…
  Shelf                            ⌃⌥F
- Tools                              ▸   Auto-Kill Apps… · Kill All Open Apps Now · Show Clipboard as QR · Keep Awake ▸ · Arrange Window ▸
+ Windows                            ▸   Fill All to Screen ⌃⌥M · Fill Current Window ⌃⌥⇧M · Restore All Windows
+                                        Left Half · Right Half · Maximize · Bottom Half · Restore Previous Size
+ Tools                              ▸   Auto-Kill Apps… · Kill All Open Apps Now · Show Clipboard as QR · Keep Awake ▸
  ───────────────────────────────────
  Clear History                          (hold ⌥ for Clear All…)
  Settings…                         ⌘,
@@ -172,7 +181,7 @@ The first time Cheese runs it shows a short welcome: what Cheese is, a **tool pi
 | Permission | Needed for |
 |---|---|
 | **Screen Recording** | Screenshots, OCR, scrolling capture, draw-mode snapshots and zoom |
-| **Accessibility** | Pasting from history, window snapping, auto-scrolling |
+| **Accessibility** | Pasting from history, window snapping and Fill to Screen, auto-scrolling |
 | **Notifications** | Finished Files jobs, files received by Cheese Share |
 | **Local Network** | Cheese Share finding LocalSend devices |
 | **Finder extension** | The Cheese ▸ submenu in Finder |
@@ -193,6 +202,8 @@ Files tools also ask once for **Automation → Finder**, only when you run one f
 | Maximize | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↑</kbd> |
 | Snap bottom half | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↓</kbd> |
 | Restore window | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌫</kbd> |
+| Fill all windows to the screen | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>M</kbd> |
+| Fill the current window to the screen | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>M</kbd> |
 | Draw on screen (tap to toggle, hold for quick ink) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> |
 | Command palette | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> |
 | Show / hide the shelf | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>F</kbd> |
@@ -237,6 +248,7 @@ Cheese warns you if a combination is already taken by macOS or the menu. The men
 | **Shortcuts** | Rebind every global shortcut |
 | **Clipboard** | History size (default 200 unpinned items) |
 | **OCR** | Languages (English, Hindi) and line-break handling |
+| **Windows** | Fill to Screen: leave room for Stage Manager's strip (and how much), or fill the whole screen |
 | **App Hotkeys** | Apps with their own <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> shortcut, with key suggestions |
 | **Files** | Finder extension status, and Microsoft Office / LibreOffice for Office → PDF (when installed) |
 | **Share** | This Mac's name, where received files go, the largest transfer accepted (default 10 GB), trusted devices |
