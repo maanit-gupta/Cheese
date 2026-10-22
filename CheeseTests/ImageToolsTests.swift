@@ -131,6 +131,28 @@ struct ImageToolTests {
         #expect(properties[kCGImagePropertyPixelHeight] as? Int == 792)
     }
 
+    @Test func iPhoneStyleHEICConvertsUprightAndCompressesWithoutLocation() async throws {
+        let input = try FilesFixture.copy("photo.heic")
+        #expect(FileFixtures.properties(of: input)[kCGImagePropertyGPSDictionary] != nil)
+
+        let converted = try await runJob(ConvertImageTool().work(inputs: [input], options: .init(format: .jpeg)))
+        let jpeg = try #require(converted.outputs.first)
+        #expect(jpeg.lastPathComponent == "photo.jpg")
+        #expect(FileFixtures.properties(of: jpeg)[kCGImagePropertyOrientation] as? Int == 6)
+
+        let resized = try await runJob(ResizeImageTool().work(inputs: [input], options: .init(mode: .maxSize, maxWidth: 200, maxHeight: 200)))
+        let small = FileFixtures.properties(of: try #require(resized.outputs.first))
+        // 600×400 tagged as rotated is 400×600 upright, so it fits 200 tall.
+        #expect(small[kCGImagePropertyPixelWidth] as? Int == 133)
+        #expect(small[kCGImagePropertyPixelHeight] as? Int == 200)
+
+        let compressed = try await runJob(CompressImageTool().work(inputs: [input], options: .init(quality: 0.2, stripMetadata: true)))
+        if let output = compressed.outputs.first {
+            #expect(FileFixtures.properties(of: output)[kCGImagePropertyGPSDictionary] == nil)
+            #expect(FileFixtures.properties(of: output)[kCGImagePropertyOrientation] as? Int == 6)
+        }
+    }
+
     @Test func pageNumbersDefaultToAllAndDropRepeats() throws {
         #expect(try PDFToImagesTool.pageNumbers("", pageCount: 3) == [1, 2, 3])
         #expect(try PDFToImagesTool.pageNumbers("2-3, 2", pageCount: 3) == [2, 3])

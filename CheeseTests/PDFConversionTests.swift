@@ -263,6 +263,15 @@ struct PDFToOfficeIntegrationTests {
         #expect(document.contains("Field Trip"))
     }
 
+    @Test func multiColumnPagesKeepBothColumnsText() async throws {
+        let input = try FilesFixture.copy("multicolumn.pdf")
+        let report = try await runJob(PDFToDocxTool().work(inputs: [input], options: NoOptions()))
+        let text = try docxText(try #require(report.outputs.first)).string
+        #expect(text.contains("Two Column Newsletter"))
+        #expect(text.contains("Left column line 18"))
+        #expect(text.contains("Right column line 18"))
+    }
+
     @Test func scannedPagesAreReadWithOCR() async throws {
         let input = try FilesFixture.copy("scanned.pdf")
         let report = try await runJob(PDFToDocxTool().work(inputs: [input], options: NoOptions()))
