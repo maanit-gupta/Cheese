@@ -16,7 +16,7 @@ struct AnnotationEditorView: View {
     }
 
     private var toolbar: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignTokens.Spacing.large) {
             Picker("Tool", selection: $model.tool) {
                 ForEach(EditorTool.allCases) { tool in
                     Image(systemName: tool.systemImage)
@@ -72,8 +72,8 @@ struct AnnotationEditorView: View {
             Button("Close", action: close)
                 .keyboardShortcut("w", modifiers: .command)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, DesignTokens.Spacing.large)
+        .padding(.vertical, DesignTokens.Spacing.small)
     }
 
     private func colorName(_ color: RGBAColor) -> String {
