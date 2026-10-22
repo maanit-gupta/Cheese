@@ -3,20 +3,20 @@ import SwiftUI
 
 /// A brief, non-activating message near the top of the screen under the pointer, optionally with one action.
 @MainActor
-final class Toast {
+final class CheeseToast {
     struct Action {
         var title: String
         var perform: @MainActor () -> Void
     }
 
-    private static var current: Toast?
+    private static var current: CheeseToast?
 
     private let panel: NSPanel
     private var dismissTask: Task<Void, Never>?
 
     static func show(_ message: String, systemImage: String = "checkmark.circle.fill", action: Action? = nil) {
         current?.dismiss(animated: false)
-        let toast = Toast(message: message, systemImage: systemImage, action: action)
+        let toast = CheeseToast(message: message, systemImage: systemImage, action: action)
         current = toast
         toast.present(for: action == nil ? .seconds(1.6) : .seconds(4))
     }

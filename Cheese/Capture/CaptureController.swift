@@ -78,6 +78,6 @@ final class CaptureController {
 
     private func report(_ error: any Error) {
         Logger.capture.error("Capture failed: \(error.localizedDescription, privacy: .public)")
-        Toast.show("Capture failed: \(error.localizedDescription)", systemImage: "exclamationmark.triangle.fill")
+        CheeseToast.show("Capture failed: \(error.localizedDescription)", systemImage: "exclamationmark.triangle.fill")
     }
 }

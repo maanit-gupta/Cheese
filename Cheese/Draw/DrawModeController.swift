@@ -1150,11 +1150,11 @@ final class DrawModeController {
                     exit()
                     services.openEditor(image)
                 } else if await ImageExport.copy(image) {
-                    Toast.show("Snapshot copied", systemImage: "camera.fill")
+                    CheeseToast.show("Snapshot copied", systemImage: "camera.fill")
                 }
             } catch {
                 Logger.draw.error("Snapshot failed: \(error.localizedDescription, privacy: .public)")
-                Toast.show("Snapshot failed: \(error.localizedDescription)", systemImage: "exclamationmark.triangle.fill")
+                CheeseToast.show("Snapshot failed: \(error.localizedDescription)", systemImage: "exclamationmark.triangle.fill")
             }
         }
     }

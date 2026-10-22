@@ -36,18 +36,18 @@ final class OCRModule: CheeseModule {
 
         let result = await OCRService.live.read(image.image)
         guard let text = result.copyText else {
-            Toast.show(result.summary, systemImage: "text.viewfinder")
+            CheeseToast.show(result.summary, systemImage: "text.viewfinder")
             return
         }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
 
         if case let .codes(payloads) = result, let url = BarcodeReader.openableURL(from: payloads) {
-            Toast.show(result.summary, systemImage: "qrcode", action: Toast.Action(title: "Open") {
+            CheeseToast.show(result.summary, systemImage: "qrcode", action: CheeseToast.Action(title: "Open") {
                 NSWorkspace.shared.open(url)
             })
         } else {
-            Toast.show(result.summary, systemImage: result == .nothing ? "text.viewfinder" : "text.quote")
+            CheeseToast.show(result.summary, systemImage: result == .nothing ? "text.viewfinder" : "text.quote")
         }
     }
 
@@ -70,6 +70,6 @@ final class OCRModule: CheeseModule {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(text, forType: .string)
         }
-        Toast.show(result.summary, systemImage: result == .nothing ? "text.viewfinder" : "text.quote")
+        CheeseToast.show(result.summary, systemImage: result == .nothing ? "text.viewfinder" : "text.quote")
     }
 }

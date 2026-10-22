@@ -83,7 +83,7 @@ private struct ScrollPreviewView: View {
                 Spacer()
                 Button("Copy") {
                     Task {
-                        if await ImageExport.copy(image) { Toast.show("Copied") }
+                        if await ImageExport.copy(image) { CheeseToast.show("Copied") }
                     }
                 }
                 .keyboardShortcut("c", modifiers: .command)
@@ -118,12 +118,12 @@ private struct ScrollPreviewView: View {
     private func save() async {
         do {
             let url = try await ImageExport.save(image, in: Preferences().screenshotSaveFolder)
-            Toast.show("Saved \(url.lastPathComponent)", systemImage: "square.and.arrow.down.fill", action: Toast.Action(title: "Show") {
+            CheeseToast.show("Saved \(url.lastPathComponent)", systemImage: "square.and.arrow.down.fill", action: CheeseToast.Action(title: "Show") {
                 NSWorkspace.shared.activateFileViewerSelecting([url])
             })
         } catch {
             Logger.scrollCapture.error("Saving failed: \(error.localizedDescription, privacy: .public)")
-            Toast.show("Couldn't save: \(error.localizedDescription)", systemImage: "exclamationmark.triangle.fill")
+            CheeseToast.show("Couldn't save: \(error.localizedDescription)", systemImage: "exclamationmark.triangle.fill")
         }
     }
 }

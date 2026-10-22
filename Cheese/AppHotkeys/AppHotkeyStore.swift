@@ -90,7 +90,7 @@ enum AppLauncher {
 
     static func launchOrActivate(_ binding: AppHotkeyBinding) {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: binding.bundleID) else {
-            Toast.show("\(binding.name) isn't installed", systemImage: "questionmark.app")
+            CheeseToast.show("\(binding.name) isn't installed", systemImage: "questionmark.app")
             return
         }
         for app in NSRunningApplication.runningApplications(withBundleIdentifier: binding.bundleID) where app.isHidden {

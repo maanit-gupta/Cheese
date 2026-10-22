@@ -64,7 +64,7 @@ final class ScrollCaptureSession {
 
         let worker = StitchWorker(maxHeight: settings.maxHeight)
         guard let first = await settledCapture(after: nil), await worker.begin(with: first) else {
-            Toast.show("Couldn't capture the region", systemImage: "exclamationmark.triangle.fill")
+            CheeseToast.show("Couldn't capture the region", systemImage: "exclamationmark.triangle.fill")
             return nil
         }
 

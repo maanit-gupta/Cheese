@@ -45,7 +45,7 @@ final class ScrollCaptureModule: CheeseModule {
             capturer = try await capture.regionCapturer(for: selection)
         } catch {
             Logger.app.error("Scrolling capture setup failed: \(error.localizedDescription, privacy: .public)")
-            Toast.show("Capture failed: \(error.localizedDescription)", systemImage: "exclamationmark.triangle.fill")
+            CheeseToast.show("Capture failed: \(error.localizedDescription)", systemImage: "exclamationmark.triangle.fill")
             return
         }
         let session = ScrollCaptureSession(region: selection.rect, capturer: capturer)

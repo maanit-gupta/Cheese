@@ -16,7 +16,7 @@ final class PageEditorTool: NSObject, WindowFileTool, NSWindowDelegate {
             return
         }
         guard let count = PDFPageCounts.count(url), count > 0 else {
-            Toast.show("\(url.lastPathComponent) can't be opened", systemImage: "exclamationmark.triangle.fill")
+            CheeseToast.show("\(url.lastPathComponent) can't be opened", systemImage: "exclamationmark.triangle.fill")
             return
         }
         let model = PageEditorModel(url: url, pageCount: count)

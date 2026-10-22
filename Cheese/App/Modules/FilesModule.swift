@@ -49,7 +49,7 @@ final class FilesModule: CheeseModule {
         let applicable = ToolApplicability.applies(tool, to: files)
         guard applicable else {
             Logger.files.info("\(tool.rawValue, privacy: .public) doesn't apply to the \(files.count) given file(s)")
-            Toast.show("\(tool.title) doesn't work with these files", systemImage: "exclamationmark.triangle.fill")
+            CheeseToast.show("\(tool.title) doesn't work with these files", systemImage: "exclamationmark.triangle.fill")
             return
         }
         if registry.openOwnWindow(tool, files: files, run: { [weak self] work in self?.run(work) }) {
@@ -72,7 +72,7 @@ final class FilesModule: CheeseModule {
             let job = try FilesHandoff.consume(id, from: container)
             let existing = job.fileURLs.filter { FileManager.default.fileExists(atPath: $0.path(percentEncoded: false)) }
             guard isRunning else {
-                Toast.show("Files is turned off in Settings", systemImage: "exclamationmark.triangle.fill")
+                CheeseToast.show("Files is turned off in Settings", systemImage: "exclamationmark.triangle.fill")
                 return
             }
             open(job.tool, files: existing)
@@ -150,7 +150,7 @@ final class FilesModule: CheeseModule {
 
     private func finished(_ report: JobReport) {
         if report.wasCancelled {
-            Toast.show("Cancelled \(JobTitles.subject(report.inputs))", systemImage: "xmark.circle.fill")
+            CheeseToast.show("Cancelled \(JobTitles.subject(report.inputs))", systemImage: "xmark.circle.fill")
             return
         }
         notifications.post(report)

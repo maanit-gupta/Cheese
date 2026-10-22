@@ -52,7 +52,7 @@ final class ScreenshotsModule: CheeseModule {
         }
         Task {
             if await ImageExport.copy(image) {
-                Toast.show("Screenshot copied")
+                CheeseToast.show("Screenshot copied")
             }
         }
     }

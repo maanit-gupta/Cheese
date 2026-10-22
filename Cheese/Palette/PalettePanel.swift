@@ -30,8 +30,8 @@ final class PalettePanel {
         panel.dismiss()
     }
 
-    private func makePanel() -> FloatingPanel {
-        let panel = FloatingPanel(rootView: PaletteView(model: model))
+    private func makePanel() -> CheesePanel {
+        let panel = CheesePanel(rootView: PaletteView(model: model))
         panel.onCancel = { [weak self] in self?.close() }
         return panel
     }

@@ -122,8 +122,8 @@ final class QRPanelController {
         return (image, scale)
     }
 
-    private func makePanel() -> FloatingPanel {
-        let panel = FloatingPanel(rootView: QRPanelView(model: model))
+    private func makePanel() -> CheesePanel {
+        let panel = CheesePanel(rootView: QRPanelView(model: model))
         panel.onCancel = { [weak self] in self?.close() }
         return panel
     }

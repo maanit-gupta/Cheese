@@ -168,7 +168,7 @@ final class EditorModel {
     func copy() async {
         guard let image = await export() else { return }
         if await ImageExport.copy(image) {
-            Toast.show("Copied")
+            CheeseToast.show("Copied")
         }
     }
 
@@ -176,12 +176,12 @@ final class EditorModel {
         guard let image = await export() else { return }
         do {
             let url = try await ImageExport.save(image, in: saveFolder())
-            Toast.show("Saved \(url.lastPathComponent)", systemImage: "square.and.arrow.down.fill", action: Toast.Action(title: "Show") {
+            CheeseToast.show("Saved \(url.lastPathComponent)", systemImage: "square.and.arrow.down.fill", action: CheeseToast.Action(title: "Show") {
                 NSWorkspace.shared.activateFileViewerSelecting([url])
             })
         } catch {
             Logger.editor.error("Saving failed: \(error.localizedDescription, privacy: .public)")
-            Toast.show("Couldn't save: \(error.localizedDescription)", systemImage: "exclamationmark.triangle.fill")
+            CheeseToast.show("Couldn't save: \(error.localizedDescription)", systemImage: "exclamationmark.triangle.fill")
         }
     }
 }
