@@ -62,6 +62,7 @@ struct ActionCatalogueTests {
             OCRModule(capture: capture),
             ScrollCaptureModule(capture: capture, previewActions: ScrollPreviewWindow.Actions(annotate: { _ in }, recognizeText: { _ in })),
             WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager())),
+            QRModule(),
             KeepAwakeModule { _ in },
         ]
     }

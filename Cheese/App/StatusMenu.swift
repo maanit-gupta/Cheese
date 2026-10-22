@@ -26,6 +26,7 @@ final class StatusMenu: NSObject {
             .submenu(title: "Arrange Window", symbol: "macwindow.on.rectangle", actions: [.snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow]),
         ]),
         Section(header: "Utilities", entries: [
+            .action(.showClipboardQR),
             .submenu(title: "Keep Awake", symbol: "cup.and.saucer", actions: [.keepAwakeIndefinitely, .keepAwakeUntil, .keepAwakeOff]),
         ]),
         Section(entries: [.action(.clearHistory), .action(.clearAll)]),

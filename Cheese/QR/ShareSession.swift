@@ -1,0 +1,190 @@
+import Foundation
+
+/// What one share link serves, ready to send.
+struct ShareResource: Sendable {
+    enum Body: Sendable {
+        case data(Data)
+        case file(URL)
+    }
+
+    var contentType: String
+    var body: Body
+    /// Set for downloads: the name the phone saves the file under.
+    var attachmentName: String?
+    /// Temp files made for this share (zips), deleted when it ends.
+    var temporaryFiles: [URL] = []
+}
+
+/// One live share link: a random token, what it serves, and when it stops working.
+struct ShareSession: Sendable, Identifiable {
+    let token: String
+    let resource: ShareResource
+    let expiresAt: Date
+
+    var id: String { token }
+
+    func isExpired(at now: Date) -> Bool {
+        now >= expiresAt
+    }
+}
+
+/// The rules for share links: token shape, lifetime, and which requests get what.
+enum ShareRules {
+    /// Links stop working this long after they're made.
+    static let lifetime: TimeInterval = 10 * 60
+    /// 128 random bits, as hex.
+    static let tokenLength = 32
+
+    static func makeToken<Generator: RandomNumberGenerator>(using generator: inout Generator) -> String {
+        let high = generator.next() as UInt64
+        let low = generator.next() as UInt64
+        return String(format: "%016llx%016llx", high, low)
+    }
+
+    static func makeToken() -> String {
+        var generator = SystemRandomNumberGenerator()
+        return makeToken(using: &generator)
+    }
+
+    /// The token a request path names, if it has exactly the shape `/<token>`.
+    static func token(fromPath path: String) -> String? {
+        guard path.hasPrefix("/") else { return nil }
+        let token = path.dropFirst()
+        guard token.count == tokenLength, token.allSatisfy(\.isHexDigit), token == token.lowercased() else { return nil }
+        return String(token)
+    }
+
+    /// The live session a path names. Anything else, including an expired link, is nil (a 404).
+    static func session(forPath path: String, in sessions: [ShareSession], now: Date) -> ShareSession? {
+        guard let token = token(fromPath: path) else { return nil }
+        return sessions.first { $0.token == token && !$0.isExpired(at: now) }
+    }
+}
+
+/// The parts of HTTP/1.1 the share server needs: a request line in, a status and headers out.
+enum HTTPMessage {
+    struct RequestHead: Equatable {
+        var method: String
+        var path: String
+    }
+
+    enum Route: Equatable {
+        case serve(token: String)
+        case status(Int)
+    }
+
+    /// Requests larger than this before the blank line are refused.
+    static let maxHeadBytes = 16 * 1024
+    private static let headTerminator = Data("\r\n\r\n".utf8)
+
+    /// True once `data` holds the whole request head.
+    static func hasCompleteHead(_ data: Data) -> Bool {
+        data.range(of: headTerminator) != nil
+    }
+
+    /// The method and path of a request, or nil when the request line is malformed.
+    static func parseHead(_ data: Data) -> RequestHead? {
+        guard let end = data.range(of: Data("\r\n".utf8)),
+              let line = String(data: data[data.startIndex..<end.lowerBound], encoding: .utf8)
+        else { return nil }
+        let parts = line.split(separator: " ", omittingEmptySubsequences: false)
+        guard parts.count == 3, parts[2].hasPrefix("HTTP/1."), !parts[0].isEmpty, parts[1].hasPrefix("/") else { return nil }
+        return RequestHead(method: String(parts[0]), path: String(parts[1]))
+    }
+
+    /// GET only, one path per live share; everything else is an error status.
+    static func route(_ head: RequestHead?, sessions: [ShareSession], now: Date) -> Route {
+        guard let head else { return .status(400) }
+        guard head.method == "GET" else { return .status(405) }
+        guard let session = ShareRules.session(forPath: head.path, in: sessions, now: now) else { return .status(404) }
+        return .serve(token: session.token)
+    }
+
+    static func reason(for status: Int) -> String {
+        switch status {
+        case 200: "OK"
+        case 400: "Bad Request"
+        case 404: "Not Found"
+        case 405: "Method Not Allowed"
+        default: "Error"
+        }
+    }
+
+    static func responseHead(status: Int, headers: [(String, String)]) -> Data {
+        var text = "HTTP/1.1 \(status) \(reason(for: status))\r\n"
+        for (name, value) in headers {
+            text += "\(name): \(value)\r\n"
+        }
+        text += "\r\n"
+        return Data(text.utf8)
+    }
+
+    /// `attachment` with an ASCII fallback name and the real name percent-encoded (RFC 6266).
+    static func contentDisposition(attachmentName name: String) -> String {
+        let fallback = String(name.unicodeScalars.map { scalar -> Character in
+            scalar.isASCII && scalar.value >= 0x20 && scalar != "\"" && scalar != "\\" ? Character(scalar) : "_"
+        })
+        var allowed = CharacterSet.alphanumerics.intersection(CharacterSet(charactersIn: Unicode.Scalar(0)...Unicode.Scalar(127)))
+        allowed.insert(charactersIn: "-._~")
+        let encoded = name.addingPercentEncoding(withAllowedCharacters: allowed) ?? fallback
+        return "attachment; filename=\"\(fallback)\"; filename*=UTF-8''\(encoded)"
+    }
+}
+
+/// The mobile page a shared text opens as: the text and a Copy button.
+enum SharePage {
+    static func html(for text: String) -> String {
+        """
+        <!doctype html>
+        <html lang="en">
+        <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Shared from Cheese</title>
+        <style>
+        :root { color-scheme: light dark; }
+        body { font: 17px -apple-system, system-ui, sans-serif; margin: 0; padding: 16px; }
+        textarea { box-sizing: border-box; width: 100%; height: 70vh; font: inherit; padding: 12px;
+          border-radius: 12px; border: 1px solid #8884; resize: vertical; }
+        button { margin-top: 12px; width: 100%; font: 600 17px -apple-system, system-ui, sans-serif;
+          padding: 14px; border: 0; border-radius: 12px; background: #f5b400; color: #222; }
+        </style>
+        </head>
+        <body>
+        <textarea id="text" readonly>\(escape(text))</textarea>
+        <button id="copy" type="button">Copy</button>
+        <script>
+        const button = document.getElementById("copy");
+        const area = document.getElementById("text");
+        button.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(area.value);
+          } catch {
+            area.select();
+            area.setSelectionRange(0, area.value.length);
+            document.execCommand("copy");
+          }
+          button.textContent = "Copied";
+        });
+        </script>
+        </body>
+        </html>
+        """
+    }
+
+    static func escape(_ text: String) -> String {
+        var escaped = ""
+        escaped.reserveCapacity(text.count)
+        for character in text {
+            switch character {
+            case "&": escaped += "&amp;"
+            case "<": escaped += "&lt;"
+            case ">": escaped += "&gt;"
+            case "\"": escaped += "&quot;"
+            case "'": escaped += "&#39;"
+            default: escaped.append(character)
+            }
+        }
+        return escaped
+    }
+}

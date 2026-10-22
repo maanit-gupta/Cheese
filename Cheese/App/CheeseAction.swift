@@ -31,6 +31,7 @@ extension ActionID {
     static let keepAwakeIndefinitely = Self(rawValue: "keepAwakeIndefinitely")
     static let keepAwakeUntil = Self(rawValue: "keepAwakeUntil")
     static let keepAwakeOff = Self(rawValue: "keepAwakeOff")
+    static let showClipboardQR = Self(rawValue: "showClipboardQR")
 }
 
 /// Where an action was launched from.
