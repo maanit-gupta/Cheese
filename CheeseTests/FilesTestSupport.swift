@@ -33,3 +33,35 @@ enum TestPDFs {
         return (0..<document.pageCount).map { document.page(at: $0)?.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "" }
     }
 }
+
+extension TestPDFs {
+    /// Random RGB noise, which compresses badly: a stand-in for a photo.
+    static func noiseImage(width: Int, height: Int) -> CGImage? {
+        var generator = SystemRandomNumberGenerator()
+        let bytes = (0..<(width * height * 4)).map { _ in UInt8.random(in: 0...255, using: &generator) }
+        guard let provider = CGDataProvider(data: Data(bytes) as CFData) else { return nil }
+        return CGImage(
+            width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: width * 4,
+            space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue),
+            provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent
+        )
+    }
+
+    /// Page 1: a full-page noisy image ("scanned"). Page 2: text only.
+    @discardableResult
+    static func writeMixed(to url: URL, imagePixels: Int = 1200) -> URL {
+        var mediaBox = CGRect(x: 0, y: 0, width: 612, height: 792)
+        guard let context = CGContext(url as CFURL, mediaBox: &mediaBox, nil),
+              let image = noiseImage(width: imagePixels, height: imagePixels)
+        else { return url }
+        context.beginPDFPage(nil)
+        context.draw(image, in: CGRect(x: 0, y: 90, width: 612, height: 612))
+        context.endPDFPage()
+        context.beginPDFPage(nil)
+        draw("Plain text page", at: CGPoint(x: 72, y: 700), size: 18, in: context)
+        context.endPDFPage()
+        context.closePDF()
+        return url
+    }
+}

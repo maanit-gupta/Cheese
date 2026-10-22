@@ -16,6 +16,7 @@ final class FileToolRegistry {
         [
             AnyFileTool(MergeTool()),
             AnyFileTool(SplitTool()),
+            AnyFileTool(CompressTool()),
             AnyFileTool(WatermarkTool()),
             AnyFileTool(PageNumbersTool()),
             AnyFileTool(ImagesToPDFTool()),

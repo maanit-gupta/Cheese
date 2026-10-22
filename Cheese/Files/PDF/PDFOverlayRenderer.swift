@@ -30,17 +30,9 @@ enum PDFOverlayRenderer {
         for number in 1...count {
             try Task.checkCancellation()
             guard let page = document.page(at: number) else { continue }
-            let box = page.getBoxRect(.cropBox)
-            let quarterTurns = ((page.rotationAngle / 90) % 4 + 4) % 4
-            let size = quarterTurns % 2 == 1 ? CGSize(width: box.height, height: box.width) : box.size
-            var mediaBox = CGRect(origin: .zero, size: size)
-            context.beginPDFPage([kCGPDFContextMediaBox: Data(bytes: &mediaBox, count: MemoryLayout<CGRect>.size)] as CFDictionary)
-            context.saveGState()
-            // Bakes the page's rotation and crop into the new page so it looks the same.
-            context.concatenate(page.getDrawingTransform(.cropBox, rect: mediaBox, rotate: 0, preserveAspectRatio: true))
-            context.clip(to: box)
-            context.drawPDFPage(page)
-            context.restoreGState()
+            let size = PDFPageDrawing.uprightSize(of: page)
+            PDFPageDrawing.beginPage(size: size, in: context)
+            PDFPageDrawing.drawUpright(page, size: size, in: context)
             context.saveGState()
             try overlay(context, OverlayPage(index: number - 1, count: count, size: size))
             context.restoreGState()
@@ -50,7 +42,7 @@ enum PDFOverlayRenderer {
     }
 
     /// Title, author and the like, carried over to the new file.
-    private static func documentInfo(of document: CGPDFDocument) -> CFDictionary? {
+    static func documentInfo(of document: CGPDFDocument) -> CFDictionary? {
         guard let info = document.info else { return nil }
         var result: [CFString: Any] = [:]
         let keys: [(String, CFString)] = [
@@ -64,6 +56,30 @@ enum PDFOverlayRenderer {
             }
         }
         return result.isEmpty ? nil : result as CFDictionary
+    }
+}
+
+/// Copies PDF pages into a new PDF context as vectors, with their crop and rotation baked in.
+enum PDFPageDrawing {
+    /// The crop box's size once the page's rotation is applied.
+    static func uprightSize(of page: CGPDFPage) -> CGSize {
+        let box = page.getBoxRect(.cropBox)
+        let quarterTurns = ((page.rotationAngle / 90) % 4 + 4) % 4
+        return quarterTurns % 2 == 1 ? CGSize(width: box.height, height: box.width) : box.size
+    }
+
+    static func beginPage(size: CGSize, in context: CGContext) {
+        var mediaBox = CGRect(origin: .zero, size: size)
+        context.beginPDFPage([kCGPDFContextMediaBox: Data(bytes: &mediaBox, count: MemoryLayout<CGRect>.size)] as CFDictionary)
+    }
+
+    /// Draws the page so it looks the same on an unrotated page of `size`.
+    static func drawUpright(_ page: CGPDFPage, size: CGSize, in context: CGContext) {
+        context.saveGState()
+        context.concatenate(page.getDrawingTransform(.cropBox, rect: CGRect(origin: .zero, size: size), rotate: 0, preserveAspectRatio: true))
+        context.clip(to: page.getBoxRect(.cropBox))
+        context.drawPDFPage(page)
+        context.restoreGState()
     }
 }
 
