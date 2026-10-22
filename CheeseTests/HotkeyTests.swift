@@ -19,6 +19,7 @@ struct HotkeyTests {
             .maximize: .upArrow,
             .snapBottom: .downArrow,
             .restoreWindow: .delete,
+            .commandPalette: .return,
         ]
         #expect(expected.count == Hotkey.allCases.count)
         for hotkey in Hotkey.allCases {

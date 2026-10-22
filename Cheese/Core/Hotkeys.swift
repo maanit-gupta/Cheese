@@ -14,6 +14,7 @@ enum Hotkey: CaseIterable, Sendable {
     case maximize
     case snapBottom
     case restoreWindow
+    case commandPalette
 
     var name: KeyboardShortcuts.Name {
         switch self {
@@ -28,6 +29,7 @@ enum Hotkey: CaseIterable, Sendable {
         case .maximize: .maximize
         case .snapBottom: .snapBottom
         case .restoreWindow: .restoreWindow
+        case .commandPalette: .commandPalette
         }
     }
 
@@ -44,6 +46,7 @@ enum Hotkey: CaseIterable, Sendable {
         case .maximize: "Maximize"
         case .snapBottom: "Snap to bottom half"
         case .restoreWindow: "Restore window"
+        case .commandPalette: "Command palette"
         }
     }
 }
@@ -62,6 +65,7 @@ extension KeyboardShortcuts.Name {
     static let maximize = Self("maximize", initial: .init(.upArrow, modifiers: modifiers))
     static let snapBottom = Self("snapBottom", initial: .init(.downArrow, modifiers: modifiers))
     static let restoreWindow = Self("restoreWindow", initial: .init(.delete, modifiers: modifiers))
+    static let commandPalette = Self("commandPalette", initial: .init(.return, modifiers: modifiers))
 }
 
 extension KeyboardShortcuts.Name {

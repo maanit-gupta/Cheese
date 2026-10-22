@@ -32,6 +32,13 @@ extension ActionID {
     static let keepAwakeUntil = Self(rawValue: "keepAwakeUntil")
     static let keepAwakeOff = Self(rawValue: "keepAwakeOff")
     static let showClipboardQR = Self(rawValue: "showClipboardQR")
+    static let commandPalette = Self(rawValue: "commandPalette")
+    static let settingsGeneral = Self(rawValue: "settingsGeneral")
+    static let settingsShortcuts = Self(rawValue: "settingsShortcuts")
+    static let settingsClipboard = Self(rawValue: "settingsClipboard")
+    static let settingsOCR = Self(rawValue: "settingsOCR")
+    static let settingsAppHotkeys = Self(rawValue: "settingsAppHotkeys")
+    static let settingsPermissions = Self(rawValue: "settingsPermissions")
 }
 
 /// Where an action was launched from.

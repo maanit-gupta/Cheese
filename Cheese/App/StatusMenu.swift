@@ -30,7 +30,7 @@ final class StatusMenu: NSObject {
             .submenu(title: "Keep Awake", symbol: "cup.and.saucer", actions: [.keepAwakeIndefinitely, .keepAwakeUntil, .keepAwakeOff]),
         ]),
         Section(entries: [.action(.clearHistory), .action(.clearAll)]),
-        Section(entries: [.action(.editShortcuts), .action(.openSettings, keyEquivalent: ","), .action(.showWelcome)]),
+        Section(entries: [.action(.commandPalette), .action(.editShortcuts), .action(.openSettings, keyEquivalent: ","), .action(.showWelcome)]),
         Section(entries: [.action(.quit, keyEquivalent: "q")]),
     ]
 

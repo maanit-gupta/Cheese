@@ -65,6 +65,7 @@ struct ActionCatalogueTests {
             QRModule(),
             KeepAwakeModule { _ in },
             AppHotkeysModule(store: AppHotkeyStore(defaults: UserDefaults(suiteName: "ActionCatalogueTests") ?? .standard), index: InstalledAppIndex(folders: [])),
+            CommandPaletteModule(availableActions: { [] }, perform: { _, _ in }),
         ]
     }
 

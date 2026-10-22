@@ -77,6 +77,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             QRModule(),
             KeepAwakeModule { [weak self] text in self?.menuBar?.setIndicator(text) },
             AppHotkeysModule(store: appHotkeyStore, index: installedApps),
+            CommandPaletteModule(
+                availableActions: { [weak self] in self?.registry?.availableActions ?? [] },
+                perform: { [weak self] id, context in self?.registry?.perform(id, context: context) }
+            ),
         ]
         let preferences = Preferences()
         return ActionRegistry(
@@ -112,7 +116,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             CheeseAction(id: .quit, title: "Quit Cheese", symbol: "power", module: nil) { _ in
                 NSApp.terminate(nil)
             },
+        ] + settingsTabActions()
+    }
+
+    /// "Settings: General" and friends, so the palette can open Settings on any tab.
+    private func settingsTabActions() -> [CheeseAction] {
+        let tabs: [(ActionID, String, String, SettingsTab)] = [
+            (.settingsGeneral, "General", "gearshape", .general),
+            (.settingsShortcuts, "Shortcuts", "keyboard", .shortcuts),
+            (.settingsClipboard, "Clipboard", "doc.on.clipboard", .clipboard),
+            (.settingsOCR, "OCR", "text.viewfinder", .ocr),
+            (.settingsAppHotkeys, "App Hotkeys", "app.badge", .appHotkeys),
+            (.settingsPermissions, "Permissions", "lock.shield", .permissions),
         ]
+        return tabs.map { id, title, symbol, tab in
+            CheeseAction(id: id, title: "Settings: \(title)", symbol: symbol, module: nil) { [weak self] _ in
+                self?.settingsWindow?.show(tab: tab)
+            }
+        }
     }
 
     /// Settings changes take effect right away: module toggles start or stop modules (and their

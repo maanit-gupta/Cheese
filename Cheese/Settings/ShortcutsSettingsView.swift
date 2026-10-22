@@ -6,6 +6,7 @@ struct ShortcutsSettingsView: View {
         ("Clipboard", [.openHistory]),
         ("Capture", [.captureRegion, .captureFullScreen, .captureWindow, .ocrRegion, .scrollingCapture]),
         ("Windows", [.snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow]),
+        ("Tools", [.commandPalette]),
     ]
 
     var body: some View {
