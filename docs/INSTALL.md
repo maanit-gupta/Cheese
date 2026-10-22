@@ -109,7 +109,7 @@ The first time Cheese opens, a short welcome guide appears:
 
 | Page | What it's for |
 |---|---|
-| **Welcome** | The five tools and their shortcuts |
+| **Welcome** | What each tool does, with its shortcut |
 | **Permissions** | Live status of the two permissions, with buttons that open the right System Settings page |
 | **Shortcuts** | Rebind any shortcut on the spot |
 | **All set** | Turn on *Open Cheese automatically when you log in* |

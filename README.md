@@ -5,10 +5,9 @@
 <h1 align="center">Cheese</h1>
 
 <p align="center">
-  <b>Everyday Mac tools in one tiny menu bar app.</b><br>
-  Clipboard history · Screenshots · OCR · Scrolling capture · Window snapping<br>
-  Draw on screen · Clipboard as QR · Keep awake · App hotkeys · Command palette<br>
-  Files: offline PDF, document and image tools
+  <b>Eleven everyday Mac tools in one tiny menu bar app.</b><br>
+  Capture &amp; OCR · Clipboard · Windows &amp; apps · Draw on screen · Files · Keep awake<br>
+  <sub>Native · offline · every shortcut rebindable · MIT licensed</sub>
 </p>
 
 <p align="center">
@@ -21,6 +20,7 @@
 
 <p align="center">
   <a href="https://github.com/maanit-gupta/Cheese/releases/latest"><b>Download</b></a> ·
+  <a href="#at-a-glance"><b>Features</b></a> ·
   <a href="docs/INSTALL.md"><b>Install guide</b></a> ·
   <a href="#keyboard-shortcuts"><b>Shortcuts</b></a> ·
   <a href="#troubleshooting"><b>Troubleshooting</b></a>
@@ -36,15 +36,50 @@
 
 ---
 
-Cheese replaces a handful of single-purpose utilities (a clipboard manager, a screenshot tool, a text grabber, a window manager, a screen annotator, a keep-awake toggle, an app launcher and an online PDF converter) with one native app. It lives in your menu bar, starts instantly and stays out of the way until you press a shortcut.
+Cheese replaces a drawer full of single-purpose utilities (a clipboard manager, a screenshot tool, a text grabber, a window manager, a screen annotator, a keep-awake toggle, an app launcher and an online PDF converter) with one native app. It lives in your menu bar, starts instantly and stays out of the way until you press a shortcut.
 
 - **Native.** Swift 6, SwiftUI and AppKit, built on ScreenCaptureKit, Vision, PDFKit and Accessibility. No Electron. The Files tools render Office documents with small bundled JavaScript libraries in a hidden web view that can't reach the network.
 - **Private.** Everything stays on your Mac. No accounts, analytics or internet access. The only network use is the optional local Wi-Fi share link for QR codes, which serves one file to your own network for 10 minutes. Files are converted on your Mac and never uploaded. Items that password managers mark as secret are never recorded or shown.
-- **Yours to tweak.** Every shortcut can be changed, and the source is MIT licensed.
+- **Yours to tweak.** Every shortcut can be changed, any tool you don't need can be switched off, and the source is MIT licensed.
 
-## Features
+## At a glance
 
-### 📋 Clipboard history
+| | Tool | What it does | Default shortcut |
+|---|---|---|---|
+| **📸&nbsp;Capture** | [Screenshots](#screenshots) | Region, window or full screen, straight to the clipboard. Hold <kbd>⇧</kbd> to annotate | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>4</kbd> · <kbd>5</kbd> · <kbd>3</kbd> |
+| | [Scrolling capture](#scrolling-capture) | Scrolls the page for you and stitches one tall image | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd> |
+| | [Copy text (OCR)](#copy-text-from-anything-ocr) | Text, QR codes and barcodes from any part of the screen | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> |
+| **📋&nbsp;Clipboard** | [Clipboard history](#clipboard-history) | Searchable history of text, images and files, one keystroke from pasting | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>V</kbd> |
+| | [Clipboard as QR](#show-clipboard-as-qr) | Send what you copied to your phone with a QR code | Menu · palette |
+| **🪟&nbsp;Windows&nbsp;&amp;&nbsp;apps** | [Window snapping](#window-snapping) | Halves, maximize, restore and multi-display moves | <kbd>⌃</kbd><kbd>⌥</kbd> + arrows |
+| | [App hotkeys](#app-hotkeys) | Open or switch to any app with its own shortcut | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + key |
+| | [Command palette](#command-palette) | Search and run every Cheese action | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> |
+| **🎨&nbsp;Present** | [Draw on screen](#-draw-on-screen) | Pens, shapes, sticky notes, laser, spotlight and zoom over everything | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> |
+| **📄&nbsp;Files** | [PDF, document and image tools](#-files-offline-pdf-document-and-image-tools) | Merge, split, compress, convert and edit, fully offline | Finder · drop on icon · palette |
+| **☕&nbsp;Utilities** | [Keep awake](#keep-awake) | Stop your Mac sleeping, indefinitely or until a set time | Menu · palette |
+
+Every tool is also in the menu bar menu, so shortcuts are optional.
+
+## 📸 Capture and text
+
+### Screenshots
+- **Region** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>4</kbd>, **full screen** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>3</kbd> and **window** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>5</kbd> (with its shadow).
+- Copied straight to the clipboard at full Retina resolution. Nothing clutters your desktop.
+- **Hold <kbd>⇧</kbd> as you finish** to open the annotation editor: arrows, boxes, text, highlighter, blur, crop, and undo/redo. Save as PNG or copy.
+
+### Scrolling capture
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd>, then select the scrollable area. Cheese scrolls for you and stitches one tall image.
+- Sticky headers and footers are detected and kept once, not repeated.
+- Stops by itself at the end of the page, or when you press <kbd>Esc</kbd>. Then copy, save, annotate or OCR the result.
+
+### Copy text from anything (OCR)
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd>, then drag over any part of the screen: videos, images, locked PDFs or slides.
+- Recognises **English and Hindi**. You choose whether to keep line breaks or join them into paragraphs.
+- **QR codes and barcodes** are read too. Links get an *Open* button.
+
+## 📋 Clipboard
+
+### Clipboard history
 - Remembers text, rich text (pastes back with formatting), images and files.
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>V</kbd> opens the history under the menu bar icon. Start typing to fuzzy-search.
 - Search also matches **text inside copied images**, which Cheese reads in the background.
@@ -52,27 +87,27 @@ Cheese replaces a handful of single-purpose utilities (a clipboard manager, a sc
 - Pin favourites with <kbd>⌘</kbd><kbd>P</kbd>. Pinned items never expire. Keeps your last 200 items (adjustable).
 - Skips anything a password manager marks as concealed or transient.
 
-### 📸 Screenshots
-- **Region** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>4</kbd>, **full screen** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>3</kbd> and **window** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>5</kbd> (with its shadow).
-- Copied straight to the clipboard at full Retina resolution. Nothing clutters your desktop.
-- **Hold <kbd>⇧</kbd> as you finish** to open the annotation editor: arrows, boxes, text, highlighter, blur, crop, and undo/redo. Save as PNG or copy.
+### Show clipboard as QR
+- Pick **Show Clipboard as QR** from the menu or the command palette. A large QR code appears in the middle of the screen.
+- Short text and links go straight into the code. Anything bigger (long text, images, rich text, files, folders) is served from a **local Wi-Fi link** that expires after 10 minutes or when you press **Stop Sharing**. Your phone must be on the same Wi-Fi.
+- The first time Cheese shares over Wi-Fi, **the macOS firewall may ask** whether Cheese can accept incoming connections (only if the firewall is on). Allow it, or the phone can't reach the link.
 
-### 🔤 Copy text from anything (OCR)
-- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd>, then drag over any part of the screen: videos, images, locked PDFs or slides.
-- Recognises **English and Hindi**. You choose whether to keep line breaks or join them into paragraphs.
-- **QR codes and barcodes** are read too. Links get an *Open* button.
+## 🪟 Windows and apps
 
-### 📜 Scrolling capture
-- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd>, then select the scrollable area. Cheese scrolls for you and stitches one tall image.
-- Sticky headers and footers are detected and kept once, not repeated.
-- Stops by itself at the end of the page, or when you press <kbd>Esc</kbd>. Then copy, save, annotate or OCR the result.
-
-### 🪟 Window snapping
+### Window snapping
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>←</kbd> / <kbd>→</kbd> snaps to the left or right half, <kbd>↑</kbd> maximizes and <kbd>↓</kbd> snaps to the bottom half.
 - Press <kbd>→</kbd> again on the right half to jump to the next display, Windows-style.
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌫</kbd> puts the window back where it was.
 
-### ✏️ Draw on screen
+### App hotkeys
+- **Settings → App Hotkeys** gives any app a <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + letter shortcut that opens it, or brings it to the front if it's running.
+- Add an app and Cheese **suggests a free, memorable key** (Figma → <kbd>F</kbd>, Microsoft Word → <kbd>W</kbd>), skipping keys that Cheese, macOS or popular utilities already use. Accept it, ask for another, or record your own.
+
+### Command palette
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, draw mode, QR, keep awake, Files tools, history and each Settings tab.
+- Each row shows the action's shortcut, so you learn them as you go. Recently used actions come first.
+
+## 🎨 Draw on screen
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> puts a transparent canvas over every display, including full-screen apps, with a Miro-style tool rail on the left (drag it anywhere).
 - Pen, highlighter, eraser, rectangle, ellipse, line, arrow, text and sticky notes. Hold <kbd>⇧</kbd> for squares, circles and 45° lines.
 - Presenting? **Laser pointer**, **spotlight** and **zoom** (scroll to resize or magnify), plus a whiteboard or blackboard behind your drawings.
@@ -91,25 +126,7 @@ Cheese replaces a handful of single-purpose utilities (a clipboard manager, a sc
 | <kbd>I</kbd> / <kbd>A</kbd> | Line / arrow | <kbd>1</kbd>–<kbd>9</kbd> | Color preset |
 | <kbd>[</kbd> / <kbd>]</kbd> | Thinner / thicker | <kbd>⌘</kbd><kbd>Z</kbd> / <kbd>⌘</kbd><kbd>⇧</kbd><kbd>Z</kbd> | Undo / redo |
 
-### 📱 Show clipboard as QR
-- Pick **Show Clipboard as QR** from the menu or the command palette. A large QR code appears in the middle of the screen.
-- Short text and links go straight into the code. Anything bigger (long text, images, rich text, files, folders) is served from a **local Wi-Fi link** that expires after 10 minutes or when you press **Stop Sharing**. Your phone must be on the same Wi-Fi.
-- The first time Cheese shares over Wi-Fi, **the macOS firewall may ask** whether Cheese can accept incoming connections (only if the firewall is on). Allow it, or the phone can't reach the link.
-
-### ☕️ Keep awake
-- **Keep Awake ▸ Indefinitely / Until… / Turn Off** stops your Mac and display from going to sleep while idle.
-- While it's on, the time left shows next to the menu bar icon (`1h 12m`, `42m`, or `∞`).
-- Keeping the Mac awake **with the lid closed isn't supported**: that needs a privileged helper, which Cheese doesn't install.
-
-### 🚀 App hotkeys
-- **Settings → App Hotkeys** gives any app a <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + letter shortcut that opens it, or brings it to the front if it's running.
-- Add an app and Cheese **suggests a free, memorable key** (Figma → <kbd>F</kbd>, Microsoft Word → <kbd>W</kbd>), skipping keys that Cheese, macOS or popular utilities already use. Accept it, ask for another, or record your own.
-
-### ⌘ Command palette
-- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, draw mode, QR, keep awake, history and each Settings tab.
-- Each row shows the action's shortcut, so you learn them as you go. Recently used actions come first.
-
-### 📄 Files: PDF, document and image tools
+## 📄 Files: offline PDF, document and image tools
 Like iLovePDF, but **entirely offline**: no file leaves your Mac and nothing touches the network. Results are saved **next to the original** (`Report.pdf` → `Report (compressed).pdf`) and nothing is ever overwritten.
 
 Three ways in, all listing only the tools that fit your files:
@@ -137,7 +154,14 @@ Watermarks and page numbers keep your PDF's text selectable. Compression only re
 
 If **Microsoft Office or LibreOffice** is installed, **Settings → Files** offers to use it for Office → PDF instead (off by default). macOS asks once per app to let Cheese control it, and the app may open while it works. If it fails, Cheese falls back to its built-in renderer and says so.
 
-### 🧩 Modules
+## ☕ Utilities
+
+### Keep awake
+- **Keep Awake ▸ Indefinitely / Until… / Turn Off** stops your Mac and display from going to sleep while idle.
+- While it's on, the time left shows next to the menu bar icon (`1h 12m`, `42m`, or `∞`).
+- Keeping the Mac awake **with the lid closed isn't supported**: that needs a privileged helper, which Cheese doesn't install.
+
+## 🧩 Modules
 Don't need a tool? Switch it off in **Settings → General → Modules**. A module that's off has no shortcuts, runs nothing in the background and disappears from the menu and the palette.
 
 ## Install
@@ -332,7 +356,7 @@ The Finder extension has to be switched on once: **Settings → Files → Open E
 <details>
 <summary><b>A converted Word, Excel or PowerPoint file doesn't look like the original</b></summary>
 
-The built-in renderer is approximate (see [Known limits](#-files-pdf-document-and-image-tools)). If you have Microsoft Office or LibreOffice, turn on **Settings → Files → Use Microsoft Office or LibreOffice when available** for closer results.
+The built-in renderer is approximate (see [Known limits](#-files-offline-pdf-document-and-image-tools)). If you have Microsoft Office or LibreOffice, turn on **Settings → Files → Use Microsoft Office or LibreOffice when available** for closer results.
 </details>
 
 <details>

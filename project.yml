@@ -17,8 +17,8 @@ settings:
     # warns "Metadata extraction skipped, no AppIntents.framework dependency found".
     LM_SKIP_METADATA_EXTRACTION: YES
     # One version for the app and its Finder extension, which must match.
-    MARKETING_VERSION: 0.1.1
-    CURRENT_PROJECT_VERSION: 2
+    MARKETING_VERSION: 0.2.0
+    CURRENT_PROJECT_VERSION: 3
     # Stable signing keeps Screen Recording / Accessibility grants across rebuilds.
     # The author's personal team: the OU of the Apple Development certificate (not the ID in its name).
     DEVELOPMENT_TEAM: 8H5274FWRC
