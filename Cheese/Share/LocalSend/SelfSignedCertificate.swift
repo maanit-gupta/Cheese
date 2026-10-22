@@ -81,13 +81,22 @@ enum SelfSignedCertificate {
     static let ecPublicKey = "1.2.840.10045.2.1"
     static let prime256v1 = "1.2.840.10045.3.1.7"
 
-    /// The certificate's DER bytes, valid from an hour before `now` for ten years.
+    /// The certificate for a CryptoKit key.
+    static func make(key: P256.Signing.PrivateKey, now: Date = .now) throws -> Data {
+        try make(publicKeyX963: key.publicKey.x963Representation, now: now) { data in
+            try key.signature(for: data).derRepresentation
+        }
+    }
+
+    /// The certificate's DER bytes, valid from an hour before `now` for ten years. `sign` returns a
+    /// DER ECDSA-with-SHA-256 signature of the bytes it's given, so the key can live in the Keychain.
     static func make(
-        key: P256.Signing.PrivateKey,
+        publicKeyX963: Data,
         commonName: String = "Cheese Share",
         organization: String = "Cheese",
         now: Date = .now,
-        serial: [UInt8] = (0..<16).map { _ in UInt8.random(in: 0...255) }
+        serial: [UInt8] = (0..<16).map { _ in UInt8.random(in: 0...255) },
+        sign: (Data) throws -> Data
     ) throws -> Data {
         let name = DER.sequence(
             DER.set(DER.sequence(DER.oid("2.5.4.3"), DER.utf8String(commonName))),
@@ -96,7 +105,7 @@ enum SelfSignedCertificate {
         let algorithm = DER.sequence(DER.oid(ecdsaWithSHA256))
         let publicKeyInfo = DER.sequence(
             DER.sequence(DER.oid(ecPublicKey), DER.oid(prime256v1)),
-            DER.bitString(Array(key.publicKey.x963Representation))
+            DER.bitString(Array(publicKeyX963))
         )
         let extensions = DER.sequence(
             // Basic constraints: not a CA. Critical.
@@ -116,7 +125,7 @@ enum SelfSignedCertificate {
             publicKeyInfo,
             DER.element(0xA3, extensions)
         )
-        let signature = try key.signature(for: Data(tbs)).derRepresentation
+        let signature = try sign(Data(tbs))
         return Data(DER.sequence(tbs, algorithm, DER.bitString(Array(signature))))
     }
 }

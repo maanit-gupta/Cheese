@@ -292,7 +292,16 @@ final class HTTPConnectionStream: HTTPByteSource, @unchecked Sendable {
         }
     }
 
+    /// Sends `data`, closing the connection if the peer stops taking it for `idleTimeout` (a server
+    /// that refused an upload without reading it, or a phone that went to sleep).
     func send(_ data: Data) async throws {
+        let connection = connection
+        let timeout = idleTimeout
+        let timer = Task {
+            try await Task.sleep(for: timeout)
+            connection.cancel()
+        }
+        defer { timer.cancel() }
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             connection.send(content: data, completion: .contentProcessed { error in
                 if let error {

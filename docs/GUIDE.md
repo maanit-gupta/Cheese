@@ -48,7 +48,7 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - The shelf survives restarts. There's one shelf.
 
 ### Cheese Share
-- **Share…** in the menu (or the palette, the shelf's **Send…**, or **Cheese Share** in any app's Share menu) opens the Share panel.
+- **Share…** in the menu (or the palette, the shelf's **Send…**, **Cheese Share** in any app's Share menu, or the URL `cheese://share` from Shortcuts or a script) opens the Share panel.
 - **Phones, no app needed:** click **Phone** and scan the QR code. The page lets the phone send photos, files and text to the Mac, and download whatever you drop on the Phone tile.
 - **LocalSend:** devices running the free [LocalSend](https://localsend.org) app (Android, iPhone, Windows, Linux, Mac) on the same network show up as tiles. Drop files on a tile, click it to send what's ready, or use its menu for **Send Clipboard**. They can send to Cheese too: you're asked first, with **Always Accept from This Device** for your own devices (manage them in **Settings → Share**).
 - Received files go to **Downloads** (configurable) and a notification offers **Show in Finder**. Received text and links land on the clipboard, and in clipboard history.

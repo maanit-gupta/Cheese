@@ -33,64 +33,108 @@ enum TLSIdentity {
     }
 
     /// The Keychain identity, made on first use. Nil when the Keychain won't store or find it.
-    static func loadOrCreate(label: String = keychainLabel) -> ShareIdentity? {
-        if let existing = existing(label: label) {
+    static func loadOrCreate(label: String = keychainLabel, defaults: UserDefaults = .standard) -> ShareIdentity? {
+        if let existing = existing(label: label, defaults: defaults) {
             return existing
         }
+        // The Keychain makes the key itself, in the login keychain: importing a key made elsewhere
+        // needs keychain entitlements a free signing team can't get.
+        var error: Unmanaged<CFError>?
+        let attributes: [CFString: Any] = [
+            kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom,
+            kSecAttrKeySizeInBits: 256,
+            kSecPrivateKeyAttrs: [kSecAttrIsPermanent: true, kSecAttrLabel: label] as [CFString: Any],
+        ]
+        guard let key = SecKeyCreateRandomKey(attributes as CFDictionary, &error),
+              let publicKey = SecKeyCopyPublicKey(key),
+              let x963 = SecKeyCopyExternalRepresentation(publicKey, &error) as Data?
+        else {
+            Logger.share.error("Couldn't make the Share key: \(String(describing: error?.takeRetainedValue()), privacy: .public)")
+            return nil
+        }
         do {
-            let key = P256.Signing.PrivateKey()
-            let der = try makeCertificate(key: key)
-            var error: Unmanaged<CFError>?
-            let attributes: [CFString: Any] = [
-                kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom,
-                kSecAttrKeyClass: kSecAttrKeyClassPrivate,
-                kSecAttrKeySizeInBits: 256,
-            ]
-            guard let secKey = SecKeyCreateWithData(key.x963Representation as CFData, attributes as CFDictionary, &error),
-                  let certificate = SecCertificateCreateWithData(nil, der as CFData)
-            else {
-                Logger.share.error("Couldn't make the Share certificate: \(String(describing: error?.takeRetainedValue()), privacy: .public)")
+            let der = try SelfSignedCertificate.make(publicKeyX963: x963) { data in
+                var signError: Unmanaged<CFError>?
+                guard let signature = SecKeyCreateSignature(key, .ecdsaSignatureMessageX962SHA256, data as CFData, &signError) as Data? else {
+                    throw signError?.takeRetainedValue() ?? CocoaError(.featureUnsupported)
+                }
+                return signature
+            }
+            guard let certificate = SecCertificateCreateWithData(nil, der as CFData) else { return nil }
+            let status = SecItemAdd([kSecClass: kSecClassCertificate, kSecValueRef: certificate, kSecAttrLabel: label] as CFDictionary, nil)
+            guard status == errSecSuccess else {
+                Logger.share.error("Couldn't store the Share certificate (\(status))")
+                SecItemDelete([kSecValueRef: key] as CFDictionary)
                 return nil
             }
-            let keyStatus = SecItemAdd([kSecClass: kSecClassKey, kSecValueRef: secKey, kSecAttrLabel: label] as CFDictionary, nil)
-            let certificateStatus = SecItemAdd([kSecClass: kSecClassCertificate, kSecValueRef: certificate, kSecAttrLabel: label] as CFDictionary, nil)
-            guard [errSecSuccess, errSecDuplicateItem].contains(keyStatus), [errSecSuccess, errSecDuplicateItem].contains(certificateStatus) else {
-                Logger.share.error("Couldn't store the Share certificate (\(keyStatus), \(certificateStatus))")
-                return nil
-            }
-            var identity: SecIdentity?
-            guard SecIdentityCreateWithCertificate(nil, certificate, &identity) == errSecSuccess, let identity else { return nil }
+            let fingerprint = fingerprint(ofCertificate: der)
+            defaults.set(fingerprint, forKey: fingerprintDefaultsKey(label))
+            guard let identity = identity(for: certificate, fingerprint: fingerprint) else { return nil }
             Logger.share.info("Made Cheese Share's TLS certificate")
-            return ShareIdentity(identity: identity, fingerprint: fingerprint(ofCertificate: der))
+            return identity
         } catch {
             Logger.share.error("Couldn't make the Share certificate: \(error.localizedDescription, privacy: .public)")
+            SecItemDelete([kSecValueRef: key] as CFDictionary)
             return nil
         }
     }
 
-    /// The identity in the Keychain, without making one.
-    static func existing(label: String = keychainLabel) -> ShareIdentity? {
-        let query: [CFString: Any] = [
-            kSecClass: kSecClassIdentity,
-            kSecAttrLabel: label,
-            kSecReturnRef: true,
-            kSecMatchLimit: kSecMatchLimitOne,
-        ]
-        var item: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess, let item,
-              CFGetTypeID(item) == SecIdentityGetTypeID()
-        else { return nil }
-        let identity = unsafeDowncast(item, to: SecIdentity.self)
-        var certificate: SecCertificate?
-        guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess, let certificate else { return nil }
-        return ShareIdentity(identity: identity, fingerprint: fingerprint(ofCertificate: SecCertificateCopyData(certificate) as Data))
+    /// Where the fingerprint of the certificate Cheese made is remembered. Cheese finds its
+    /// certificate by this fingerprint, never by label: Keychain identity searches can ignore labels
+    /// and hand back another identity, like the user's code-signing certificate.
+    static func fingerprintDefaultsKey(_ label: String) -> String {
+        label == keychainLabel ? "shareCertificateFingerprint" : "shareCertificateFingerprint_\(label)"
     }
 
-    /// Deletes the certificate and key stored under `label`.
-    static func remove(label: String) {
-        for itemClass in [kSecClassCertificate, kSecClassKey] {
-            SecItemDelete([kSecClass: itemClass, kSecAttrLabel: label] as CFDictionary)
+    /// Cheese's identity in the Keychain, without making one: the certificate whose SHA-256 is the
+    /// one Cheese recorded when it made it, paired with its private key.
+    static func existing(label: String = keychainLabel, defaults: UserDefaults = .standard) -> ShareIdentity? {
+        guard let wanted = defaults.string(forKey: fingerprintDefaultsKey(label)),
+              let certificate = certificate(withFingerprint: wanted)
+        else { return nil }
+        return identity(for: certificate, fingerprint: wanted)
+    }
+
+    private static func certificate(withFingerprint wanted: String) -> SecCertificate? {
+        let query: [CFString: Any] = [
+            kSecClass: kSecClassCertificate,
+            kSecReturnRef: true,
+            kSecMatchLimit: kSecMatchLimitAll,
+        ]
+        var items: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &items) == errSecSuccess, let items, CFGetTypeID(items) == CFArrayGetTypeID() else { return nil }
+        let array = unsafeDowncast(items, to: CFArray.self) as [AnyObject]
+        for item in array where CFGetTypeID(item) == SecCertificateGetTypeID() {
+            let certificate = unsafeDowncast(item, to: SecCertificate.self)
+            if fingerprint(ofCertificate: SecCertificateCopyData(certificate) as Data) == wanted {
+                return certificate
+            }
         }
+        return nil
+    }
+
+    /// The certificate paired with its private key, checked to really be that certificate.
+    private static func identity(for certificate: SecCertificate, fingerprint wanted: String) -> ShareIdentity? {
+        var identity: SecIdentity?
+        guard SecIdentityCreateWithCertificate(nil, certificate, &identity) == errSecSuccess, let identity else { return nil }
+        var paired: SecCertificate?
+        guard SecIdentityCopyCertificate(identity, &paired) == errSecSuccess, let paired,
+              fingerprint(ofCertificate: SecCertificateCopyData(paired) as Data) == wanted
+        else { return nil }
+        return ShareIdentity(identity: identity, fingerprint: wanted)
+    }
+
+    /// Deletes the certificate and key made under `label`.
+    static func remove(label: String, defaults: UserDefaults = .standard) {
+        guard let identity = existing(label: label, defaults: defaults) else { return }
+        var certificate: SecCertificate?
+        var key: SecKey?
+        SecIdentityCopyCertificate(identity.identity, &certificate)
+        SecIdentityCopyPrivateKey(identity.identity, &key)
+        for item in [certificate as AnyObject?, key as AnyObject?].compactMap(\.self) {
+            SecItemDelete([kSecValueRef: item] as CFDictionary)
+        }
+        defaults.removeObject(forKey: fingerprintDefaultsKey(label))
     }
 
     /// The HTTP-mode fingerprint: a random string made once and kept, used only when there's no certificate.

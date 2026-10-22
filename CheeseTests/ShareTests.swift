@@ -481,6 +481,65 @@ struct ShareLoopbackTests {
         #expect(leftovers.isEmpty)
     }
 
+    @Test func phonePageUploadsTextAndDownloads() async throws {
+        let destination = try temporaryFolder()
+        let offeredFolder = try temporaryFolder()
+        defer {
+            try? FileManager.default.removeItem(at: destination)
+            try? FileManager.default.removeItem(at: offeredFolder)
+        }
+        var received: [URL] = []
+        var texts: [String] = []
+        let browser = BrowserTransfer(hooks: BrowserTransfer.Hooks(
+            destination: { destination },
+            maxBytes: { 1_000_000 },
+            onText: { texts.append($0) },
+            onFileReceived: { received.append($0) }
+        ))
+        let offered = offeredFolder.appending(path: "From Mac.txt")
+        try Data("download me".utf8).write(to: offered)
+        browser.offer([.file(offered), .text("a link")])
+        let server = HTTPServer { [browser] request, body in await browser.handle(request, body: body) }
+        let port = try await server.start(on: "127.0.0.1")
+        defer { server.stop() }
+        let endpoint = HTTPClient.Endpoint(host: "127.0.0.1", port: port, usesTLS: false)
+        let base = "/\(browser.token)"
+
+        let page = try await HTTPClient.send("GET", to: endpoint, target: base + "/")
+        #expect(page.status == 200)
+        #expect(String(decoding: page.body, as: UTF8.self).contains("Cheese Share"))
+
+        let upload = try await HTTPClient.send(
+            "POST", to: endpoint, target: base + "/upload?name=" + "../../photo 1.jpg".addingPercentEncoding(withAllowedCharacters: .alphanumerics)!,
+            body: .data(Data(repeating: 1, count: 5_000))
+        )
+        #expect(upload.status == 204)
+        #expect(received.map(\.lastPathComponent) == ["photo 1.jpg"])
+        #expect(received.first?.deletingLastPathComponent().standardizedFileURL == destination.standardizedFileURL)
+
+        #expect(try await HTTPClient.send("POST", to: endpoint, target: base + "/text", body: .data(Data("hi Mac".utf8))).status == 204)
+        #expect(texts == ["hi Mac"])
+
+        let items = try await HTTPClient.send("GET", to: endpoint, target: base + "/items")
+        let list = try JSONDecoder().decode([BrowserPage.Item].self, from: items.body)
+        #expect(list.map(\.name) == ["From Mac.txt", "a link"])
+        #expect(list.last?.text == "a link")
+        let file = try #require(list.first)
+        let download = try await HTTPClient.send("GET", to: endpoint, target: base + "/download/\(file.id)")
+        #expect(download.status == 200)
+        #expect(download.body == Data("download me".utf8))
+        #expect(download.headers["content-disposition"]?.contains("From Mac.txt") == true)
+
+        // Without the token there's nothing; an oversized upload is refused and leaves nothing behind.
+        #expect(try await HTTPClient.send("GET", to: endpoint, target: "/").status == 404)
+        #expect(try await HTTPClient.send("GET", to: endpoint, target: "/\(ShareRules.makeToken())/items").status == 404)
+        // Refused before it's read: the client sees 413, or the connection dropped mid-send.
+        let big = try? await HTTPClient.send("POST", to: endpoint, target: base + "/upload?name=big.bin", body: .data(Data(count: 2_000_000)), timeout: .seconds(5))
+        #expect(big == nil || big?.status == 413)
+        let leftovers = try FileManager.default.contentsOfDirectory(atPath: destination.path(percentEncoded: false))
+        #expect(leftovers == ["photo 1.jpg"])
+    }
+
     @Test func declinedSendsReportIt() async throws {
         let receiver = LocalSendReceiver(hooks: LocalSendReceiver.Hooks(
             destination: { FileManager.default.temporaryDirectory },
@@ -577,6 +636,11 @@ struct ShareHTTPSTests {
         let label = "Cheese Share Test \(UUID().uuidString)"
         defer { TLSIdentity.remove(label: label) }
         let identity = try #require(TLSIdentity.loadOrCreate(label: label))
+        // It's the certificate Cheese made, not some other identity in the Keychain.
+        var certificate: SecCertificate?
+        SecIdentityCopyCertificate(identity.identity, &certificate)
+        #expect(certificate.flatMap { SecCertificateCopySubjectSummary($0) as String? } == "Cheese Share")
+        #expect(TLSIdentity.existing(label: label)?.fingerprint == identity.fingerprint)
         var texts: [String] = []
         let receiver = LocalSendReceiver(hooks: LocalSendReceiver.Hooks(
             destination: { FileManager.default.temporaryDirectory },
@@ -598,6 +662,9 @@ struct ShareHTTPSTests {
         try await LocalSendSender.send([.text("secret")], to: honest, as: me, identity: identity) { _ in }
         try await LocalSendSender.send([.text("again")], to: honest, as: me, identity: identity) { _ in }
         #expect(texts == ["secret", "again"])
+        // The device saw exactly our certificate.
+        let seen = try await HTTPClient.send("GET", to: honest.endpoint, target: "/", timeout: .seconds(5))
+        #expect(seen.peerFingerprint == identity.fingerprint)
 
         let impostor = try #require(LocalSendPeer(
             info: LocalSend.DeviceInfo(alias: "Mac", version: "2.2", fingerprint: String(repeating: "0", count: 64), port: Int(port), transport: .https),

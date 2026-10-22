@@ -73,11 +73,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// `cheese://job/<uuid>` from the Finder extension opens that tool on the handed-over files;
     /// `cheese://share/<uuid>` from the Share menu opens Cheese Share with the shared items;
-    /// `cheese://settings/share` opens Settings on the Share tab.
+    /// `cheese://share` opens it empty; `cheese://settings/share` opens Settings on the Share tab.
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
             if ShareHandoff.jobID(from: url) != nil {
                 share?.openHandoff(url)
+            } else if url.host() == ShareHandoff.host {
+                // `cheese://share` on its own opens the Share panel, for Shortcuts and scripts.
+                share?.open()
             } else if url.host() == "settings" {
                 settingsWindow?.show(tab: url.lastPathComponent == "share" ? .share : .general)
             } else {
