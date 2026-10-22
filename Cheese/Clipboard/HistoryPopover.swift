@@ -24,6 +24,14 @@ final class HistoryPopover: NSObject, NSPopoverDelegate {
         popover.contentSize = HistoryView.size
         popover.contentViewController = NSHostingController(rootView: HistoryView(model: model))
         popover.delegate = self
+
+        // A transient popover could close under a drag still in flight; it stays put until the drop.
+        model.onDragBegan = { [weak self] in self?.popover.behavior = .applicationDefined }
+        model.onDragEnded = { [weak self] dropped in
+            guard let self else { return }
+            popover.behavior = .transient
+            if dropped { close() }
+        }
     }
 
     func show(relativeTo anchor: NSView) {
@@ -43,20 +51,27 @@ final class HistoryPopover: NSObject, NSPopoverDelegate {
     func popoverDidClose(_ notification: Notification) {
         closedAt = .now
         removeKeyMonitor()
+        model.panelClosed()
     }
 
     // Commands are handled ahead of the search field, so arrows and Return work while typing.
+    // While a text item is being edited, the editor gets every key but ⌘E, ⌘Return and Esc.
     private func installKeyMonitor() {
         guard keyMonitor == nil else { return }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            let command = HistoryCommand(
-                keyCode: Int(event.keyCode),
-                modifiers: event.modifierFlags,
-                charactersIgnoringModifiers: event.charactersIgnoringModifiers
-            )
+            let keyCode = Int(event.keyCode)
+            let modifiers = event.modifierFlags
+            let characters = event.charactersIgnoringModifiers
             let windowNumber = event.windowNumber
-            let handled = MainActor.assumeIsolated {
-                self?.handle(command, inWindowNumbered: windowNumber) ?? false
+            let handled = MainActor.assumeIsolated { () -> Bool in
+                guard let self else { return false }
+                let command = HistoryCommand(
+                    keyCode: keyCode,
+                    modifiers: modifiers,
+                    charactersIgnoringModifiers: characters,
+                    isEditing: self.model.isEditingText
+                )
+                return self.handle(command, inWindowNumbered: windowNumber)
             }
             return handled ? nil : event
         }

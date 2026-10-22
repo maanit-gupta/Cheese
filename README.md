@@ -25,7 +25,7 @@
 Cheese lives in your menu bar and stays out of the way until you press a shortcut. Every tool is also in its menu, any tool you don't need can be switched off, and every shortcut can be changed. The [guide](docs/GUIDE.md) covers each one in detail.
 
 ## Copy
-Keep everything you copy, searchable and one keystroke from pasting, and hand any of it to your phone as a QR code.
+Keep everything you copy, searchable and one keystroke from pasting. Drag any of it straight into a chat, touch up text in place before you send it, and hand any of it to your phone as a QR code.
 <kbd>⌃</kbd><kbd>⌥</kbd><kbd>V</kbd> clipboard history · **Show Clipboard as QR** in the menu
 
 ## Capture

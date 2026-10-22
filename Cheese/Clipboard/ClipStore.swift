@@ -136,6 +136,37 @@ final class ClipStore {
         enforceRetention()
     }
 
+    /// Replaces a text item's text with the user's live edit and moves it to the top, since the edit
+    /// goes onto the clipboard. The edit becomes the item's only representation: stale RTF or HTML
+    /// would paste the old text back. Another item already holding the same text merges into this
+    /// one (keeping its pin), so the text never shows up twice.
+    /// - Returns: false when nothing changed: no such text item, an empty edit, or the same text.
+    @discardableResult
+    func updateText(for id: UUID, newText: String, at date: Date = .now) -> Bool {
+        guard let item = item(withID: id), item.kind == .text || item.kind == .richText,
+              !newText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              newText != item.plainText
+        else { return false }
+
+        let hash = ClipHasher.hash(text: newText)
+        let duplicates = items.filter { $0.id != id && $0.contentHash == hash }
+        if !item.isPinned, let pinned = duplicates.first(where: \.isPinned) {
+            item.isPinned = true
+            item.pinnedAt = pinned.pinnedAt ?? date
+        }
+        item.plainText = newText
+        item.contentHash = hash
+        item.kindRaw = ClipKind.text.rawValue
+        item.pasteboardItems = []
+        item.lastCopiedAt = date
+        // Text items keep nothing on disk, so there are no files to clean up.
+        for duplicate in duplicates {
+            context.delete(duplicate)
+        }
+        save()
+        return true
+    }
+
     func delete(_ id: UUID) {
         guard let item = item(withID: id) else { return }
         remove([item])

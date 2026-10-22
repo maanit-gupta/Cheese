@@ -6,8 +6,11 @@ struct HistoryPreview: View {
     /// Previews show at most this much text; pasting always uses all of it.
     static let maxPreviewCharacters = 100_000
 
+    let model: HistoryViewModel
     let item: ClipItem
     let imageURL: URL?
+
+    private var isEditing: Bool { model.editingID == item.id }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -51,29 +54,59 @@ struct HistoryPreview: View {
     @ViewBuilder
     private var content: some View {
         switch item.kind {
-        case .text:
-            TextPreview(contentID: contentID, text: { plainAttributedText }, isRich: false)
-        case .richText:
-            TextPreview(contentID: contentID, text: { richAttributedText }, isRich: true)
+        case .text, .richText:
+            // The bottom-right badge edits the text in place, and drags it out.
+            ZStack(alignment: .bottomTrailing) {
+                TextPreview(
+                    contentID: contentID,
+                    text: { isEditing ? editableText : (item.kind == .richText ? richAttributedText : plainAttributedText) },
+                    isRich: item.kind == .richText && !isEditing,
+                    isEditing: isEditing,
+                    onChange: { [model] text in model.draftText = text }
+                )
+                LiveTextEditorOverlay(model: model, itemID: item.id, isEditing: isEditing)
+                    .padding(DesignTokens.Spacing.large)
+            }
         case .image:
             ImagePreview(url: imageURL)
+                .overlay { ClipDragHandle(model: model, itemID: item.id, toolTip: "Drag the image into any app") }
                 .padding(DesignTokens.Spacing.large)
         case .files:
             FilesPreview(paths: item.filePaths)
+                .overlay { ClipDragHandle(model: model, itemID: item.id, toolTip: "Drag into any app") }
         }
     }
 
-    /// Changes whenever the previewed content does, so the text view reloads only then.
+    /// Changes whenever the previewed content does, so the text view reloads only then. Editing
+    /// reloads only when the editor needs different text from the preview: rich text turns plain
+    /// (that's what an edit saves), and a long text is loaded in full.
     private var contentID: String {
-        "\(item.id)-\(item.contentHash)"
+        let base = "\(item.id)-\(item.contentHash)"
+        let editorDiffers = item.kind == .richText || (item.plainText?.count ?? 0) > Self.maxPreviewCharacters
+        return isEditing && editorDiffers ? base + "-editing" : base
     }
+
+    /// The whole text, plain, in the preview's font: what the editor starts from.
+    private var editableText: NSAttributedString {
+        NSAttributedString(string: item.plainText ?? "", attributes: Self.plainAttributes)
+    }
+
+    static let plainAttributes: [NSAttributedString.Key: Any] = [
+        .font: NSFont.systemFont(ofSize: 13),
+        .foregroundColor: NSColor.labelColor,
+    ]
 
     private var footer: some View {
         HStack(spacing: DesignTokens.Spacing.medium) {
-            shortcut("↩", "Paste")
-            shortcut("⌥↩", "Plain")
-            shortcut("⌘P", item.isPinned ? "Unpin" : "Pin")
-            shortcut("⌘⌫", "Delete")
+            if isEditing {
+                shortcut("⌘↩", "Save & Paste")
+                shortcut("esc", "Done")
+            } else {
+                shortcut("↩", "Paste")
+                shortcut("⌥↩", "Plain")
+                shortcut("⌘P", item.isPinned ? "Unpin" : "Pin")
+                shortcut("⌘⌫", "Delete")
+            }
             Spacer(minLength: 0)
         }
         .font(DesignTokens.Typography.caption)
@@ -131,7 +164,7 @@ struct HistoryPreview: View {
     private var plainAttributedText: NSAttributedString {
         NSAttributedString(
             string: String((item.plainText ?? "").prefix(Self.maxPreviewCharacters)),
-            attributes: [.font: NSFont.systemFont(ofSize: 13), .foregroundColor: NSColor.labelColor]
+            attributes: Self.plainAttributes
         )
     }
 
@@ -143,16 +176,28 @@ struct HistoryPreview: View {
     }
 }
 
-/// Read-only, selectable text in an `NSTextView`, which copes with long texts far better than SwiftUI `Text`.
+/// The text in an `NSTextView`, which copes with long texts far better than SwiftUI `Text`.
+/// Read-only until live edit turns the same view editable, so nothing shifts.
 private struct TextPreview: NSViewRepresentable {
     let contentID: String
     /// Built only when the content changes; rendering rich text isn't free.
     let text: () -> NSAttributedString
     /// Rich text keeps its own colors, so it's shown on a white page to stay legible in Dark Mode.
     let isRich: Bool
+    let isEditing: Bool
+    /// The text after each edit.
+    let onChange: @MainActor (String) -> Void
 
-    final class Coordinator {
+    @MainActor
+    final class Coordinator: NSObject, NSTextViewDelegate {
         var contentID: String?
+        var isEditing = false
+        var onChange: (String) -> Void = { _ in }
+
+        func textDidChange(_ notification: Notification) {
+            guard let textView = notification.object as? NSTextView else { return }
+            onChange(textView.string)
+        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -169,19 +214,45 @@ private struct TextPreview: NSViewRepresentable {
             textView.isSelectable = false
             textView.textContainerInset = NSSize(width: DesignTokens.Spacing.large, height: DesignTokens.Spacing.large)
             textView.textContainer?.widthTracksTextView = true
+            // Edits are saved as plain text, so typing and pasting stay plain too.
+            textView.isRichText = false
+            textView.allowsUndo = true
+            textView.typingAttributes = HistoryPreview.plainAttributes
+            textView.delegate = context.coordinator
         }
         return scrollView
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        guard context.coordinator.contentID != contentID,
-              let textView = scrollView.documentView as? NSTextView
-        else { return }
-        context.coordinator.contentID = contentID
-        textView.drawsBackground = isRich
-        textView.backgroundColor = isRich ? .white : .clear
-        textView.textStorage?.setAttributedString(text())
-        textView.scrollToBeginningOfDocument(nil)
+        guard let textView = scrollView.documentView as? NSTextView else { return }
+        let coordinator = context.coordinator
+        coordinator.onChange = onChange
+
+        if coordinator.contentID != contentID {
+            coordinator.contentID = contentID
+            let text = text()
+            // Saving mid-edit (dragging the edit out) changes the content ID but not the text.
+            if !(isEditing && coordinator.isEditing && textView.string == text.string) {
+                textView.drawsBackground = isRich
+                textView.backgroundColor = isRich ? .white : .clear
+                textView.textStorage?.setAttributedString(text)
+                textView.scrollToBeginningOfDocument(nil)
+            }
+        }
+
+        guard coordinator.isEditing != isEditing else { return }
+        coordinator.isEditing = isEditing
+        textView.isEditable = isEditing
+        textView.isSelectable = isEditing
+        if isEditing {
+            textView.window?.makeFirstResponder(textView)
+            textView.setSelectedRange(NSRange(location: (textView.string as NSString).length, length: 0))
+            textView.scrollRangeToVisible(textView.selectedRange())
+        } else {
+            textView.setSelectedRange(NSRange(location: 0, length: 0))
+            // Undo stops at the end of an edit; the list and search field have nothing to undo into it.
+            textView.undoManager?.removeAllActions()
+        }
     }
 }
 

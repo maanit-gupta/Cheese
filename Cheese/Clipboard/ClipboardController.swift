@@ -29,6 +29,17 @@ final class ClipboardController {
 
         model.onPaste = { [weak self] item, plainText in self?.paste(item, plainText: plainText) }
         model.onClose = { [weak self] in self?.popover.close() }
+        model.onEditSaved = { [weak self] item in self?.copyEdit(of: item) }
+    }
+
+    /// Puts a live-edited item on the clipboard. The monitor skips the write, so the edit doesn't
+    /// come back as a new history entry.
+    private func copyEdit(of item: ClipItem) {
+        Task {
+            if let changeCount = await paster.write(item, plainTextOnly: true) {
+                monitor?.ignoreChange(changeCount)
+            }
+        }
     }
 
     func start() {

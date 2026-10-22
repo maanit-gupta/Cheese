@@ -30,6 +30,8 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - Search also matches **text inside copied images**, which Cheese reads in the background.
 - <kbd>↩</kbd> pastes into the app you were using, <kbd>⌥</kbd><kbd>↩</kbd> pastes as plain text, and <kbd>⌘</kbd><kbd>1</kbd>…<kbd>9</kbd> pastes instantly.
 - Pin favourites with <kbd>⌘</kbd><kbd>P</kbd>. Pinned items never expire. Keeps your last 200 items (adjustable).
+- **Drag any item out** of the history (a row, or the image or file in the preview) and drop it into Messages, Slack, Discord, a browser chat, Mail or Finder. The history fades while you're over another window so you can see where it lands, and closes after the drop. Images go as both a PNG file and image data, so web chats and native apps both take them.
+- **Edit text in place**: click the ✏️ in the bottom-right corner of a text preview, or press <kbd>⌘</kbd><kbd>E</kbd>. <kbd>⌘</kbd><kbd>↩</kbd> saves and pastes, <kbd>Esc</kbd> saves and goes back to the list, and the drag handle saves and drags the edited text straight into a chat. The edit replaces the item (and the clipboard) instead of adding a copy; edited rich text becomes plain text.
 - Skips anything a password manager marks as concealed or transient.
 
 ### Show clipboard as QR
@@ -213,7 +215,10 @@ Cheese warns you if a combination is already taken by macOS or the menu. The men
 | <kbd>⌘</kbd><kbd>1</kbd> … <kbd>⌘</kbd><kbd>9</kbd> | Paste the Nth item |
 | <kbd>⌘</kbd><kbd>P</kbd> | Pin / unpin |
 | <kbd>⌘</kbd><kbd>⌫</kbd> | Delete item |
-| <kbd>Esc</kbd> | Close |
+| <kbd>⌘</kbd><kbd>E</kbd> | Edit the selected text in place (again to finish) |
+| <kbd>⌘</kbd><kbd>↩</kbd> | While editing: save and paste |
+| <kbd>Esc</kbd> | While editing: save and go back to the list. Otherwise: close |
+| Drag | Drop an item into any app |
 
 ## Settings
 

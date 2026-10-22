@@ -25,7 +25,7 @@ struct HistoryView: View {
                 .frame(width: 1)
             Group {
                 if let selected {
-                    HistoryPreview(item: selected, imageURL: model.imageURL(for: selected))
+                    HistoryPreview(model: model, item: selected, imageURL: model.imageURL(for: selected))
                 } else {
                     emptyState
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -69,14 +69,20 @@ struct HistoryView: View {
                             imageURL: model.imageURL(for: item)
                         )
                         .id(item.id)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            model.selectedID = item.id
-                            if NSApp.currentEvent?.clickCount == 2 {
-                                model.perform(.paste(plainText: false))
-                            }
+                        // Click to select, double-click to paste, drag into any app, right-click for more.
+                        .overlay {
+                            ClipDragHandle(
+                                model: model,
+                                itemID: item.id,
+                                onClick: { [model] clickCount in
+                                    model.selectedID = item.id
+                                    if clickCount == 2 {
+                                        model.perform(.paste(plainText: false))
+                                    }
+                                },
+                                menu: { [model] in HistoryItemMenu.make(for: item, model: model) }
+                            )
                         }
-                        .contextMenu { contextMenu(for: item) }
                     }
                 }
                 .padding(.horizontal, DesignTokens.Spacing.small)
@@ -95,26 +101,38 @@ struct HistoryView: View {
         }
     }
 
-    @ViewBuilder
-    private func contextMenu(for item: ClipItem) -> some View {
-        Button("Paste") { select(item, then: .paste(plainText: false)) }
-        Button("Paste as Plain Text") { select(item, then: .paste(plainText: true)) }
-        Divider()
-        Button(item.isPinned ? "Unpin" : "Pin") { select(item, then: .togglePin) }
-        Button("Delete", role: .destructive) { select(item, then: .delete) }
-    }
-
-    private func select(_ item: ClipItem, then command: HistoryCommand) {
-        model.selectedID = item.id
-        model.perform(command)
-    }
-
     private var emptyState: some View {
         CheeseEmptyState(
             symbol: model.query.isEmpty ? "doc.on.clipboard" : "magnifyingglass",
             title: model.query.isEmpty ? "Nothing copied yet" : "No matches",
             detail: model.query.isEmpty ? "Copy something and it shows up here." : "Try a different search."
         )
+    }
+}
+
+/// A history item's right-click menu: Paste · Paste as Plain Text · Edit Text · Pin · Delete.
+@MainActor
+enum HistoryItemMenu {
+    static func make(for item: ClipItem, model: HistoryViewModel) -> NSMenu {
+        let id = item.id
+        func run(_ command: HistoryCommand) -> @MainActor @Sendable () -> Void {
+            { [model] in
+                model.selectedID = id
+                model.perform(command)
+            }
+        }
+        let menu = NSMenu()
+        menu.addItem(ClosureMenuItem(title: "Paste", handler: run(.paste(plainText: false))))
+        menu.addItem(ClosureMenuItem(title: "Paste as Plain Text", handler: run(.paste(plainText: true))))
+        if item.kind == .text || item.kind == .richText {
+            menu.addItem(ClosureMenuItem(title: "Edit Text") { [model] in
+                if let item = model.store.item(withID: id) { model.startEditing(item) }
+            })
+        }
+        menu.addItem(.separator())
+        menu.addItem(ClosureMenuItem(title: item.isPinned ? "Unpin" : "Pin", handler: run(.togglePin)))
+        menu.addItem(ClosureMenuItem(title: "Delete", handler: run(.delete)))
+        return menu
     }
 }
 

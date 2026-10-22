@@ -51,6 +51,8 @@ enum DesignTokens {
         static let rowThumbnail: CGFloat = 28
         /// The accent bar on the leading edge of a tinted selected row.
         static let selectionBar: CGFloat = 2
+        /// A round control floating over content, like the clipboard preview's edit badge.
+        static let floatingButton: CGFloat = 28
     }
 
     enum Opacity {
@@ -122,6 +124,26 @@ struct CheeseSurface<S: Shape>: ViewModifier {
     }
 }
 
+/// A small control floating over content: thin material with a hairline edge, or solid with
+/// Reduce Transparency on.
+struct CheeseFloatingControlSurface<S: InsettableShape>: ViewModifier {
+    let shape: S
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    func body(content: Content) -> some View {
+        content
+            .background {
+                if reduceTransparency {
+                    shape.fill(Color(nsColor: .windowBackgroundColor))
+                } else {
+                    shape.fill(.ultraThinMaterial)
+                }
+            }
+            .overlay(shape.strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5))
+            .shadow(color: .black.opacity(0.12), radius: 3, y: 1)
+    }
+}
+
 extension View {
     /// A floating panel's background: material, rounded to the panel radius.
     func cheesePanelBackground() -> some View {
@@ -131,5 +153,10 @@ extension View {
     /// A surface's background in any shape, like the toast's capsule.
     func cheeseSurface(in shape: some Shape) -> some View {
         modifier(CheeseSurface(shape: shape))
+    }
+
+    /// The background of a control floating over content, like the clipboard edit badge.
+    func cheeseFloatingControl(in shape: some InsettableShape) -> some View {
+        modifier(CheeseFloatingControlSurface(shape: shape))
     }
 }
