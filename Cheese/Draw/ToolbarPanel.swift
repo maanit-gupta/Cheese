@@ -31,7 +31,9 @@ final class ToolbarPanel {
 
     /// Shows the rail at the left edge of `screen`, vertically centered.
     func show(on screen: NSScreen) {
-        panel.layoutIfNeeded()
+        if let fitting = panel.contentViewController?.view.fittingSize, fitting.width > 0, fitting.height > 0 {
+            panel.setContentSize(fitting)
+        }
         let size = panel.frame.size
         let visible = screen.visibleFrame
         panel.setFrameOrigin(NSPoint(x: visible.minX + 12, y: visible.midY - size.height / 2))

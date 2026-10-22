@@ -31,12 +31,16 @@ final class FloatingPanel: NSPanel {
         onCancel()
     }
 
-    /// Centers the panel a little above the middle of the display under the pointer and focuses it.
+    /// Centers the panel on the display under the pointer and focuses it.
     func present() {
+        // Size to the SwiftUI content now; on first show the window hasn't been sized yet.
+        if let fitting = contentViewController?.view.fittingSize, fitting.width > 0, fitting.height > 0 {
+            setContentSize(fitting)
+        }
         if let screen = Screens.underMouse {
             let visible = screen.visibleFrame
             let size = frame.size
-            setFrameOrigin(NSPoint(x: visible.midX - size.width / 2, y: visible.midY - size.height / 2 + visible.height / 10))
+            setFrameOrigin(NSPoint(x: visible.midX - size.width / 2, y: visible.midY - size.height / 2))
         }
         makeKeyAndOrderFront(nil)
         installClickMonitors()
