@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The Share panel: nearby LocalSend devices and the Phone (scan QR) tile, with anything handed in
-/// from the Shelf, the clipboard or the macOS Share menu waiting in a "Ready to send" strip.
+/// The Share panel: a "Ready to Share" strip of staged items, the browser link as a QR code with
+/// Copy Link and Stop, and nearby LocalSend devices that take the staged items with one click.
 /// Opening it starts Cheese Share; closing it starts the 10-minute countdown to stopping.
 @MainActor
 final class SharePanelController {
@@ -25,16 +25,13 @@ final class SharePanelController {
 
     var isShown: Bool { panel?.isVisible ?? false }
 
-    /// Opens the panel, adding `items` to the ready strip.
+    /// Opens the panel, staging `items`.
     func show(ready items: [OutgoingItem] = []) {
-        if !items.isEmpty {
-            service.ready = items
-        }
         let panel = panel ?? makePanel()
         self.panel = panel
-        model.mode = .devices
+        model.opened()
+        model.service.stage(items)
         panel.present(at: .centered)
-        service.panelOpened()
     }
 
     func close() {
@@ -57,41 +54,159 @@ final class SharePanelController {
         behavior.dismissesOnOutsideClick = false
         behavior.isMovable = true
         behavior.level = .floating
-        let panel = CheesePanel(rootView: SharePanelView(model: model), behavior: behavior)
+        let panel = CheesePanel(rootView: SharePanelView(model: model), behavior: behavior) { [model] content in
+            let host = CheeseDropHostView(content: content, types: [.fileURL])
+            host.onEntered = { [weak host] sender in
+                guard !Self.files(in: sender).isEmpty else { return [] }
+                model.dragMoved(to: host?.contentPoint(of: sender))
+                return .copy
+            }
+            host.onUpdated = { [weak host] sender in model.dragMoved(to: host?.contentPoint(of: sender)) }
+            host.onExited = { model.dragMoved(to: nil) }
+            host.onDrop = { sender in model.drop(Self.files(in: sender)) }
+            return host
+        }
         panel.onCancel = { [weak self] in self?.close() }
         return panel
+    }
+
+    private static func files(in sender: any NSDraggingInfo) -> [URL] {
+        let urls = sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
+        // No folder sending.
+        return (urls ?? []).filter { !$0.hasDirectoryPath }
     }
 }
 
 @MainActor
 @Observable
 final class SharePanelModel {
-    enum Mode {
-        case devices
-        case phone
+    enum Phase: Equatable {
+        case starting
+        case live(URL)
+        /// Stopped from the panel; the link no longer works until sharing starts again.
+        case stopped
+        case unavailable(String)
     }
 
     let service: ShareService
-    var mode = Mode.devices
+    /// A drag of files is over the panel.
+    private(set) var isDropTargeted = false
+    /// The device a drag is over, which takes the files instead of the strip.
+    private(set) var targetedPeer: LocalSendPeer.ID?
+    private var stoppedByUser = false
+    /// Device tiles' frames, top-left origin in the panel, for drops onto a device.
+    @ObservationIgnored var tileFrames: [LocalSendPeer.ID: CGRect] = [:]
     @ObservationIgnored let clipboardItems: @MainActor () -> [OutgoingItem]
     @ObservationIgnored var onClose: () -> Void = {}
     @ObservationIgnored var onBackToMenu: () -> Void = {}
+    /// Asks for files to share; an open panel, unless a test says otherwise.
+    @ObservationIgnored var pickFiles: @MainActor () -> [URL] = SharePanelModel.openPanel
+    @ObservationIgnored private var code: (link: String, scale: CGFloat, image: CGImage)?
 
     init(service: ShareService, clipboardItems: @escaping @MainActor () -> [OutgoingItem]) {
         self.service = service
         self.clipboardItems = clipboardItems
     }
 
-    /// Clicking a device sends what's ready, or asks for files when nothing is.
-    func activate(_ peer: LocalSendPeer) {
-        if service.transfers[peer.id]?.state == .waiting || isSending(to: peer) {
-            return
+    var phase: Phase {
+        Self.phase(stoppedByUser: stoppedByUser, listening: service.listening, link: service.browserURL)
+    }
+
+    nonisolated static func phase(stoppedByUser: Bool, listening: ShareService.Listening, link: URL?) -> Phase {
+        if stoppedByUser { return .stopped }
+        switch listening {
+        case .stopped, .starting: return .starting
+        case .listening: return link.map(Phase.live) ?? .starting
+        case let .unavailable(message): return .unavailable(message)
         }
-        if service.ready.isEmpty {
-            chooseFiles { [weak self] items in self?.service.send(items, to: peer) }
+    }
+
+    /// `Report.pdf · 1.8 MB`, `3 items · 4.2 MB`, or a text's first line. Nil when nothing's staged.
+    nonisolated static func summary(of items: [OutgoingItem]) -> String? {
+        guard let first = items.first else { return nil }
+        let bytes = items.reduce(Int64(0)) { total, item in
+            if case .file = item.content { return total + item.size }
+            return total
+        }
+        let size = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+        if items.count == 1 {
+            if case .text = first.content { return "“\(first.name)”" }
+            return "\(first.name) · \(size)"
+        }
+        return bytes > 0 ? "\(items.count) items · \(size)" : "\(items.count) items"
+    }
+
+    // MARK: Lifetime
+
+    /// The panel opened: sharing starts (again) and the link goes live.
+    func opened() {
+        stoppedByUser = false
+        service.panelOpened()
+    }
+
+    /// Stop: the link and every transfer end, and the strip empties.
+    func stop() {
+        stoppedByUser = true
+        service.stop()
+    }
+
+    func startAgain() {
+        opened()
+    }
+
+    // MARK: Staging
+
+    func addFiles() {
+        let files = pickFiles()
+        service.stage(files.map(OutgoingItem.file))
+    }
+
+    /// Stages the clipboard. False when it's empty.
+    @discardableResult
+    func shareClipboard() -> Bool {
+        let items = clipboardItems()
+        guard !items.isEmpty else {
+            CheeseToast.show("The clipboard is empty", systemImage: "clipboard")
+            return false
+        }
+        service.stage(items)
+        return true
+    }
+
+    // MARK: Dropping onto the panel
+
+    func dragMoved(to point: CGPoint?) {
+        isDropTargeted = point != nil
+        targetedPeer = point.flatMap { point in tileFrames.first { $0.value.contains(point) }?.key }
+    }
+
+    /// Files dropped on a device go to it; anywhere else they're staged.
+    func drop(_ files: [URL]) -> Bool {
+        let peer = targetedPeer.flatMap { id in service.peers.first { $0.id == id } }
+        dragMoved(to: nil)
+        guard !files.isEmpty else { return false }
+        let items = files.map(OutgoingItem.file)
+        if let peer {
+            guard !isSending(to: peer) else { return false }
+            service.send(items, to: peer)
         } else {
-            service.send(service.ready, to: peer)
-            service.ready = []
+            service.stage(items)
+        }
+        return true
+    }
+
+    // MARK: Devices
+
+    /// Clicking a device sends what's staged, or asks for files when nothing is.
+    func activate(_ peer: LocalSendPeer) {
+        guard !isSending(to: peer) else { return }
+        if service.staged.isEmpty {
+            let files = pickFiles()
+            if !files.isEmpty {
+                service.send(files.map(OutgoingItem.file), to: peer)
+            }
+        } else {
+            service.send(service.staged, to: peer)
         }
     }
 
@@ -109,63 +224,62 @@ final class SharePanelModel {
         service.send(items, to: peer)
     }
 
-    func openPhone(adding items: [OutgoingItem] = []) {
-        var offered = items
-        if offered.isEmpty {
-            offered = service.ready
-            service.ready = []
-        }
-        service.offerToPhone(offered)
-        mode = .phone
-    }
-
-    func chooseFiles(_ then: @escaping ([OutgoingItem]) -> Void) {
-        let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = true
-        panel.canChooseDirectories = false
-        panel.prompt = "Send"
-        NSApp.activate()
-        guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }
-        then(panel.urls.map(OutgoingItem.file))
-    }
-
     func status(of peer: LocalSendPeer) -> String? {
         switch service.transfers[peer.id]?.state {
         case nil: nil
-        case .waiting: "Waiting for \(peer.alias)…"
-        case let .sending(fraction): "Sending… \(Int(fraction * 100))%"
-        case .done: "Sent"
+        case .waiting: "Waiting…"
+        case let .sending(fraction): "Sending \(Int(fraction * 100))%"
+        case .done: "Sent ✓"
         case let .failed(message): message
         }
     }
+
+    /// The link's QR code, made once per link and scale.
+    func code(for link: URL, scale: CGFloat, side: CGFloat) -> CGImage? {
+        if let code, code.link == link.absoluteString, code.scale == scale { return code.image }
+        guard let image = QRGenerator.image(for: link.absoluteString, minimumPixels: Int(side * scale)) else { return nil }
+        code = (link.absoluteString, scale, image)
+        return image
+    }
+
+    private static func openPanel() -> [URL] {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = false
+        panel.prompt = "Share"
+        NSApp.activate()
+        guard panel.runModal() == .OK else { return [] }
+        return panel.urls
+    }
 }
 
-private struct SharePanelView: View {
+struct SharePanelView: View {
     @Bindable var model: SharePanelModel
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider()
-            switch model.mode {
-            case .devices: DevicesView(model: model)
-            case .phone: PhoneView(model: model)
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                ReadyStrip(model: model)
+                LinkSection(model: model)
+                DevicesSection(model: model)
+            }
+            .padding(DesignTokens.Spacing.panel)
+        }
+        .frame(width: 380, height: 460, alignment: .top)
+        .overlay {
+            if model.isDropTargeted, model.targetedPeer == nil {
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.panel)
+                    .strokeBorder(Color.accentColor, lineWidth: 2)
             }
         }
-        .frame(width: 560, height: 440)
         .cheesePanelBackground()
     }
 
     private var header: some View {
         CheeseToolbar {
-            switch model.mode {
-            case .phone:
-                CheeseIconButton(symbol: "chevron.left", help: "Back to devices") { model.mode = .devices }
-            case .devices:
-                CheeseIconButton(symbol: "chevron.left", help: "Back to the Cheese menu") { model.onBackToMenu() }
-            }
-            Image(systemName: ModuleID.share.symbol)
-                .foregroundStyle(.tint)
+            CheeseIconButton(symbol: "chevron.left", help: "Back to the Cheese menu") { model.onBackToMenu() }
             VStack(alignment: .leading, spacing: 0) {
                 Text("Cheese Share")
                     .font(DesignTokens.Typography.heading)
@@ -180,251 +294,203 @@ private struct SharePanelView: View {
     }
 
     private var statusLine: String {
-        switch model.service.listening {
-        case .stopped, .starting: "Starting…"
-        case .listening:
-            "Visible as \(Preferences().shareDeviceName)" + (model.service.isEncrypted ? " · encrypted" : " · unencrypted")
+        switch model.phase {
+        case .starting: "Starting…"
+        case .live: "Visible as \(Preferences().shareDeviceName)" + (model.service.isEncrypted ? " · encrypted" : " · unencrypted")
+        case .stopped: "Stopped"
         case let .unavailable(message): message
         }
     }
 }
 
-private struct DevicesView: View {
-    let model: SharePanelModel
-    private let columns = [GridItem(.adaptive(minimum: 116), spacing: DesignTokens.Spacing.medium)]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
-            if !model.service.ready.isEmpty {
-                ReadyStrip(model: model)
-            }
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: DesignTokens.Spacing.medium) {
-                    PhoneTile(model: model)
-                    ForEach(model.service.peers) { peer in
-                        DeviceTile(model: model, peer: peer)
-                    }
-                }
-                .padding(.vertical, DesignTokens.Spacing.xxSmall)
-            }
-            footer
-        }
-        .padding(DesignTokens.Spacing.xLarge)
-    }
-
-    @ViewBuilder private var footer: some View {
-        if let problem = model.service.discoveryProblem {
-            Label(problem, systemImage: "wifi.exclamationmark")
-                .font(DesignTokens.Typography.caption)
-                .foregroundStyle(.orange)
-        } else if model.service.isListening {
-            Label(
-                model.service.peers.isEmpty
-                    ? "Looking for devices running LocalSend on this network…"
-                    : "Drop files on a device, or click it to send.",
-                systemImage: "dot.radiowaves.left.and.right"
-            )
-            .font(DesignTokens.Typography.caption)
-            .foregroundStyle(.secondary)
-        }
-    }
-}
-
+/// Staged items, or a drop bar that invites some.
 private struct ReadyStrip: View {
     let model: SharePanelModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
-            CheeseSectionHeader(title: "Ready to send", symbol: "tray.and.arrow.up") {
-                Button("Clear") { model.service.ready = [] }
-                    .buttonStyle(.borderless)
-                    .controlSize(.small)
-            }
-            ScrollView(.horizontal) {
-                HStack(spacing: DesignTokens.Spacing.xSmall) {
-                    ForEach(model.service.ready) { item in
-                        Label(item.name, systemImage: item.symbol)
-                            .font(DesignTokens.Typography.caption)
-                            .lineLimit(1)
-                            .frame(maxWidth: 160)
-                            .padding(.horizontal, DesignTokens.Spacing.small)
-                            .padding(.vertical, DesignTokens.Spacing.xxSmall)
-                            .background(.quaternary, in: Capsule())
-                    }
+        HStack(spacing: DesignTokens.Spacing.small) {
+            if let summary = SharePanelModel.summary(of: model.service.staged) {
+                Image(systemName: "square.stack.fill")
+                    .foregroundStyle(.tint)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Ready to Share")
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(.secondary)
+                    Text(summary)
+                        .font(DesignTokens.Typography.secondary.weight(.medium))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
-            }
-            Text("Click a device to send these.")
-                .font(DesignTokens.Typography.caption)
-                .foregroundStyle(.secondary)
-        }
-    }
-}
-
-/// A tile that takes dropped files, highlighted while they hover.
-private struct TileFrame<Content: View>: View {
-    var isTargeted: Bool
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        CheeseCard(isHighlighted: isTargeted) {
-            VStack(spacing: DesignTokens.Spacing.xSmall) {
-                content
-            }
-            .frame(maxWidth: .infinity, minHeight: 104)
-        }
-        .contentShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
-    }
-}
-
-private struct PhoneTile: View {
-    let model: SharePanelModel
-    @State private var isTargeted = false
-
-    var body: some View {
-        TileFrame(isTargeted: isTargeted) {
-            Image(systemName: "qrcode")
-                .font(.system(size: 30))
-                .foregroundStyle(.tint)
-            Text("Phone")
-                .font(DesignTokens.Typography.heading)
-            Text("Scan a QR code, no app needed")
-                .font(DesignTokens.Typography.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .onTapGesture { model.openPhone() }
-        .dropDestination(for: URL.self) { urls, _ in
-            let files = urls.filter(\.isFileURL)
-            guard !files.isEmpty else { return false }
-            model.openPhone(adding: files.map(OutgoingItem.file))
-            return true
-        } isTargeted: { isTargeted = $0 }
-        .accessibilityAddTraits(.isButton)
-        .accessibilityLabel("Phone, scan a QR code")
-    }
-}
-
-private struct DeviceTile: View {
-    let model: SharePanelModel
-    let peer: LocalSendPeer
-    @State private var isTargeted = false
-
-    var body: some View {
-        TileFrame(isTargeted: isTargeted) {
-            Image(systemName: peer.symbol)
-                .font(.system(size: 30))
-                .foregroundStyle(.tint)
-            Text(peer.alias)
-                .font(DesignTokens.Typography.heading)
-                .lineLimit(1)
-            if let status = model.status(of: peer) {
-                if case let .sending(fraction) = model.service.transfers[peer.id]?.state {
-                    ProgressView(value: fraction)
-                        .controlSize(.small)
-                }
-                Text(status)
+                .help(model.service.staged.map(\.name).joined(separator: "\n"))
+                Spacer(minLength: DesignTokens.Spacing.xxSmall)
+                Button("Clear") { model.service.clearStaged() }
+                    .buttonStyle(CheeseTextButtonStyle())
+            } else {
+                Image(systemName: "tray.and.arrow.down")
+                    .foregroundStyle(.secondary)
+                Text("Drop files here, click + to browse, or share the clipboard")
                     .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
-                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: DesignTokens.Spacing.xxSmall)
+                Button("Share Clipboard") { model.shareClipboard() }
+                    .controlSize(.small)
+            }
+            CheeseIconButton(symbol: "plus", help: "Add files…") { model.addFiles() }
+        }
+        .padding(.leading, DesignTokens.Spacing.medium)
+        .padding(.trailing, DesignTokens.Spacing.xSmall)
+        .frame(minHeight: 40)
+        .background {
+            let shape = RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
+            if model.service.staged.isEmpty {
+                shape.strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4, 3])).foregroundStyle(.tertiary)
             } else {
-                Text(peer.deviceModel ?? "LocalSend")
+                shape.fill(.quaternary.opacity(0.6))
+            }
+        }
+    }
+}
+
+/// The QR code and drop link, or why there isn't one.
+private struct LinkSection: View {
+    let model: SharePanelModel
+    @Environment(\.displayScale) private var displayScale
+    private let side: CGFloat = 140
+    private let height: CGFloat = 250
+
+    var body: some View {
+        switch model.phase {
+        case let .live(link):
+            if let code = model.code(for: link, scale: displayScale, side: side) {
+                ShareLinkCard(code: code, side: side, link: link, expiresAt: model.service.linkExpiresAt) { model.stop() }
+            }
+        case .starting:
+            placeholder { ProgressView().controlSize(.small) }
+        case .stopped:
+            placeholder {
+                CheeseEmptyState(symbol: "stop.circle", title: "Sharing stopped", detail: "The link no longer works.") {
+                    Button("Share Again") { model.startAgain() }
+                        .controlSize(.small)
+                }
+            }
+        case let .unavailable(message):
+            placeholder { CheeseEmptyState(symbol: "wifi.slash", title: "Can't share right now", detail: message) }
+        }
+    }
+
+    private func placeholder(@ViewBuilder _ content: () -> some View) -> some View {
+        content()
+            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+            .background(.quaternary.opacity(0.6), in: RoundedRectangle(cornerRadius: DesignTokens.Radius.card))
+    }
+}
+
+private struct DevicesSection: View {
+    let model: SharePanelModel
+    private let columns = [GridItem(.flexible(), spacing: DesignTokens.Spacing.small), GridItem(.flexible())]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
+            CheeseSectionCaps("Nearby devices")
+            if model.service.peers.isEmpty {
+                Label(emptyLine, systemImage: model.service.discoveryProblem == nil ? "dot.radiowaves.left.and.right" : "wifi.exclamationmark")
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(model.service.discoveryProblem == nil ? Color.secondary : Color.orange)
+                    .padding(.horizontal, DesignTokens.Spacing.medium)
+            } else {
+                // Scrolls only when the devices don't fit.
+                ViewThatFits(in: .vertical) {
+                    grid
+                    ScrollView { grid }
+                }
+            }
+        }
+    }
+
+    private var grid: some View {
+        LazyVGrid(columns: columns, spacing: DesignTokens.Spacing.small) {
+            ForEach(model.service.peers) { peer in
+                DeviceTile(model: model, peer: peer)
+            }
+        }
+    }
+
+    private var emptyLine: String {
+        model.service.discoveryProblem ?? "Looking for devices running LocalSend…"
+    }
+}
+
+/// A nearby LocalSend device: click to send what's staged, or drop files on it.
+private struct DeviceTile: View {
+    let model: SharePanelModel
+    let peer: LocalSendPeer
+    @State private var isHovered = false
+
+    var body: some View {
+        HStack(spacing: DesignTokens.Spacing.small) {
+            Image(systemName: peer.symbol)
+                .foregroundStyle(.tint)
+                .frame(width: DesignTokens.Size.rowIcon)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(peer.alias)
+                    .font(DesignTokens.Typography.secondary.weight(.medium))
+                    .lineLimit(1)
+                Text(model.status(of: peer) ?? peer.deviceModel ?? "LocalSend")
                     .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
-        }
-        .overlay(alignment: .topTrailing) {
+            Spacer(minLength: 0)
             Menu {
                 if model.isSending(to: peer) {
                     Button("Cancel", systemImage: "xmark.circle") { model.service.cancelTransfer(to: peer) }
                 } else {
                     Button("Send Files…", systemImage: "doc") {
-                        model.chooseFiles { items in model.service.send(items, to: peer) }
+                        let files = model.pickFiles()
+                        if !files.isEmpty { model.service.send(files.map(OutgoingItem.file), to: peer) }
                     }
                     Button("Send Clipboard", systemImage: "doc.on.clipboard") { model.sendClipboard(to: peer) }
                 }
             } label: {
-                Image(systemName: "ellipsis.circle")
+                Image(systemName: "ellipsis")
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .fixedSize()
-            .padding(DesignTokens.Spacing.xSmall)
         }
+        .padding(.horizontal, DesignTokens.Spacing.small)
+        .frame(height: 40)
+        .background(background, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.row))
+        .overlay(alignment: .bottom) {
+            if case let .sending(fraction) = model.service.transfers[peer.id]?.state {
+                GeometryReader { geometry in
+                    Capsule()
+                        .fill(Color.accentColor)
+                        .frame(width: geometry.size.width * fraction, height: 2)
+                }
+                .frame(height: 2)
+                .padding(.horizontal, DesignTokens.Spacing.small)
+            }
+        }
+        .overlay {
+            if model.targetedPeer == peer.id {
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.row).strokeBorder(Color.accentColor, lineWidth: 1.5)
+            }
+        }
+        .contentShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.row))
         .onTapGesture { model.activate(peer) }
-        .dropDestination(for: URL.self) { urls, _ in
-            let files = urls.filter(\.isFileURL)
-            guard !files.isEmpty, !model.isSending(to: peer) else { return false }
-            model.service.send(files.map(OutgoingItem.file), to: peer)
-            return true
-        } isTargeted: { isTargeted = $0 }
+        .onHover { isHovered = $0 }
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.tileFrames[peer.id] = $0 }
+        .onDisappear { model.tileFrames[peer.id] = nil }
+        .help(model.service.staged.isEmpty ? "Click to choose files for \(peer.alias)" : "Click to send what's ready to \(peer.alias)")
         .accessibilityAddTraits(.isButton)
         .accessibilityLabel("Send to \(peer.alias)")
     }
-}
 
-private struct PhoneView: View {
-    let model: SharePanelModel
-    @Environment(\.displayScale) private var displayScale
-
-    var body: some View {
-        HStack(alignment: .top, spacing: DesignTokens.Spacing.xxLarge) {
-            VStack(spacing: DesignTokens.Spacing.small) {
-                if let url = model.service.browserURL,
-                   let code = QRGenerator.image(for: url.absoluteString, minimumPixels: Int(220 * displayScale)) {
-                    Image(decorative: code, scale: displayScale)
-                        .interpolation(.none)
-                        .padding(DesignTokens.Spacing.large)
-                        .background(.white, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
-                    Text(url.absoluteString)
-                        .font(DesignTokens.Typography.caption)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                } else {
-                    CheeseEmptyState(symbol: "wifi.slash", title: "Not listening", detail: "Connect to Wi-Fi, then open Share again.")
-                }
-            }
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-                CheeseSectionHeader("Scan with your phone's camera", symbol: "camera")
-                Text("The page lets your phone send photos, files and text to this Mac, and download what's below. The phone must be on the same Wi-Fi.")
-                    .font(DesignTokens.Typography.secondary)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                CheeseSectionHeader(title: "On the page", symbol: "arrow.down.circle") {
-                    Button("Add Files…") {
-                        model.chooseFiles { items in model.service.offerToPhone(items) }
-                    }
-                    .controlSize(.small)
-                }
-                .padding(.top, DesignTokens.Spacing.small)
-                if model.service.phoneItems.isEmpty {
-                    Text("Nothing yet. Drop files on the Phone tile, or add them here.")
-                        .font(DesignTokens.Typography.caption)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ScrollView {
-                        VStack(spacing: DesignTokens.Spacing.hairline) {
-                            ForEach(model.service.phoneItems) { item in
-                                CheeseListRow(symbol: item.symbol, title: item.name) {
-                                    Button {
-                                        model.service.withdrawFromPhone(item.id)
-                                    } label: {
-                                        Image(systemName: "xmark.circle.fill")
-                                    }
-                                    .buttonStyle(.plain)
-                                    .help("Stop offering this")
-                                }
-                            }
-                        }
-                    }
-                }
-                Spacer(minLength: 0)
-                Label("The link works until Cheese Share stops, 10 minutes after you close this panel.", systemImage: "clock")
-                    .font(DesignTokens.Typography.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(DesignTokens.Spacing.xLarge)
+    private var background: AnyShapeStyle {
+        if model.targetedPeer == peer.id { return AnyShapeStyle(Color.accentColor.opacity(DesignTokens.Opacity.activeTint)) }
+        return isHovered ? AnyShapeStyle(Color.primary.opacity(DesignTokens.Opacity.hoverTint)) : AnyShapeStyle(.quaternary.opacity(0.6))
     }
 }

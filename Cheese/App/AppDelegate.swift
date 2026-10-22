@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var files: FilesModule?
     private var shelf: ShelfModule?
     private var share: ShareModule?
+    private var qr: QRModule?
     private let appHotkeyStore = AppHotkeyStore()
     private let installedApps = InstalledAppIndex()
     private var defaultsObserver: Task<Void, Never>?
@@ -57,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         menuBar = MenuBarController(
             statusMenu: StatusMenu(registry: registry) { [weak self] in self?.files?.progressMenuItems ?? [] },
-            dropMenu: { [weak self] urls in self?.dropMenu(for: urls) },
+            dropHub: makeDropHub(),
             openShare: { [weak self] in self?.share?.open() },
             isShareShown: { [weak self] in self?.share?.isPanelShown ?? false }
         )
@@ -117,10 +118,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         self.share = share
         let shelf = ShelfModule(services: ShelfServices(
-            fileTools: { [weak files] urls in
-                guard let files, files.isRunning else { return [] }
-                return ToolApplicability.tools(for: urls).filter(files.registry.contains)
-            },
+            fileTools: { [weak files] urls in files?.applicableTools(for: urls) ?? [] },
             openFileTool: { [weak files] tool, urls in files?.open(tool, files: urls) },
             isSendAvailable: { [weak share] in share?.isRunning ?? false },
             send: { [weak share] files, texts in share?.open(files: files, texts: texts) }
@@ -136,6 +134,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 permissionPrompter.presentAlert(for: .screenRecording, feature: feature)
             }
         ))
+        let qr = QRModule()
+        self.qr = qr
         let modules: [any CheeseModule] = [
             clipboard,
             ScreenshotsModule(capture: capture, editor: editor),
@@ -143,7 +143,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             scrollCapture,
             WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager()) { FillLayout.current() }),
             draw,
-            QRModule(),
+            qr,
             KeepAwakeModule { [weak self] text in self?.menuBar?.setIndicator(text, for: .keepAwake) },
             AppHotkeysModule(store: appHotkeyStore, index: installedApps),
             // Draw mode never routes through the palette, and the palette stays shut while drawing.
@@ -167,18 +167,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// The menu for files dropped on the icon: "Add to Shelf" first, then the Files tools that apply.
-    private func dropMenu(for urls: [URL]) -> NSMenu? {
-        let filesMenu = files?.dropMenu(for: urls)
-        guard let shelf, shelf.isRunning, !urls.isEmpty else { return filesMenu }
-        let menu = filesMenu ?? NSMenu()
-        let add = ClosureMenuItem(title: "Add to Shelf") { [weak shelf] in shelf?.add(files: urls) }
-        add.image = NSImage(systemSymbolName: "tray.and.arrow.down", accessibilityDescription: nil)
-        menu.insertItem(add, at: 0)
-        if filesMenu != nil {
-            menu.insertItem(.separator(), at: 1)
+    /// The hub that opens when something is dropped on the menu bar icon: Share Link / QR, Add to
+    /// Shelf, and the Files tools that apply.
+    private func makeDropHub() -> StatusItemDropPanelController {
+        StatusItemDropPanelController(services: DropHubServices(
+            canShare: { [weak self] in (self?.share?.isRunning ?? false) || (self?.qr?.isRunning ?? false) },
+            canShelve: { [weak self] in self?.shelf?.isRunning ?? false },
+            tools: { [weak self] urls in self?.files?.applicableTools(for: urls) ?? [] },
+            share: { [weak self] payload in self?.share(payload) },
+            addToShelf: { [weak self] payload in
+                self?.shelf?.add(Self.shelfInputs(for: payload))
+                CheeseToast.show("Added to Shelf", systemImage: "tray.and.arrow.down.fill")
+            },
+            openTool: { [weak self] tool, urls in self?.files?.open(tool, files: urls) }
+        ))
+    }
+
+    /// Stages a drop in Cheese Share and shows its link, or, with Share off, shows it as a QR share.
+    private func share(_ payload: DropPayload) {
+        if let share, share.isRunning {
+            share.open(ready: Self.outgoingItems(for: payload))
+            return
         }
-        return menu
+        switch payload {
+        case let .files(urls): qr?.show(.files(urls))
+        case let .image(png): qr?.show(.image(png: png))
+        case let .link(url): qr?.show(.text(url.absoluteString))
+        case let .text(text): qr?.show(.text(text))
+        }
+    }
+
+    private static func outgoingItems(for payload: DropPayload) -> [OutgoingItem] {
+        switch payload {
+        case let .files(urls): urls.filter { !$0.hasDirectoryPath }.map(OutgoingItem.file)
+        case let .image(png): ShareModule.imageItem(png, named: "Image.png").map { [$0] } ?? []
+        case let .link(url): [.text(url.absoluteString)]
+        case let .text(text): [.text(text)]
+        }
+    }
+
+    private static func shelfInputs(for payload: DropPayload) -> [ShelfInput] {
+        switch payload {
+        case let .files(urls): urls.map(ShelfInput.file)
+        case let .image(png): [.imageData(png, suggestedName: nil)]
+        case let .link(url): [.link(url)]
+        case let .text(text): [.text(text)]
+        }
     }
 
     /// Letters and digits already used with Ctrl+Opt+Cmd: by Cheese's actions, other app hotkeys,

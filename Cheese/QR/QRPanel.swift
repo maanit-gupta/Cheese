@@ -9,13 +9,15 @@ import os
 final class QRPanelModel {
     struct Share: Equatable {
         var token: String
+        var url: URL
         var expiresAt: Date
     }
 
     enum Content {
         case message(title: String, detail: String?, symbol: String)
         case preparing
-        case code(image: CGImage, scale: CGFloat, preview: String, share: Share?)
+        /// `side` is the code's size in points.
+        case code(image: CGImage, side: CGFloat, preview: String, share: Share?)
     }
 
     var content = Content.preparing
@@ -31,8 +33,17 @@ final class QRPanelModel {
 /// Shows the clipboard as a QR code: directly when it fits, otherwise as a local Wi-Fi share link.
 @MainActor
 final class QRPanelController {
-    /// The QR code is never drawn smaller than this, in points.
-    static let minimumCodeSize: CGFloat = 320
+    /// A share link's code, in points: links are short, so their codes are coarse and scan easily.
+    nonisolated static let linkCodeSide: CGFloat = 180
+
+    /// Text in the code itself makes a denser code, drawn bigger so a phone can still read it.
+    nonisolated static func codeSide(forDirectBytes bytes: Int) -> CGFloat {
+        switch bytes {
+        case ...150: linkCodeSide
+        case ...800: 240
+        default: 320
+        }
+    }
 
     private let server: ShareServer
     private let model = QRPanelModel()
@@ -70,8 +81,9 @@ final class QRPanelController {
         case .empty:
             show(.message(title: "Clipboard is empty", detail: "Copy some text, an image or files first.", symbol: "clipboard"))
         case let .direct(text):
-            if let code = makeCode(for: text) {
-                show(.code(image: code.image, scale: code.scale, preview: Self.preview(of: text), share: nil))
+            let side = Self.codeSide(forDirectBytes: text.utf8.count)
+            if let code = makeCode(for: text, side: side) {
+                show(.code(image: code, side: side, preview: Self.preview(of: text), share: nil))
             } else {
                 await share(.text(text), preview: Self.preview(of: text))
             }
@@ -92,13 +104,13 @@ final class QRPanelController {
                 return
             }
             let (session, url) = try await server.share(resource, on: address)
-            guard let code = makeCode(for: url.absoluteString) else {
+            guard let code = makeCode(for: url.absoluteString, side: Self.linkCodeSide) else {
                 server.stop(session.token)
                 return
             }
             show(.code(
-                image: code.image, scale: code.scale, preview: preview,
-                share: QRPanelModel.Share(token: session.token, expiresAt: session.expiresAt)
+                image: code, side: Self.linkCodeSide, preview: preview,
+                share: QRPanelModel.Share(token: session.token, url: url, expiresAt: session.expiresAt)
             ))
         } catch {
             Logger.qr.error("Sharing failed: \(error.localizedDescription, privacy: .public)")
@@ -116,10 +128,9 @@ final class QRPanelController {
         show(.message(title: "Link expired", detail: "Show the clipboard as QR again for a new link.", symbol: "clock.badge.xmark"))
     }
 
-    private func makeCode(for message: String) -> (image: CGImage, scale: CGFloat)? {
+    private func makeCode(for message: String, side: CGFloat) -> CGImage? {
         let scale = Screens.underMouse?.backingScaleFactor ?? 2
-        guard let image = QRGenerator.image(for: message, minimumPixels: Int(Self.minimumCodeSize * scale)) else { return nil }
-        return (image, scale)
+        return QRGenerator.image(for: message, minimumPixels: Int(side * scale))
     }
 
     private func makePanel() -> CheesePanel {
@@ -189,62 +200,69 @@ final class QRPanelController {
     }
 }
 
-private struct QRPanelView: View {
+struct QRPanelView: View {
     let model: QRPanelModel
 
     var body: some View {
-        VStack(spacing: 14) {
-            switch model.content {
-            case .preparing:
-                ProgressView()
-                    .controlSize(.large)
-                    .frame(width: QRPanelController.minimumCodeSize, height: QRPanelController.minimumCodeSize)
-            case let .message(title, detail, symbol):
-                CheeseEmptyState(symbol: symbol, title: title, detail: detail)
-                    .frame(width: QRPanelController.minimumCodeSize)
-            case let .code(image, scale, preview, share):
-                Image(decorative: image, scale: scale)
-                    .interpolation(.none)
-                    // White quiet zone, whatever the appearance.
-                    .padding(DesignTokens.Spacing.xLarge)
-                    .background(.white, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
-                Text(preview)
-                    .font(DesignTokens.Typography.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(maxWidth: CGFloat(image.width) / scale)
-                if let share {
-                    ShareStatus(expiresAt: share.expiresAt)
-                }
-            }
-            HStack {
-                if let share = model.share {
-                    Button("Stop Sharing") { model.onStopSharing(share.token) }
-                }
-                Spacer()
-                Button("Close") { model.onClose() }
+        VStack(spacing: 0) {
+            CheeseToolbar {
+                Image(systemName: ModuleID.qr.symbol)
+                    .foregroundStyle(.tint)
+                Text("Clipboard as QR")
+                    .font(DesignTokens.Typography.heading)
+            } trailing: {
+                CheeseIconButton(symbol: "xmark", help: "Close") { model.onClose() }
                     .keyboardShortcut(.cancelAction)
             }
+            Divider()
+            content
+                .padding(DesignTokens.Spacing.panel)
         }
-        .padding(DesignTokens.Spacing.xxLarge)
-        .fixedSize()
+        .frame(width: width)
+        .fixedSize(horizontal: false, vertical: true)
         .cheesePanelBackground()
     }
-}
 
-private struct ShareStatus: View {
-    let expiresAt: Date
+    private var width: CGFloat {
+        if case let .code(_, side, _, _) = model.content { return max(380, side + 72) }
+        return 380
+    }
 
-    var body: some View {
-        VStack(spacing: DesignTokens.Spacing.xxSmall) {
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-                let remaining = max(0, Int(expiresAt.timeIntervalSince(context.date).rounded(.up)))
-                Text("Link expires in \(remaining / 60):\(String(format: "%02d", remaining % 60))")
-                    .monospacedDigit()
+    @ViewBuilder private var content: some View {
+        switch model.content {
+        case .preparing:
+            ProgressView()
+                .controlSize(.small)
+                .frame(maxWidth: .infinity, minHeight: 240)
+        case let .message(title, detail, symbol):
+            CheeseEmptyState(symbol: symbol, title: title, detail: detail)
+                .frame(maxWidth: .infinity)
+        case let .code(image, side, preview, share):
+            VStack(spacing: DesignTokens.Spacing.large) {
+                HStack(spacing: DesignTokens.Spacing.small) {
+                    Image(systemName: "doc.on.clipboard")
+                        .foregroundStyle(.tint)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(share == nil ? "In the code" : "Ready to Share")
+                            .font(DesignTokens.Typography.caption)
+                            .foregroundStyle(.secondary)
+                        Text(preview)
+                            .font(DesignTokens.Typography.secondary.weight(.medium))
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, DesignTokens.Spacing.medium)
+                .frame(minHeight: 40)
+                .background(.quaternary.opacity(0.6), in: RoundedRectangle(cornerRadius: DesignTokens.Radius.card))
+                ShareLinkCard(
+                    code: image, side: side, link: share?.url,
+                    caption: share == nil ? "Scan with your phone's camera" : nil,
+                    expiresAt: share?.expiresAt,
+                    onStop: share.map { share in { model.onStopSharing(share.token) } }
+                )
             }
-            Label("Phone must be on the same Wi-Fi", systemImage: "wifi")
-                .foregroundStyle(.secondary)
         }
-        .font(DesignTokens.Typography.caption)
     }
 }

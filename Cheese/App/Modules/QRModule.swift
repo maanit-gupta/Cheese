@@ -7,6 +7,7 @@ final class QRModule: CheeseModule {
     let id = ModuleID.qr
     private let server = ShareServer()
     private lazy var panel = QRPanelController(server: server)
+    private(set) var isRunning = false
 
     var actions: [CheeseAction] {
         [
@@ -17,15 +18,25 @@ final class QRModule: CheeseModule {
     }
 
     // The share server only runs while a share is live.
-    func start() {}
+    func start() {
+        isRunning = true
+    }
 
     func stop() {
+        isRunning = false
         panel.close()
         server.stopAll()
     }
 
     private func showClipboard() {
-        panel.show(Self.source(from: SystemPasteboard()))
+        show(Self.source(from: SystemPasteboard()))
+    }
+
+    /// Shows `source` as a QR code, or a share link to it. Also the drop hub's Share Link when
+    /// Cheese Share is off.
+    func show(_ source: QRSource) {
+        guard isRunning else { return }
+        panel.show(source)
     }
 
     /// The pasteboard's contents, read the same way clipboard history reads them.

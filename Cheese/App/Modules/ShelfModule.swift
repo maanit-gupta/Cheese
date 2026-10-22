@@ -40,9 +40,9 @@ final class ShelfModule: CheeseModule {
         controller?.hide()
     }
 
-    /// "Add to Shelf" from the menu bar drop menu.
-    func add(files: [URL]) {
-        guard isRunning else { return }
-        controller?.add(files.map(ShelfInput.file))
+    /// "Add to Shelf" from the menu bar drop hub.
+    func add(_ inputs: [ShelfInput]) {
+        guard isRunning, !inputs.isEmpty else { return }
+        controller?.add(inputs)
     }
 }

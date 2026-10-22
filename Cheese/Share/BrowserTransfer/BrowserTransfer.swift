@@ -1,7 +1,7 @@
 import Foundation
 import os
 
-/// The no-app way in: a phone scans the Phone tile's QR code and gets a page where it can upload
+/// The no-app way in: a phone scans the Share panel's QR code and gets a page where it can upload
 /// files, photos and text to this Mac, and download what the Mac is offering. The link's random
 /// token is the consent: anyone with it can use the page until Cheese Share stops listening, when
 /// a new token is made.

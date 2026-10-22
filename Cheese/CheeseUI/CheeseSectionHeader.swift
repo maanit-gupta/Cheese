@@ -26,3 +26,22 @@ extension CheeseSectionHeader where Trailing == EmptyView {
         self.init(title: title, symbol: symbol) { EmptyView() }
     }
 }
+
+/// A quieter heading in small capitals, for groups inside a compact panel: PDF, CONVERT, IMAGES.
+struct CheeseSectionCaps: View {
+    let title: String
+
+    init(_ title: String) {
+        self.title = title
+    }
+
+    var body: some View {
+        Text(title.uppercased())
+            .font(DesignTokens.Typography.caption.weight(.semibold))
+            .tracking(0.4)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, DesignTokens.Spacing.medium)
+            .padding(.top, DesignTokens.Spacing.xxSmall)
+            .accessibilityAddTraits(.isHeader)
+    }
+}

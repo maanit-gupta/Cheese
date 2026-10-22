@@ -22,6 +22,8 @@ final class CheesePanel: NSPanel {
         case nearPointer
         /// Where the user last dragged it, saved under `key`; `fallback` until then.
         case remembered(key: String, fallback: Fallback)
+        /// Hanging under `anchor` (a screen rect, like the menu bar icon's), centered on it.
+        case below(NSRect)
 
         enum Fallback {
             case centered
@@ -89,6 +91,10 @@ final class CheesePanel: NSPanel {
     private func place(_ placement: Placement) {
         let screen = Screens.underMouse
         switch placement {
+        case let .below(anchor):
+            let display = NSScreen.screens.first { $0.frame.intersects(anchor) } ?? screen
+            guard let visible = display?.visibleFrame else { return }
+            setFrameOrigin(PanelPositions.origin(below: anchor, size: frame.size, in: visible))
         case .centered:
             center(on: screen)
         case .nearPointer:
@@ -201,6 +207,13 @@ enum PanelPositions {
 
     static func save(_ origin: NSPoint, forKey key: String, defaults: UserDefaults = .standard) {
         defaults.set([Double(origin.x), Double(origin.y)], forKey: defaultsKey(key))
+    }
+
+    /// Centered under `anchor` with a small gap, kept inside `visible`. AppKit coordinates.
+    static func origin(below anchor: NSRect, size: NSSize, in visible: NSRect, gap: CGFloat = 6) -> NSPoint {
+        let x = min(max(anchor.midX - size.width / 2, visible.minX), visible.maxX - size.width)
+        let y = max(min(anchor.minY, visible.maxY) - gap - size.height, visible.minY)
+        return NSPoint(x: x, y: y)
     }
 
     /// Down and to the right of the pointer, flipped to the other side near a display edge, and

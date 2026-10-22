@@ -102,7 +102,7 @@ final class ShelfPanelController: NSObject, @preconcurrency QLPreviewPanelDataSo
         behavior.isMovable = true
         behavior.level = .floating
         let panel = CheesePanel(rootView: ShelfView(model: model), behavior: behavior) { [weak self] content in
-            let host = ShelfDropHostView(content: content, types: ShelfDropReader.acceptedTypes)
+            let host = CheeseDropHostView(content: content, types: ShelfDropReader.acceptedTypes)
             host.onEntered = { self?.dragEntered($0) ?? [] }
             host.onExited = { self?.model.isDropTargeted = false }
             host.onDrop = { self?.drop($0) ?? false }
@@ -192,7 +192,7 @@ final class ShelfPanelController: NSObject, @preconcurrency QLPreviewPanelDataSo
         return urls.indices.contains(index) ? urls[index] as NSURL : nil
     }
 
-    // MARK: Dropping onto the shelf (through `ShelfDropHostView`)
+    // MARK: Dropping onto the shelf (through `CheeseDropHostView`)
 
     private func dragEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
         guard !ShelfDropReader.isFromShelf(sender) else { return [] }

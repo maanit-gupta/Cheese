@@ -88,27 +88,11 @@ final class FilesModule: CheeseModule {
 
     // MARK: Entry points
 
-    /// The tools that apply to dropped files, grouped under PDF / Convert / Images. Nil when
-    /// the module is off or nothing applies.
-    func dropMenu(for files: [URL]) -> NSMenu? {
-        guard isRunning else { return nil }
-        let tools = ToolApplicability.tools(for: files).filter(registry.contains)
-        guard !tools.isEmpty else { return nil }
-        let menu = NSMenu()
-        for (index, group) in ToolApplicability.grouped(tools).enumerated() {
-            if index > 0 {
-                menu.addItem(.separator())
-            }
-            menu.addItem(.sectionHeader(title: group.group.title))
-            for tool in group.tools {
-                let item = ClosureMenuItem(title: "\(tool.title)…") { [weak self] in
-                    self?.open(tool, files: files)
-                }
-                item.image = NSImage(systemSymbolName: tool.symbol, accessibilityDescription: nil)
-                menu.addItem(item)
-            }
-        }
-        return menu
+    /// The switched-on tools that apply to these files, for the drop hub and the Shelf. Empty when
+    /// the module is off.
+    func applicableTools(for files: [URL]) -> [ToolID] {
+        guard isRunning else { return [] }
+        return ToolApplicability.tools(for: files).filter(registry.contains)
     }
 
     /// "Files: Merging 3 PDFs… — Cancel", one per job, for the top of the status menu.

@@ -324,7 +324,7 @@ struct ShelfIntakeTests {
     /// The drop target sits above every card and takes every kind the shelf reads.
     @Test func dropHostTakesEveryAcceptedType() {
         let content = NSHostingView(rootView: Color.clear.frame(width: 520, height: 170))
-        let host = ShelfDropHostView(content: content, types: ShelfDropReader.acceptedTypes)
+        let host = CheeseDropHostView(content: content, types: ShelfDropReader.acceptedTypes)
         let registered = Set(host.registeredDraggedTypes)
         for type in [NSPasteboard.PasteboardType.fileURL, .URL, .png, .tiff, .string, .rtfd, .html] {
             #expect(registered.contains(type))

@@ -58,3 +58,14 @@ TEST_RUNNER_PAGE_SERVE=$D xcodebuild -project Cheese.xcodeproj -scheme Cheese -d
     -derivedDataPath build/DerivedData test -only-testing:CheeseTests/PhonePageInBrowserTests &
 node scripts/phone-page-webkit.mjs $D
 ```
+
+## Panels without a screen
+
+`PanelSnapshotTests` renders the drop hub, the Share panel and the QR panel to PNGs (light and dark) with
+`ImageRenderer`, to check their layout from a terminal. AppKit-backed controls (menus, some buttons) show as
+placeholders there; everything else is drawn as in the app.
+
+```sh
+TEST_RUNNER_SNAPSHOT_DIR=$(mktemp -d) xcodebuild -project Cheese.xcodeproj -scheme Cheese -destination 'platform=macOS' \
+    -derivedDataPath build/DerivedData test -only-testing:CheeseTests/PanelSnapshotTests
+```

@@ -14,15 +14,17 @@ enum IndicatorSource: CaseIterable {
     }
 }
 
-/// Owns the status item. Any click on the icon opens the feature menu; dropping files on it
-/// opens a menu of the tools that apply to them.
+/// Owns the status item. Any click on the icon opens the feature menu; dropping files, images,
+/// links or text on it opens the drop hub under the icon.
 @MainActor
 final class MenuBarController: NSObject, NSMenuDelegate, NSWindowDelegate, NSDraggingDestination {
     private let statusItem: NSStatusItem
     private let statusMenu: StatusMenu
     private var indicators: [IndicatorSource: String] = [:]
-    /// The menu for dropped files, or nil when they can't be dropped (the Files module is off).
-    private let dropMenu: ([URL]) -> NSMenu?
+    /// Shows what can be done with a drop; nil when nothing can be dropped.
+    private let dropHub: StatusItemDropPanelController?
+    /// The payload of the drag hovering over the icon, when the hub can take it.
+    private var hoveringPayload: DropPayload?
     /// Clicking the Share indicator reopens the Share panel.
     private let openShare: () -> Void
     /// While the Share panel is showing, the indicator opens the menu like the rest of the icon.
@@ -33,13 +35,13 @@ final class MenuBarController: NSObject, NSMenuDelegate, NSWindowDelegate, NSDra
 
     init(
         statusMenu: StatusMenu,
-        dropMenu: @escaping ([URL]) -> NSMenu? = { _ in nil },
+        dropHub: StatusItemDropPanelController? = nil,
         openShare: @escaping () -> Void = {},
         isShareShown: @escaping () -> Bool = { false }
     ) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         self.statusMenu = statusMenu
-        self.dropMenu = dropMenu
+        self.dropHub = dropHub
         self.openShare = openShare
         self.isShareShown = isShareShown
         super.init()
@@ -56,7 +58,7 @@ final class MenuBarController: NSObject, NSMenuDelegate, NSWindowDelegate, NSDra
             button.image = icon
             button.toolTip = "Cheese"
             // The status item's window forwards drags to its delegate.
-            button.window?.registerForDraggedTypes([.fileURL])
+            button.window?.registerForDraggedTypes(StatusItemDropHandler.acceptedTypes)
             button.window?.delegate = self
         }
     }
@@ -121,40 +123,50 @@ final class MenuBarController: NSObject, NSMenuDelegate, NSWindowDelegate, NSDra
         KeyboardShortcuts.isEnabled = true
     }
 
-    // MARK: Dropping files on the icon
+    // MARK: Dropping on the icon
 
-    private func droppedFiles(_ sender: any NSDraggingInfo) -> [URL] {
-        let options: [NSPasteboard.ReadingOptionKey: Any] = [.urlReadingFileURLsOnly: true]
-        return sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: options) as? [URL] ?? []
+    /// The icon's frame on screen, which the drop hub hangs under.
+    private var iconFrame: NSRect? {
+        guard let button = statusItem.button, let window = button.window else { return nil }
+        return window.convertToScreen(button.convert(button.bounds, to: nil))
     }
 
     func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
-        guard dropMenu(droppedFiles(sender)) != nil else { return [] }
-        statusItem.button?.highlight(true)
+        guard let dropHub, let payload = StatusItemDropHandler.payload(from: sender.draggingPasteboard), dropHub.accepts(payload) else {
+            hoveringPayload = nil
+            return []
+        }
+        hoveringPayload = payload
+        if let button = statusItem.button {
+            StatusItemDropHandler.setHighlighted(true, button)
+        }
         return .copy
     }
 
     func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation {
-        statusItem.button?.isHighlighted == true ? .copy : []
+        hoveringPayload == nil ? [] : .copy
     }
 
     func draggingExited(_ sender: (any NSDraggingInfo)?) {
-        statusItem.button?.highlight(false)
+        endHover()
     }
 
     func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
-        statusItem.button?.highlight(false)
-        guard let menu = dropMenu(droppedFiles(sender)) else { return false }
-        // Pop the menu once the drag session has ended, or it eats the menu's first click.
-        Task { @MainActor [weak self] in
-            guard let button = self?.statusItem.button else { return }
-            menu.delegate = self
-            menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 4), in: button)
-        }
+        defer { endHover() }
+        guard let dropHub, let payload = hoveringPayload, let anchor = iconFrame else { return false }
+        // Show the hub once the drag session has ended, or it takes the session's last events.
+        Task { @MainActor in dropHub.show(payload, below: anchor) }
         return true
     }
 
     func concludeDragOperation(_ sender: (any NSDraggingInfo)?) {
-        statusItem.button?.highlight(false)
+        endHover()
+    }
+
+    private func endHover() {
+        hoveringPayload = nil
+        if let button = statusItem.button {
+            StatusItemDropHandler.setHighlighted(false, button)
+        }
     }
 }

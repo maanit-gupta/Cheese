@@ -15,6 +15,8 @@ enum DesignTokens {
         static let xLarge: CGFloat = 16
         static let xxLarge: CGFloat = 20
         static let xxxLarge: CGFloat = 24
+        /// Inside a floating panel's edge.
+        static let panel: CGFloat = 14
     }
 
     enum Radius {
@@ -22,7 +24,11 @@ enum DesignTokens {
         static let small: CGFloat = 6
         /// List rows, page thumbnails, toolbar buttons.
         static let medium: CGFloat = 8
-        /// Cards, HUDs, the draw rail, the QR code's quiet zone.
+        /// Compact rows and tiles inside panels, like Share's device tiles.
+        static let row: CGFloat = 7
+        /// Cards inside panels: the drop hub's actions, Share's link card.
+        static let card: CGFloat = 10
+        /// HUDs, the draw rail, the QR code's quiet zone.
         static let large: CGFloat = 12
         /// Floating panels: the palette, the QR panel, the shelf, the share panel.
         static let panel: CGFloat = 16

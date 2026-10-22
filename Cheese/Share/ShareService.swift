@@ -48,13 +48,14 @@ final class ShareService {
     private(set) var listening = Listening.stopped
     /// LocalSend transfers use HTTPS (false only when the Keychain wouldn't hold a certificate).
     private(set) var isEncrypted = false
-    /// The plain-HTTP port of the Phone tile's page; browsers refuse self-signed certificates.
+    /// The plain-HTTP port of the browser link's page; browsers refuse self-signed certificates.
     private(set) var browserPort: UInt16?
     private(set) var peers: [LocalSendPeer] = []
     private(set) var discoveryProblem: String?
     private(set) var transfers: [LocalSendPeer.ID: Transfer] = [:]
-    /// Handed in from the Shelf, the clipboard or the macOS Share menu; sent by clicking a device.
-    var ready: [OutgoingItem] = []
+    /// Staged to share: offered on the browser link's page, and sent to a device with one click.
+    /// Handed in from a drop, the Shelf, the clipboard or the macOS Share menu.
+    private(set) var staged: [OutgoingItem] = []
 
     @ObservationIgnored private let hooks: Hooks
     @ObservationIgnored private let trustStore = TrustStore()
@@ -81,7 +82,7 @@ final class ShareService {
     @ObservationIgnored private lazy var server: HTTPServer = makeServer { [weak self] request, body in
         await self?.routeLocalSend(request, body: body) ?? .status(404)
     }
-    /// The Phone tile's page, over plain HTTP.
+    /// The browser link's page, over plain HTTP.
     @ObservationIgnored private lazy var browserServer: HTTPServer = makeServer { [weak self] request, body in
         await self?.routeBrowser(request, body: body) ?? .status(404)
     }
@@ -112,7 +113,7 @@ final class ShareService {
         return false
     }
 
-    /// The Phone tile's link.
+    /// The link phones and browsers open, shown as a QR code in the Share panel.
     var browserURL: URL? {
         guard case let .listening(address, _) = listening, let browserPort else { return nil }
         return browser.url(address: address, port: browserPort)
@@ -203,6 +204,7 @@ final class ShareService {
         browserServer.stop()
         browserPort = nil
         browser.reset()
+        staged.removeAll()
         peers.removeAll()
         listening = .stopped
         hooks.setListening(false)
@@ -211,7 +213,8 @@ final class ShareService {
 
     // MARK: Devices
 
-    private func found(_ peer: LocalSendPeer) {
+    /// A device turned up (from discovery, or a test).
+    func found(_ peer: LocalSendPeer) {
         if let index = peers.firstIndex(where: { $0.id == peer.id }) {
             peers[index] = peer
         } else {
@@ -272,16 +275,29 @@ final class ShareService {
         }
     }
 
-    /// Offers items on the Phone tile's page for download.
-    func offerToPhone(_ items: [OutgoingItem]) {
-        browser.offer(items)
+    // MARK: Staging
+
+    /// Adds items to share, skipping any already staged.
+    func stage(_ items: [OutgoingItem]) {
+        let new = items.filter { item in !staged.contains { $0.content == item.content } }
+        staged.append(contentsOf: new)
+        browser.offer(new)
     }
 
-    var phoneItems: [OutgoingItem] { browser.offered }
-
-    func withdrawFromPhone(_ id: OutgoingItem.ID) {
+    func unstage(_ id: OutgoingItem.ID) {
+        staged.removeAll { $0.id == id }
         browser.withdraw(id)
     }
+
+    func clearStaged() {
+        for item in staged {
+            browser.withdraw(item.id)
+        }
+        staged.removeAll()
+    }
+
+    /// When the browser link stops working: nil while the Share panel is open.
+    var linkExpiresAt: Date? { browser.expiresAt }
 
     // MARK: Trust
 

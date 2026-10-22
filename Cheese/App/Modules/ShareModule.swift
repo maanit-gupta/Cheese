@@ -116,16 +116,21 @@ final class ShareModule: CheeseModule {
             // No folder sending.
             return urls.filter { !$0.hasDirectoryPath }.map(OutgoingItem.file)
         case let .image(png):
-            let folder = FileManager.default.temporaryDirectory.appending(path: "CheeseShare-\(UUID().uuidString)", directoryHint: .isDirectory)
-            let file = folder.appending(path: "Clipboard Image.png")
-            do {
-                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-                try png.write(to: file)
-                return [.file(file)]
-            } catch {
-                Logger.share.error("Couldn't save the clipboard image: \(error.localizedDescription, privacy: .public)")
-                return []
-            }
+            return imageItem(png, named: "Clipboard Image.png").map { [$0] } ?? []
+        }
+    }
+
+    /// An image with no file behind it, saved to a temp file so it can be sent.
+    static func imageItem(_ png: Data, named name: String) -> OutgoingItem? {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "CheeseShare-\(UUID().uuidString)", directoryHint: .isDirectory)
+        let file = folder.appending(path: name)
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try png.write(to: file)
+            return .file(file)
+        } catch {
+            Logger.share.error("Couldn't save the image to share: \(error.localizedDescription, privacy: .public)")
+            return nil
         }
     }
 }

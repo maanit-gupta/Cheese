@@ -30,3 +30,32 @@ struct CheeseIconButton: View {
         return isHovered ? .primary.opacity(DesignTokens.Opacity.hoverTint) : .clear
     }
 }
+
+/// A small borderless text button, like Clear or Stop: tinted text with a soft hover fill.
+struct CheeseTextButtonStyle: ButtonStyle {
+    var tint: Color = .accentColor
+
+    func makeBody(configuration: Configuration) -> some View {
+        HoverLabel(configuration: configuration, tint: tint)
+    }
+
+    private struct HoverLabel: View {
+        let configuration: Configuration
+        let tint: Color
+        @State private var isHovered = false
+
+        var body: some View {
+            configuration.label
+                .font(DesignTokens.Typography.secondary.weight(.medium))
+                .foregroundStyle(tint)
+                .padding(.horizontal, DesignTokens.Spacing.small)
+                .padding(.vertical, DesignTokens.Spacing.xxSmall)
+                .background(
+                    isHovered || configuration.isPressed ? tint.opacity(DesignTokens.Opacity.hoverTint) : .clear,
+                    in: RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
+                )
+                .contentShape(Rectangle())
+                .onHover { isHovered = $0 }
+        }
+    }
+}
