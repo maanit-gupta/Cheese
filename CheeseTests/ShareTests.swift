@@ -817,3 +817,41 @@ struct ShareTrustFlowTests {
         #expect(texts == ["one", "two"])
     }
 }
+
+/// Serves the real phone page for a browser to drive (`PAGE_SERVE=<folder>`): writes the page URL to
+/// `<folder>/url.txt`, waits for `<folder>/done`, then checks what arrived. Used to run the page in
+/// WebKit, Safari's engine, against the real server; see docs/DEVELOPMENT.md.
+@MainActor
+struct PhonePageInBrowserTests {
+    private nonisolated static var folder: String? {
+        ProcessInfo.processInfo.environment["PAGE_SERVE"]
+    }
+
+    @Test(.enabled(if: folder != nil)) func aRealBrowserUsesThePage() async throws {
+        let folder = URL(filePath: try #require(Self.folder), directoryHint: .isDirectory)
+        let destination = folder.appending(path: "received", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+        var received: [URL] = []
+        var texts: [String] = []
+        let browser = BrowserTransfer(hooks: BrowserTransfer.Hooks(
+            destination: { destination }, maxBytes: { 10_000_000 },
+            onText: { texts.append($0) }, onFileReceived: { received.append($0) }
+        ))
+        let offered = folder.appending(path: "From Mac.txt")
+        try Data("download me".utf8).write(to: offered)
+        browser.offer([.file(offered), .text("https://example.com/from-mac")])
+        let server = HTTPServer { [browser] request, body in await browser.handle(request, body: body) }
+        let port = try await server.start(on: "127.0.0.1")
+        defer { server.stop() }
+        try #require(browser.url(address: "127.0.0.1", port: port)).absoluteString.write(to: folder.appending(path: "url.txt"), atomically: true, encoding: .utf8)
+
+        let done = folder.appending(path: "done").path(percentEncoded: false)
+        let deadline = Date.now.addingTimeInterval(120)
+        while !FileManager.default.fileExists(atPath: done), Date.now < deadline {
+            try await Task.sleep(for: .milliseconds(200))
+        }
+        #expect(received.map(\.lastPathComponent) == ["photo with spaces.jpg"])
+        #expect(received.first.flatMap { try? Data(contentsOf: $0).count } == 30_000)
+        #expect(texts == ["hello from the phone"])
+    }
+}

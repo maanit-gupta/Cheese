@@ -44,3 +44,16 @@ TEST_RUNNER_SHARE_KEYCHAIN=1 xcodebuild -project Cheese.xcodeproj -scheme Cheese
 
 `open cheese://share` opens the Share panel, which starts the listeners; `curl -k https://<mac-ip>:53317/api/localsend/v2/info`
 then shows what LocalSend devices see.
+
+## The phone page in Safari's engine
+
+`PhonePageInBrowserTests` serves the real phone page and waits; `scripts/phone-page-webkit.mjs` drives it in
+WebKit as an iPhone 13 (Playwright, installed for the promo render): upload a photo, send text, download
+what the Mac offers. Run both together:
+
+```sh
+D=$(mktemp -d)
+TEST_RUNNER_PAGE_SERVE=$D xcodebuild -project Cheese.xcodeproj -scheme Cheese -destination 'platform=macOS' \
+    -derivedDataPath build/DerivedData test -only-testing:CheeseTests/PhonePageInBrowserTests &
+node scripts/phone-page-webkit.mjs $D
+```
