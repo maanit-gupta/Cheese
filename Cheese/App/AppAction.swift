@@ -15,6 +15,7 @@ enum AppAction: Equatable, Sendable {
     case clearAll
     case editShortcuts
     case openSettings
+    case showWelcome
     case quit
 
     init(_ hotkey: Hotkey) {
@@ -46,28 +47,38 @@ enum AppAction: Equatable, Sendable {
         case .maximize: .maximize
         case .snapBottom: .snapBottom
         case .restoreWindow: .restoreWindow
-        case .clearHistory, .clearAll, .editShortcuts, .openSettings, .quit: nil
+        case .clearHistory, .clearAll, .editShortcuts, .openSettings, .showWelcome, .quit: nil
         }
     }
 
     var title: String {
         switch self {
-        case .openHistory: "Open History"
+        case .openHistory: "Clipboard History"
         case .captureRegion: "Capture Region"
-        case .captureFullScreen: "Capture Screen"
+        case .captureFullScreen: "Capture Full Screen"
         case .captureWindow: "Capture Window"
-        case .ocrRegion: "OCR"
+        case .ocrRegion: "Copy Text from Screen"
         case .scrollingCapture: "Scrolling Capture"
-        case .snapLeft: "Snap Left"
-        case .snapRight: "Snap Right"
+        case .snapLeft: "Left Half"
+        case .snapRight: "Right Half"
         case .maximize: "Maximize"
-        case .snapBottom: "Snap Bottom"
-        case .restoreWindow: "Restore Window"
+        case .snapBottom: "Bottom Half"
+        case .restoreWindow: "Restore Previous Size"
         case .clearHistory: "Clear History"
-        case .clearAll: "Clear All"
+        case .clearAll: "Clear All…"
         case .editShortcuts: "Keyboard Shortcuts…"
         case .openSettings: "Settings…"
-        case .quit: "Quit"
+        case .showWelcome: "Welcome Guide…"
+        case .quit: "Quit Cheese"
+        }
+    }
+
+    /// How permission alerts name the feature: "Window snapping needs Accessibility access".
+    var featureName: String {
+        switch self {
+        case .snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow: "Window snapping"
+        case .ocrRegion: "Copying text from the screen"
+        default: title
         }
     }
 
@@ -81,7 +92,7 @@ enum AppAction: Equatable, Sendable {
             [.screenRecording, .accessibility]
         case .snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow:
             [.accessibility]
-        case .openHistory, .clearHistory, .clearAll, .editShortcuts, .openSettings, .quit:
+        case .openHistory, .clearHistory, .clearAll, .editShortcuts, .openSettings, .showWelcome, .quit:
             []
         }
     }

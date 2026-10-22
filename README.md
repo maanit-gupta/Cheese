@@ -122,7 +122,31 @@ Cheese opens a short **welcome guide** the first time it runs:
 3. **Shortcuts.** Rebind anything you like right there.
 4. **Launch at login**, if you want it.
 
-After that, look for the 🧀 wedge in your menu bar. **Click** it for clipboard history. **Right-click** it for every tool, *Keyboard Shortcuts…*, *Settings…* and *Quit*. You can reopen the guide from **Settings → General → Show Welcome Guide…**
+After that, look for the 🧀 wedge in your menu bar. **Click it to open the Cheese menu.** Every feature is there, so shortcuts are optional:
+
+```
+ Clipboard History                ⌃⌥V
+ ───────────────────────────────────
+ CAPTURE
+ Capture Region                   ⌃⌥4
+ Capture Window                   ⌃⌥5
+ Capture Full Screen              ⌃⌥3
+ Scrolling Capture                ⌃⌥S
+ TEXT
+ Copy Text from Screen            ⌃⌥T
+ WINDOWS
+ Arrange Window                     ▸
+ ───────────────────────────────────
+ Clear History
+ Clear All…
+ ───────────────────────────────────
+ Keyboard Shortcuts…
+ Settings…                         ⌘,
+ Welcome Guide…
+ Quit Cheese                       ⌘Q
+```
+
+The shortcuts shown are your current ones, and they update when you change them. **Welcome Guide…** reopens the guide.
 
 ## Keyboard shortcuts
 
@@ -141,7 +165,7 @@ After that, look for the 🧀 wedge in your menu bar. **Click** it for clipboard
 
 ### Changing shortcuts
 
-Right-click the menu bar icon and choose **Keyboard Shortcuts…** (or go to **Settings → Shortcuts**).
+Click the menu bar icon and choose **Keyboard Shortcuts…** (or go to **Settings → Shortcuts**).
 
 - **Click** a shortcut, then **press the new keys**.
 - Click **ⓧ** to turn a shortcut off.
@@ -187,7 +211,7 @@ xattr -dr com.apple.quarantine /Applications/Cheese.app
 <details>
 <summary><b>Screenshots only show the wallpaper, or capture does nothing</b></summary>
 
-Turn on **Cheese** under **System Settings → Privacy & Security → Screen Recording**, then quit Cheese (right-click the icon → Quit) and open it again.
+Turn on **Cheese** under **System Settings → Privacy & Security → Screen Recording**, then quit Cheese (menu bar icon → Quit Cheese) and open it again.
 </details>
 
 <details>

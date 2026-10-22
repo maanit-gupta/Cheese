@@ -114,7 +114,7 @@ The first time Cheese opens, a short welcome guide appears:
 | **Shortcuts** | Rebind any shortcut on the spot |
 | **All set** | Turn on *Open Cheese automatically when you log in* |
 
-You can close it at any time and reopen it later from **Settings → General → Show Welcome Guide…**
+You can close it at any time and reopen it later from the menu bar icon → **Welcome Guide…**
 
 ### 2. Grant permissions
 
@@ -124,7 +124,7 @@ Cheese asks for these only because the features can't work without them. Nothing
 
 1. In the welcome guide (or **Settings → Permissions**), click **Open System Settings** next to Screen Recording.
 2. Turn on **Cheese** in the list.
-3. If macOS offers **Quit & Reopen**, click it. Otherwise right-click the menu bar icon → **Quit**, then open Cheese again.
+3. If macOS offers **Quit & Reopen**, click it. Otherwise click the menu bar icon → **Quit Cheese**, then open Cheese again.
 
 **Accessibility**, used for pasting from history, window snapping and auto-scrolling:
 
@@ -139,12 +139,23 @@ You can skip both for now. When you use a feature that needs a missing permissio
 
 Look for the cheese wedge near the clock.
 
-- **Click** it to open clipboard history.
-- **Right-click** (or <kbd>⌃</kbd>-click) it for the menu: every capture tool, *Clear History*, *Keyboard Shortcuts…*, *Settings…* and *Quit*.
+**Click** it to open the Cheese menu. Every feature is there, so you never *have* to remember a shortcut:
+
+| Menu item | What it does |
+|---|---|
+| **Clipboard History** | Opens your history under the icon |
+| **Capture:** Region, Window, Full Screen, Scrolling Capture | Takes a screenshot (hold <kbd>⇧</kbd> as you finish to annotate) |
+| **Text:** Copy Text from Screen | OCR: drag over anything to copy its text |
+| **Windows:** Arrange Window ▸ | Left half, right half, maximize, bottom half, restore, for the window you were using |
+| **Clear History / Clear All…** | Empties history (Clear All also removes pins) |
+| **Keyboard Shortcuts…** | Change any shortcut |
+| **Settings… / Welcome Guide… / Quit Cheese** | |
+
+Each item shows its current shortcut on the right.
 
 ### 4. Make the shortcuts yours (optional)
 
-Right-click the icon → **Keyboard Shortcuts…**. Click any shortcut, press the new keys, and it takes effect immediately. Click **ⓧ** to turn a shortcut off, or **Restore Defaults** to start over.
+Click the menu bar icon → **Keyboard Shortcuts…**. Click any shortcut, press the new keys, and it takes effect immediately. Click **ⓧ** to turn a shortcut off, or **Restore Defaults** to start over.
 
 ## Updating
 
@@ -154,7 +165,7 @@ Permissions usually carry over because every release is signed with the same cer
 
 ## Uninstalling
 
-1. Right-click the menu bar icon → **Quit**.
+1. Click the menu bar icon → **Quit Cheese**.
 2. Delete the app and its data:
 
    ```sh
@@ -200,7 +211,7 @@ macOS can keep a stale entry after an app is replaced. For each permission:
 4. Quit and reopen Cheese.
 
 ### A shortcut does nothing
-Another app or a macOS shortcut may already use that combination. Right-click the icon → **Keyboard Shortcuts…** and choose a different one. Cheese warns you if macOS has already reserved a combination.
+Another app or a macOS shortcut may already use that combination. Click the menu bar icon → **Keyboard Shortcuts…** and choose a different one. Cheese warns you if macOS has already reserved a combination.
 
 ### Window snapping doesn't move a window
 Check Accessibility first. Some windows, like fixed-size panels and certain dialogs, can't be resized. Cheese moves them as far as they allow.

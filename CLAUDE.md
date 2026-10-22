@@ -73,7 +73,7 @@ Inside the history panel:
 - **Retention:** keep the last **200 unpinned** items. Pinned items don't count toward the limit and never expire. Delete orphaned image files when their item is removed.
 - **Persistence:** history survives quit and reboot.
 - **Clear:** menu bar menu has **"Clear History"** (removes unpinned items) and **"Clear All"** (removes everything, with a confirmation dialog).
-- **Panel:** opens as a popover **anchored under the menu bar icon** (both from the hotkey and from clicking the icon). Two-column layout: list on the left, **preview pane** on the right (full text, rendered rich text, image preview, or file icon and path).
+- **Panel:** opens as a popover **anchored under the menu bar icon** (from the hotkey or the menu's *Clipboard History* item; clicking the icon itself opens the menu). Two-column layout: list on the left, **preview pane** on the right (full text, rendered rich text, image preview, or file icon and path).
 - **Search:** type-to-filter fuzzy matching over item text, **including text recognized in image items** (see OCR → Live Text). 200 items is small, so use an in-memory fuzzy scorer in a pure, unit-tested function. No search index needed.
 - **Paste flow (important):** record the frontmost app **before** opening the panel. On selection: write the item to the pasteboard, close the panel, re-activate the recorded app, wait for activation, then post Cmd+V with `CGEvent`. Needs Accessibility permission. If it's missing, copy only and show the permission prompt (see Permissions).
 
@@ -112,7 +112,9 @@ Inside the history panel:
 - Some windows refuse resizing (fixed-size panels). Clamp the frame and don't crash.
 
 ### Menu bar menu
-Open History · Capture Region · Capture Window · Capture Screen · OCR · Scrolling Capture · — · Clear History · Clear All · — · Keyboard Shortcuts… (opens Settings on the Shortcuts tab) · Settings… · Quit
+Any click on the icon opens this menu, so every feature works without hotkeys. Items show their current hotkey and an SF Symbol.
+
+Clipboard History · — · **Capture:** Capture Region · Capture Window · Capture Full Screen · Scrolling Capture · — · **Text:** Copy Text from Screen · — · **Windows:** Arrange Window ▸ (Left Half · Right Half · Maximize · Bottom Half · Restore Previous Size) · — · Clear History · Clear All… · — · Keyboard Shortcuts… (opens Settings on the Shortcuts tab) · Settings… · Welcome Guide… · — · Quit Cheese
 
 ### Settings (SwiftUI window)
 - **General:** launch at login, screenshot save folder, "Show Welcome Guide…"
@@ -122,7 +124,7 @@ Open History · Capture Region · Capture Window · Capture Screen · OCR · Scr
 - **Permissions:** live status of Screen Recording and Accessibility, each with an "Open System Settings" button
 
 ### Welcome guide
-Shown once on first launch (`hasSeenWelcome` in UserDefaults; closing it counts as seen), reopenable from Settings → General. Four pages: what Cheese does (with live shortcuts) · permissions (live status + Open System Settings) · shortcuts (the same recorders as Settings) · launch at login. Everything in it is skippable.
+Shown once on first launch (`hasSeenWelcome` in UserDefaults; closing it counts as seen), reopenable from the menu (Welcome Guide…) and Settings → General. Four pages: what Cheese does (with live shortcuts) · permissions (live status + Open System Settings) · shortcuts (the same recorders as Settings) · launch at login. Everything in it is skippable.
 
 ### Permissions
 - Besides the welcome guide, when a feature needs a permission that's missing (Screen Recording for capture/OCR/scroll, Accessibility for paste/snap/auto-scroll), show a single clear alert explaining why, with a button that opens the right System Settings pane.

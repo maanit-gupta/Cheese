@@ -194,8 +194,8 @@ private struct FinishPage: View {
             PageHeader(title: "You're all set", subtitle: "Cheese is running in your menu bar. Look for the cheese wedge near the clock.")
 
             VStack(alignment: .leading, spacing: 12) {
-                Label("Click the icon to open clipboard history.", systemImage: "cursorarrow.click")
-                Label("Right-click it for every tool, Settings and Keyboard Shortcuts.", systemImage: "contextualmenu.and.cursorarrow")
+                Label("Click the icon for every tool, starting with Clipboard History.", systemImage: "cursorarrow.click")
+                Label("Change any shortcut from Keyboard Shortcuts… in that menu.", systemImage: "keyboard")
                 Label("Hold Shift as you finish a screenshot to annotate it.", systemImage: "shift")
             }
             .font(.callout)

@@ -30,6 +30,8 @@ final class SettingsWindowController {
         self.window = window
         NSApp.activate()
         window.makeKeyAndOrderFront(nil)
+        // Opened from the status menu, activation can lose to the app the user was in; stay visible anyway.
+        window.orderFrontRegardless()
     }
 
     private func makeWindow() -> NSWindow {

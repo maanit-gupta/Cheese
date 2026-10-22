@@ -38,7 +38,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.statusMenu = statusMenu
         let menuBar = MenuBarController(menu: statusMenu.menu)
         self.menuBar = menuBar
-        menuBar.primaryClickAction = { [weak self] in self?.perform(.openHistory) }
         startClipboard()
         capture.onCapture = { [weak self] image, wantsEditor in self?.handleScreenshot(image, wantsEditor: wantsEditor) }
         let openPermissionSettings: @MainActor (Permission) -> Void = { [permissionPrompter] permission in
@@ -126,7 +125,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func perform(_ action: AppAction) {
         if let missing = permissions.missing(from: action.requiredPermissions).first {
-            permissionPrompter.presentAlert(for: missing, feature: action.title)
+            permissionPrompter.presentAlert(for: missing, feature: action.featureName)
             return
         }
 
@@ -135,6 +134,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settingsWindow?.show()
         case .editShortcuts:
             settingsWindow?.show(tab: .shortcuts)
+        case .showWelcome:
+            welcomeWindow?.show()
         case .quit:
             NSApp.terminate(nil)
         case .openHistory:

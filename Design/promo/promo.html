@@ -495,10 +495,10 @@ scene({
 const SHORTCUT_ROWS = [['Open clipboard history', '⌃⌥V'], ['Capture region', '⌃⌥4'], ['Capture full screen', '⌃⌥3'], ['Capture window', '⌃⌥5'], ['Copy text from region (OCR)', '⌃⌥T'], ['Scrolling capture', '⌃⌥S']];
 scene({
   id: 'keys', start: 39.6, end: 45.6, num: 'YOUR KEYS', title: 'Every shortcut is yours', keys: ['Keyboard Shortcuts…'],
-  desc: 'Don\'t like a default? Pick Keyboard Shortcuts… from the menu bar icon, click a shortcut and press new keys.',
+  desc: 'Every feature is one click away in the menu bar. Don\'t like a default? Choose Keyboard Shortcuts…, click one and press new keys.',
   html: `
     <div class="menu" id="menu">
-      ${['Open History|⌃⌥V', 'Capture Region|⌃⌥4', 'Capture Window|⌃⌥5', 'Capture Screen|⌃⌥3', 'OCR|⌃⌥T', 'Scrolling Capture|⌃⌥S', '-', 'Clear History|', 'Clear All|', '-', 'Keyboard Shortcuts…|', 'Settings…|⌘,', 'Quit|⌘Q'].map(m => m === '-' ? '<div class="msep"></div>' : `<div class="mi" data-k="${m.split('|')[0]}"><span>${m.split('|')[0]}</span><span>${m.split('|')[1]}</span></div>`).join('')}
+      ${['Clipboard History|⌃⌥V', '-', 'Capture Region|⌃⌥4', 'Capture Window|⌃⌥5', 'Capture Full Screen|⌃⌥3', 'Scrolling Capture|⌃⌥S', 'Copy Text from Screen|⌃⌥T', 'Arrange Window|▸', '-', 'Clear History|', 'Clear All…|', '-', 'Keyboard Shortcuts…|', 'Settings…|⌘,', 'Welcome Guide…|', 'Quit Cheese|⌘Q'].map(m => m === '-' ? '<div class="msep"></div>' : `<div class="mi" data-k="${m.split('|')[0]}"><span>${m.split('|')[0]}</span><span>${m.split('|')[1]}</span></div>`).join('')}
     </div>
     <div class="win" id="settings" style="left:250px;top:70px;width:600px;height:590px;opacity:0">
       <div class="tb" style="justify-content:center;position:relative"><div class="dots" style="position:absolute;left:14px"><i></i><i></i><i></i></div>Cheese Settings</div>
@@ -520,7 +520,7 @@ scene({
     rec.classList.toggle('recording', recording);
     rec.textContent = recording ? 'Press shortcut' : changed ? '⇧⌘V' : '⌃⌥V';
     rec.style.background = changed ? `rgba(255,200,61,${.7 * (1 - prog(lt, 3.3, 4.6))})` : '#fff';
-    if (lt < 1.5) { const [cx, cy] = path(lt, [[0, 600, 300], [.25, 855, 15], [.6, 855, 15], [1.0, 800, 270]]); setCursor(cx, cy, win(lt, 0, 1.5, .15)); }
+    if (lt < 1.5) { const [cx, cy] = path(lt, [[0, 600, 300], [.25, 855, 15], [.6, 855, 15], [1.0, 800, 328]]); setCursor(cx, cy, win(lt, 0, 1.5, .15)); }
     else if (lt < 3.0) { const [cx, cy] = path(lt, [[1.8, 600, 500], [2.35, 790, 228]]); setCursor(cx, cy, win(lt, 1.8, 3.2, .15)); }
     else setCursor(0, 0, 0);
   }

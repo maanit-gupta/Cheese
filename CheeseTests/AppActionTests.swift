@@ -7,7 +7,7 @@ struct AppActionTests {
         #expect(AppAction(hotkey).hotkey == hotkey)
     }
 
-    @Test(arguments: [AppAction.clearHistory, .clearAll, .editShortcuts, .openSettings, .quit])
+    @Test(arguments: [AppAction.clearHistory, .clearAll, .editShortcuts, .openSettings, .showWelcome, .quit])
     func menuOnlyActionsHaveNoHotkey(_ action: AppAction) {
         #expect(action.hotkey == nil)
         #expect(action.requiredPermissions.isEmpty)
@@ -21,6 +21,11 @@ struct AppActionTests {
     @Test(arguments: [AppAction.snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow])
     func snappingNeedsAccessibility(_ action: AppAction) {
         #expect(action.requiredPermissions == [.accessibility])
+    }
+
+    @Test(arguments: [AppAction.snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow])
+    func snappingAlertsNameTheFeature(_ action: AppAction) {
+        #expect(action.featureName == "Window snapping")
     }
 
     @Test func scrollingCaptureNeedsBoth() {
