@@ -179,29 +179,16 @@ private struct QRPanelView: View {
                     .controlSize(.large)
                     .frame(width: QRPanelController.minimumCodeSize, height: QRPanelController.minimumCodeSize)
             case let .message(title, detail, symbol):
-                VStack(spacing: 8) {
-                    Image(systemName: symbol)
-                        .font(.system(size: 40))
-                        .foregroundStyle(.secondary)
-                    Text(title)
-                        .font(.title3.weight(.semibold))
-                    if let detail {
-                        Text(detail)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                .frame(width: QRPanelController.minimumCodeSize)
-                .padding(.vertical, 24)
+                CheeseEmptyState(symbol: symbol, title: title, detail: detail)
+                    .frame(width: QRPanelController.minimumCodeSize)
             case let .code(image, scale, preview, share):
                 Image(decorative: image, scale: scale)
                     .interpolation(.none)
                     // White quiet zone, whatever the appearance.
-                    .padding(16)
-                    .background(.white, in: RoundedRectangle(cornerRadius: 12))
+                    .padding(DesignTokens.Spacing.xLarge)
+                    .background(.white, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
                 Text(preview)
-                    .font(.callout)
+                    .font(DesignTokens.Typography.secondary)
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .frame(maxWidth: CGFloat(image.width) / scale)
@@ -218,9 +205,9 @@ private struct QRPanelView: View {
                     .keyboardShortcut(.cancelAction)
             }
         }
-        .padding(20)
+        .padding(DesignTokens.Spacing.xxLarge)
         .fixedSize()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
+        .cheesePanelBackground()
     }
 }
 
@@ -228,7 +215,7 @@ private struct ShareStatus: View {
     let expiresAt: Date
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: DesignTokens.Spacing.xxSmall) {
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 let remaining = max(0, Int(expiresAt.timeIntervalSince(context.date).rounded(.up)))
                 Text("Link expires in \(remaining / 60):\(String(format: "%02d", remaining % 60))")
@@ -237,6 +224,6 @@ private struct ShareStatus: View {
             Label("Phone must be on the same Wi-Fi", systemImage: "wifi")
                 .foregroundStyle(.secondary)
         }
-        .font(.caption)
+        .font(DesignTokens.Typography.caption)
     }
 }
