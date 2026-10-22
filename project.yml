@@ -45,6 +45,7 @@ targets:
     dependencies:
       - package: KeyboardShortcuts
       - target: CheeseFinderExtension
+      - target: CheeseShareExtension
     # Merged with the generated Info.plist keys below.
     info:
       path: Cheese/Info.plist
@@ -109,6 +110,48 @@ targets:
       base:
         PRODUCT_NAME: CheeseFinderExtension
         PRODUCT_BUNDLE_IDENTIFIER: com.maanitgupta.cheese.FinderExtension
+        GENERATE_INFOPLIST_FILE: YES
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_HARDENED_RUNTIME: NO
+        SKIP_INSTALL: YES
+
+  # "Cheese Share" in the macOS Share menu. Sandboxed; it copies what it's given into the App Group
+  # and hands it to the app, with no sharing logic of its own.
+  CheeseShareExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - CheeseShareExtension
+      - Cheese/Files/Core/ToolID.swift
+      - Cheese/Files/Core/ToolApplicability.swift
+      - Cheese/Files/Core/FilesHandoff.swift
+      - Cheese/Share/ShareHandoff.swift
+    info:
+      path: CheeseShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Cheese Share
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CheeseAppGroup: $(TeamIdentifierPrefix)com.maanitgupta.cheese
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsFileWithMaxCount: 100
+              NSExtensionActivationSupportsImageWithMaxCount: 100
+              NSExtensionActivationSupportsMovieWithMaxCount: 100
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsWebURLWithMaxCount: 10
+    entitlements:
+      path: CheeseShareExtension/CheeseShareExtension.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups: [$(TeamIdentifierPrefix)com.maanitgupta.cheese]
+    settings:
+      base:
+        PRODUCT_NAME: CheeseShareExtension
+        PRODUCT_BUNDLE_IDENTIFIER: com.maanitgupta.cheese.ShareExtension
         GENERATE_INFOPLIST_FILE: YES
         ENABLE_APP_SANDBOX: YES
         ENABLE_HARDENED_RUNTIME: NO

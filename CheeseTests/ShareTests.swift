@@ -500,3 +500,31 @@ struct ShareLoopbackTests {
         }
     }
 }
+
+// MARK: - Share menu handoff
+
+struct ShareHandoffTests {
+    @Test func parsesOnlyShareJobURLs() throws {
+        let id = UUID()
+        let url = try #require(ShareHandoff.url(for: id))
+        #expect(url.absoluteString == "cheese://share/\(id.uuidString)")
+        #expect(ShareHandoff.jobID(from: url) == id)
+        #expect(ShareHandoff.jobID(from: try #require(URL(string: "cheese://job/\(id.uuidString)"))) == nil)
+        #expect(ShareHandoff.jobID(from: try #require(URL(string: "cheese://share/not-a-uuid"))) == nil)
+        #expect(ShareHandoff.jobID(from: try #require(URL(string: "https://share/\(id.uuidString)"))) == nil)
+        #expect(ShareHandoff.settingsURL?.absoluteString == "cheese://settings/share")
+    }
+
+    @Test func jobsRoundTripAndStayInsideTheirFolder() throws {
+        let container = FileManager.default.temporaryDirectory.appending(path: "ShareHandoff-\(UUID().uuidString)", directoryHint: .isDirectory)
+        defer { try? FileManager.default.removeItem(at: container) }
+        let (id, folder) = try ShareHandoff.makeJob(in: container)
+        try Data("x".utf8).write(to: folder.appending(path: "a.txt"))
+        try ShareHandoff.finish(ShareHandoff.Job(files: ["a.txt", "../escape", ".hidden", "job.json"], texts: ["hi"]), in: folder)
+        let job = try ShareHandoff.read(id, from: container)
+        #expect(job.files.map(\.lastPathComponent) == ["a.txt"])
+        #expect(job.texts == ["hi"])
+        ShareHandoff.removeAll(in: container)
+        #expect(!FileManager.default.fileExists(atPath: folder.path(percentEncoded: false)))
+    }
+}
