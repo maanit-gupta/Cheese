@@ -9,6 +9,7 @@ struct CheeseIconButton: View {
     let action: () -> Void
 
     @State private var isHovered = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Button(role: role, action: action) {
@@ -23,6 +24,7 @@ struct CheeseIconButton: View {
         .help(help)
         .accessibilityLabel(help)
         .onHover { isHovered = $0 }
+        .animation(DesignTokens.animation(DesignTokens.Duration.quick, reduceMotion: reduceMotion), value: isHovered)
     }
 
     private var background: Color {

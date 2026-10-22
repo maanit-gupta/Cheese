@@ -22,7 +22,7 @@ enum DesignTokens {
     enum Radius {
         /// Keycaps, swatch highlights, tiny thumbnails.
         static let small: CGFloat = 6
-        /// List rows, page thumbnails, toolbar buttons.
+        /// Search fields, page thumbnails, toolbar buttons.
         static let medium: CGFloat = 8
         /// Compact rows and tiles inside panels, like Share's device tiles.
         static let row: CGFloat = 7
@@ -31,7 +31,7 @@ enum DesignTokens {
         /// HUDs, the draw rail, the QR code's quiet zone.
         static let large: CGFloat = 12
         /// Floating panels: the palette, the QR panel, the shelf, the share panel.
-        static let panel: CGFloat = 16
+        static let panel: CGFloat = 14
     }
 
     enum Typography {
@@ -41,6 +41,8 @@ enum DesignTokens {
         static let body = Font.body
         static let secondary = Font.callout
         static let caption = Font.caption
+        /// The big search field at the top of the palette.
+        static let searchField = Font.title2
         static let keycap = Font.system(.callout, design: .rounded)
         static let numeric = Font.callout.monospacedDigit()
         /// Licenses, fingerprints and other machine text.
@@ -52,6 +54,8 @@ enum DesignTokens {
         static let iconButton = CGSize(width: 28, height: 26)
         static let rowIcon: CGFloat = 22
         static let emptyStateSymbol: CGFloat = 40
+        /// A symbol standing in for a thumbnail or inviting a drop, like the shelf's.
+        static let largeSymbol: CGFloat = 28
         /// A row that shows a thumbnail, like clipboard history: fixed so keyboard scrolling stays even.
         static let thumbnailRow: CGFloat = 44
         static let rowThumbnail: CGFloat = 28
@@ -66,7 +70,10 @@ enum DesignTokens {
         static let activeTint = 0.25
         /// A selected row that keeps its text colors, paired with the leading selection bar.
         static let selectedRowTint = 0.18
-        static let hoverTint = 0.12
+        /// Behind a row or button under the pointer: just enough to see, without shifting anything.
+        static let hoverTint = 0.06
+        /// The hairline inside every panel's edge, so panels stay crisp on any background.
+        static let panelBorder = 0.09
     }
 
     /// Animation lengths, in seconds. With Reduce Motion on, `duration(_:)` gives 0.
@@ -154,6 +161,10 @@ extension View {
     /// A floating panel's background: material, rounded to the panel radius.
     func cheesePanelBackground() -> some View {
         modifier(CheeseSurface(shape: RoundedRectangle(cornerRadius: DesignTokens.Radius.panel)))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.panel)
+                    .strokeBorder(Color.primary.opacity(DesignTokens.Opacity.panelBorder), lineWidth: 1)
+            )
     }
 
     /// A surface's background in any shape, like the toast's capsule.

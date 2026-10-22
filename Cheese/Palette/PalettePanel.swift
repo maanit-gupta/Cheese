@@ -75,17 +75,17 @@ private struct PaletteView: View {
         VStack(spacing: 0) {
             HStack(spacing: DesignTokens.Spacing.medium) {
                 Image(systemName: "magnifyingglass")
-                    .font(.title2)
+                    .font(DesignTokens.Typography.searchField)
                     .foregroundStyle(.secondary)
                 TextField("Search Cheese actions", text: $model.query)
                     .textFieldStyle(.plain)
-                    .font(.title2)
+                    .font(DesignTokens.Typography.searchField)
                     .focused($searchFocused)
             }
             .padding(.horizontal, DesignTokens.Spacing.xLarge)
-            .padding(.vertical, 14)
+            .padding(.vertical, DesignTokens.Spacing.panel)
 
-            Divider()
+            CheeseDivider()
 
             ScrollViewReader { proxy in
                 ScrollView {

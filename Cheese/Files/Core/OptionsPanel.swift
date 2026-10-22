@@ -113,7 +113,7 @@ struct OptionsPanelView<Tool: FileTool>: View {
             }
             .formStyle(.grouped)
 
-            Divider()
+            CheeseDivider()
             CheeseToolbar {
                 if let problem {
                     Label(problem, systemImage: "exclamationmark.triangle")

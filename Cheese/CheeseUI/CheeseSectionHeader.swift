@@ -45,3 +45,20 @@ struct CheeseSectionCaps: View {
             .accessibilityAddTraits(.isHeader)
     }
 }
+
+/// A 1 pt separator-colored rule between a panel's parts, the same in every panel.
+struct CheeseDivider: View {
+    enum Axis {
+        case horizontal
+        case vertical
+    }
+
+    var axis = Axis.horizontal
+
+    var body: some View {
+        Rectangle()
+            .fill(Color(nsColor: .separatorColor))
+            .frame(width: axis == .vertical ? 1 : nil, height: axis == .horizontal ? 1 : nil)
+            .accessibilityHidden(true)
+    }
+}

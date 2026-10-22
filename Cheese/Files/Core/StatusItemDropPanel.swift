@@ -119,7 +119,7 @@ struct StatusItemDropPanelView: View {
                     }
                 }
                 if !plan.sections.isEmpty {
-                    Divider()
+                    CheeseDivider()
                     // Scrolls only when the tools don't fit.
                     ViewThatFits(in: .vertical) {
                         tools(plan.sections)

@@ -259,7 +259,7 @@ struct SharePanelView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            Divider()
+            CheeseDivider()
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                 ReadyStrip(model: model)
                 LinkSection(model: model)

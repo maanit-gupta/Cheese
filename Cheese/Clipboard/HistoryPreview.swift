@@ -15,11 +15,11 @@ struct HistoryPreview: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            Divider()
+            CheeseDivider()
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
-            Divider()
+            CheeseDivider()
             footer
         }
     }

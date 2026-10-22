@@ -450,7 +450,7 @@ private struct ShelfView: View {
     var body: some View {
         VStack(spacing: 0) {
             toolbar
-            Divider()
+            CheeseDivider()
             Group {
                 if model.store.isEmpty {
                     emptyDropZone
@@ -482,7 +482,7 @@ private struct ShelfView: View {
     private var emptyDropZone: some View {
         HStack(spacing: DesignTokens.Spacing.large) {
             Image(systemName: "tray.and.arrow.down")
-                .font(.system(size: 28))
+                .font(.system(size: DesignTokens.Size.largeSymbol))
                 .foregroundStyle(model.isDropTargeted ? Color.accentColor : .secondary)
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                 Text("Drop files, images, or text here")
@@ -504,11 +504,11 @@ private struct ShelfView: View {
         .padding(DesignTokens.Spacing.large)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
                 .fill(Color.accentColor.opacity(model.isDropTargeted ? DesignTokens.Opacity.hoverTint : 0))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
                 .strokeBorder(
                     model.isDropTargeted ? Color.accentColor : Color.secondary.opacity(0.5),
                     style: StrokeStyle(lineWidth: model.isDropTargeted ? 2 : 1.5, dash: [6, 4])
@@ -611,7 +611,7 @@ private struct ShelfItemView: View {
                         Image(nsImage: thumbnail).resizable().scaledToFit()
                     } else {
                         Image(systemName: isMissing ? "questionmark.folder" : "doc")
-                            .font(.system(size: 30))
+                            .font(.system(size: DesignTokens.Size.largeSymbol))
                             .foregroundStyle(.secondary)
                     }
                 }

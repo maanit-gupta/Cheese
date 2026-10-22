@@ -44,12 +44,12 @@ new UI uses CheeseUI components and system SF Symbols only, with no one-off styl
 
 | Token | Values |
 |---|---|
-| Spacing | hairline 2 · xxSmall 4 · xSmall 6 · small 8 · medium 10 · large 12 · xLarge 16 · xxLarge 20 · xxxLarge 24 |
-| Radius | small 6 (keycaps, swatches) · medium 8 (rows, thumbnails) · large 12 (cards, HUDs, rail) · panel 16 |
-| Typography | panelTitle `.title3.semibold` · pageTitle `.title.bold` · heading `.headline` · body · secondary `.callout` · caption · keycap rounded `.callout` · numeric monospaced `.callout` |
-| Material | `.regularMaterial`; with Reduce Transparency, `windowBackgroundColor` |
-| Opacity | active tint 0.25 · selected row tint 0.18 · hover tint 0.12 |
-| Size | icon button 28×26 · row icon 22 · thumbnail row 44 with a 28 pt thumbnail · selection bar 2 · empty-state symbol 40 |
+| Spacing | hairline 2 · xxSmall 4 · xSmall 6 · small 8 · medium 10 · large 12 · xLarge 16 · xxLarge 20 · xxxLarge 24 · panel 14 (inside a panel's edge) |
+| Radius | small 6 (keycaps, swatches) · row 7 (list rows, device tiles) · medium 8 (search fields, thumbnails) · card 10 (cards in panels) · large 12 (HUDs, rail, QR quiet zone) · panel 14 |
+| Typography | panelTitle `.title3.semibold` · pageTitle `.title.bold` · heading `.headline` · body · secondary `.callout` · caption · searchField `.title2` · keycap rounded `.callout` · numeric monospaced `.callout` · code monospaced `.caption` |
+| Material | `.regularMaterial` with a 1 pt `primary` 0.09 inner border; with Reduce Transparency, `windowBackgroundColor` |
+| Opacity | active tint 0.25 · selected row tint 0.18 · hover tint 0.06 · panel border 0.09 |
+| Size | icon button 28×26 · row icon 22 · thumbnail row 44 with a 28 pt thumbnail · selection bar 2 · empty-state symbol 40 · large symbol 28 |
 | Duration | quick 0.12 s · standard 0.15 s · gentle 0.25 s; zero with Reduce Motion |
 
 ## Components
@@ -59,10 +59,14 @@ new UI uses CheeseUI components and system SF Symbols only, with no one-off styl
 | `CheesePanel` | Every floating popup: non-activating, takes keys, Esc / outside click closes, placement centered, near the pointer, or remembered | `FloatingPanel` (palette, QR) |
 | `CheeseToast` | Brief confirmations with one optional action | `Toast` |
 | `CheeseCard` | Tiles: shelf items, device tiles, welcome tool groups | history preview, page editor thumbnails |
-| `CheeseListRow` + `CheeseKeycap` | Rows with symbol, title, grey detail, trailing shortcut | palette row, welcome shortcut rows |
+| `CheeseListRow` + `CheeseKeycap` | Rows with symbol, title, grey detail, trailing shortcut; a 0.06 hover fill that never shifts layout | palette row, welcome shortcut rows |
 | `CheeseIconButton` | Toolbar glyph buttons with tooltip and active tint | draw rail buttons |
 | `CheeseToolbar` | A row of controls along a panel edge | editor / scroll preview toolbars |
 | `CheeseSectionHeader` | Headings over groups | settings and welcome headings |
+| `CheeseSectionCaps` | Small-capital group labels inside compact panels (PDF, CONVERT, NEARBY DEVICES) | v4 drop hub |
+| `CheeseDivider` | The 1 pt separator-colored rule between a panel's parts, horizontal or vertical | clipboard popover's column rule |
+| `CheeseTextButtonStyle` | Small tinted text buttons like Clear and Stop, with a hover fill | v4 Share panel |
+| `CheeseDropHostView` | An AppKit drop target around a panel's SwiftUI content | the shelf (fix pass) |
 | `CheeseEmptyState` | Empty and error states | QR panel messages, empty history |
 | `.cheesePanelBackground()` / `.cheeseSurface(in:)` | Material backgrounds that honor Reduce Transparency | every floating surface |
 | `PermissionNeedRow` | A permission, the tools that need it, live status and Grant | welcome screen and Settings → Permissions |
@@ -80,6 +84,18 @@ The clipboard popover was reworked after that (fix pass): a fixed 680×460 split
 column (search field in a `.quaternary` capsule, 44 pt rows, 28 pt thumbnails cropped to their square,
 selection as a 0.18 accent tint with a 2 pt accent bar) and a preview pane with a header, clipped
 content and a shortcut footer.
+
+## v4 polish pass
+
+Panels got tighter, crisper edges and one hover language:
+- Panel radius 16 → 14, cards 12 → 10, list rows 8 → 7; content sits 14 pt inside a panel's edge.
+- Every `cheesePanelBackground()` adds a 1 pt `primary` 0.09 inner border, so panels stay defined on
+  busy wallpapers in light and dark.
+- `CheeseListRow` and `CheeseIconButton` fade in a 0.06 `primary` fill on hover over 0.12 s (none with
+  Reduce Motion), drawn as a background so nothing moves.
+- Clipboard history, the Shelf, the Files options panel, Auto-Kill and the palette now separate their
+  parts with `CheeseDivider`; the palette's search font and padding and the shelf's large symbols are tokens.
+- New v4 surfaces (drop hub, Share panel, QR panel) use only these components.
 
 ## Rules
 1. v3 UI uses only CheeseUI components and SF Symbols.

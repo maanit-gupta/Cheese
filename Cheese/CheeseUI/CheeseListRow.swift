@@ -2,7 +2,8 @@ import AppKit
 import SwiftUI
 
 /// One row of a list in a panel: symbol (or an app's icon), title, grey detail and an optional trailing accessory.
-/// Selected rows fill with the accent color and turn their text white, like the palette and history.
+/// Selected rows fill with the accent color and turn their text white, like the palette and history;
+/// the row under the pointer gets a faint fill that doesn't move anything.
 struct CheeseListRow<Accessory: View>: View {
     let symbol: String
     let title: String
@@ -12,6 +13,9 @@ struct CheeseListRow<Accessory: View>: View {
     /// Shown in place of the symbol, like an app's icon.
     var icon: NSImage?
     @ViewBuilder var accessory: Accessory
+
+    @State private var isHovered = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.medium) {
@@ -40,8 +44,15 @@ struct CheeseListRow<Accessory: View>: View {
         .opacity(isDimmed ? 0.5 : 1)
         .padding(.horizontal, DesignTokens.Spacing.medium)
         .padding(.vertical, 7)
-        .background(isSelected ? Color.accentColor : .clear, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        .background(background, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.row))
         .contentShape(Rectangle())
+        .onHover { isHovered = $0 }
+        .animation(DesignTokens.animation(DesignTokens.Duration.quick, reduceMotion: reduceMotion), value: isHovered)
+    }
+
+    private var background: Color {
+        if isSelected { return .accentColor }
+        return isHovered ? .primary.opacity(DesignTokens.Opacity.hoverTint) : .clear
     }
 }
 

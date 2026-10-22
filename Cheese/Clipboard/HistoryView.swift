@@ -20,9 +20,7 @@ struct HistoryView: View {
                 list(items, selectedID: selected?.id)
             }
             .frame(width: Self.listWidth)
-            Rectangle()
-                .fill(Color(nsColor: .separatorColor))
-                .frame(width: 1)
+            CheeseDivider(axis: .vertical)
             Group {
                 if let selected {
                     HistoryPreview(model: model, item: selected, imageURL: model.imageURL(for: selected))

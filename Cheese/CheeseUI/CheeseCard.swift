@@ -11,10 +11,10 @@ struct CheeseCard<Content: View>: View {
             .padding(padding)
             .background(
                 isHighlighted ? AnyShapeStyle(Color.accentColor.opacity(DesignTokens.Opacity.activeTint)) : AnyShapeStyle(.quaternary.opacity(0.6)),
-                in: RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                in: RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
                     .strokeBorder(isHighlighted ? Color.accentColor : .clear, lineWidth: 1.5)
             )
     }

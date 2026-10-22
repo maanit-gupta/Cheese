@@ -214,7 +214,7 @@ struct QRPanelView: View {
                 CheeseIconButton(symbol: "xmark", help: "Close") { model.onClose() }
                     .keyboardShortcut(.cancelAction)
             }
-            Divider()
+            CheeseDivider()
             content
                 .padding(DesignTokens.Spacing.panel)
         }
