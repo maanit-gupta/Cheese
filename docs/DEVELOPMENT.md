@@ -30,3 +30,17 @@ Bug reports and pull requests are welcome. Please open an issue first for anythi
 ## App size budget
 
 `make test` ends with `scripts/check-size.sh`, which builds Release and fails if `Cheese.app` is more than 2 MB larger than `scripts/size-baseline.txt` (the v2.5 Release bundle, in bytes). Raise the baseline only on purpose, and say why in the commit.
+
+## Cheese Share over real HTTPS
+
+`make test` covers Cheese Share over loopback sockets (LocalSend send/receive, messages, the phone
+page) without touching the Keychain. To also run a real HTTPS round trip with a Keychain identity made
+the way the app makes its own (under a throwaway label, deleted afterwards):
+
+```sh
+TEST_RUNNER_SHARE_KEYCHAIN=1 xcodebuild -project Cheese.xcodeproj -scheme Cheese -destination 'platform=macOS' \
+    -derivedDataPath build/DerivedData test -only-testing:CheeseTests/ShareHTTPSTests
+```
+
+`open cheese://share` opens the Share panel, which starts the listeners; `curl -k https://<mac-ip>:53317/api/localsend/v2/info`
+then shows what LocalSend devices see.
