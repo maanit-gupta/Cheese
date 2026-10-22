@@ -19,6 +19,21 @@ struct PreferencesTests {
         for language in OCRLanguage.allCases {
             #expect(preferences.isOCRLanguageEnabled(language))
         }
+        for module in ModuleID.allCases {
+            #expect(preferences.isModuleEnabled(module))
+        }
+    }
+
+    @Test func disabledModuleIsRead() {
+        defaults.set(false, forKey: PreferenceKey.moduleEnabled(.clipboard))
+        #expect(!preferences.isModuleEnabled(.clipboard))
+        #expect(preferences.isModuleEnabled(.ocr))
+    }
+
+    @Test func moduleKeysAreUniqueAndKVOSafe() {
+        let keys = ModuleID.allCases.map(PreferenceKey.moduleEnabled)
+        #expect(Set(keys).count == keys.count)
+        #expect(keys.allSatisfy { !$0.contains(".") })
     }
 
     @Test func storedValuesAreRead() {

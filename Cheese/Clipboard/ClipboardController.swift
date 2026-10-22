@@ -32,6 +32,7 @@ final class ClipboardController {
     }
 
     func start() {
+        guard monitor == nil else { return }
         let monitor = PasteboardMonitor(pasteboard: SystemPasteboard()) { [weak self] clip in
             guard let self else { return }
             Task { await self.store.add(clip) }
@@ -42,7 +43,15 @@ final class ClipboardController {
         Task { await store.removeOrphanedImages() }
     }
 
-    func toggleHistory(anchoredTo anchor: NSView?) {
+    /// Stops recording copies and closes the panel. Copies made while stopped are never recorded.
+    func stop() {
+        monitor?.stop()
+        monitor = nil
+        popover.close()
+    }
+
+    /// Opens or closes the history panel. `target` is the app pastes go to.
+    func toggleHistory(anchoredTo anchor: NSView?, target: NSRunningApplication?) {
         if popover.isShown {
             popover.close()
             return
@@ -53,8 +62,7 @@ final class ClipboardController {
             return
         }
         // Record the target before activating Cheese, which takes the front.
-        let frontmost = NSWorkspace.shared.frontmostApplication
-        targetApp = frontmost?.processIdentifier == ProcessInfo.processInfo.processIdentifier ? nil : frontmost
+        targetApp = target
         popover.show(relativeTo: anchor)
     }
 

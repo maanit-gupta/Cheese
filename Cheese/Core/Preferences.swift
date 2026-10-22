@@ -11,6 +11,10 @@ enum PreferenceKey {
     static func ocrLanguageEnabled(_ language: OCRLanguage) -> String {
         "ocrLanguageEnabled_\(language.rawValue)"
     }
+
+    static func moduleEnabled(_ module: ModuleID) -> String {
+        "moduleEnabled_\(module.rawValue)"
+    }
 }
 
 enum OCRLineBreakMode: String, CaseIterable, Sendable {
@@ -45,6 +49,7 @@ struct Preferences {
     static let historySizeRange = 50...1000
     static let defaultLineBreakMode = OCRLineBreakMode.keepLineBreaks
     static let defaultOCRLanguageEnabled = true
+    static let defaultModuleEnabled = true
     static var defaultSaveFolder: URL { .desktopDirectory }
 
     let defaults: UserDefaults
@@ -78,5 +83,10 @@ struct Preferences {
     func isOCRLanguageEnabled(_ language: OCRLanguage) -> Bool {
         defaults.object(forKey: PreferenceKey.ocrLanguageEnabled(language)) as? Bool
             ?? Self.defaultOCRLanguageEnabled
+    }
+
+    func isModuleEnabled(_ module: ModuleID) -> Bool {
+        defaults.object(forKey: PreferenceKey.moduleEnabled(module)) as? Bool
+            ?? Self.defaultModuleEnabled
     }
 }

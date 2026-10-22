@@ -5,16 +5,18 @@ import KeyboardShortcuts
 @MainActor
 final class MenuBarController: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem
+    private let statusMenu: StatusMenu
 
     /// The view popovers anchor to, so they appear under the menu bar icon.
     var anchorView: NSView? { statusItem.button }
 
-    init(menu: NSMenu) {
+    init(statusMenu: StatusMenu) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        self.statusMenu = statusMenu
         super.init()
 
-        menu.delegate = self
-        statusItem.menu = menu
+        statusMenu.menu.delegate = self
+        statusItem.menu = statusMenu.menu
         if let button = statusItem.button {
             // Template image from the asset catalog, so it tints for light/dark menu bars.
             let icon = NSImage(resource: .menuBarIcon)
@@ -25,6 +27,11 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     }
 
     // MARK: NSMenuDelegate
+
+    // Modules may have been switched on or off since the menu last opened.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        statusMenu.rebuild()
+    }
 
     // NSMenu's tracking loop buffers global hotkeys and replays them on close, so pause them while open.
     func menuWillOpen(_ menu: NSMenu) {

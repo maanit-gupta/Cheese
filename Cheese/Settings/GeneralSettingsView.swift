@@ -37,6 +37,18 @@ struct GeneralSettingsView: View {
             }
 
             Section {
+                ForEach(ModuleID.allCases) { module in
+                    ModuleToggle(module: module)
+                }
+            } header: {
+                Text("Modules")
+            } footer: {
+                Text("A module that's off has no shortcuts, runs nothing in the background, and leaves the menu.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
                 Button("Show Welcome Guide…") {
                     showWelcome()
                 }
@@ -76,5 +88,20 @@ struct GeneralSettingsView: View {
         if panel.runModal() == .OK, let url = panel.url {
             saveFolderPath = url.path(percentEncoded: false)
         }
+    }
+}
+
+/// One module's on/off switch. Cheese picks the change up from UserDefaults and applies it immediately.
+private struct ModuleToggle: View {
+    let module: ModuleID
+    @AppStorage private var isOn: Bool
+
+    init(module: ModuleID) {
+        self.module = module
+        _isOn = AppStorage(wrappedValue: Preferences.defaultModuleEnabled, PreferenceKey.moduleEnabled(module))
+    }
+
+    var body: some View {
+        Toggle(module.title, isOn: $isOn)
     }
 }
