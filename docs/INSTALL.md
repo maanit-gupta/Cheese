@@ -105,59 +105,60 @@ Sign with a stable identity rather than ad hoc. macOS ties Screen Recording and 
 
 When Cheese starts, a prompt offers to turn on **Accessibility** access and **Open Cheese automatically when you log in**, whichever is still off. Click **Turn On** and System Settings opens on the Accessibility list, where you switch on **Cheese**. Untick what you don't want, click **Not Now** to be asked next launch, or tick **Don't ask again**.
 
-### 1. The welcome guide
+### 1. The welcome screen
 
-The first time Cheese opens, a short welcome guide appears after that prompt:
+The first time Cheese opens, a short welcome appears after that prompt:
 
-| Page | What it's for |
+| Screen | What it's for |
 |---|---|
-| **Welcome** | What each tool does, with its shortcut |
-| **Permissions** | Live status of the two permissions, with buttons that open the right System Settings page |
-| **Shortcuts** | Rebind any shortcut on the spot |
-| **All set** | Turn on *Open Cheese automatically when you log in* |
+| **Cheese** | Who Cheese is |
+| **Pick your tools** | Every tool, grouped by what you do (Copy, Capture, Draw, Convert, Share, Control), each with a switch, a line on what it does and its shortcut. Switch off anything you won't use |
+| **Permissions** | Only the permissions the tools you kept need, each with a **Grant** button and live status |
 
-You can close it at any time and reopen it later from the menu bar icon → **Welcome Guide…**
+Everything is skippable. Reopen it later from **Settings → General → Show Welcome…**
 
 ### 2. Grant permissions
 
-Cheese asks for these only because the features can't work without them. Nothing leaves your Mac.
+Cheese asks for these only because the tools can't work without them. Nothing leaves your Mac.
 
-**Screen Recording**, used for screenshots, OCR and scrolling capture:
+**Screen Recording**, used for screenshots, OCR, scrolling capture and draw-mode snapshots:
 
-1. In the welcome guide (or **Settings → Permissions**), click **Open System Settings** next to Screen Recording.
+1. In the welcome screen (or **Settings → Permissions**), click **Grant…** next to Screen Recording.
 2. Turn on **Cheese** in the list.
 3. If macOS offers **Quit & Reopen**, click it. Otherwise click the menu bar icon → **Quit Cheese**, then open Cheese again.
 
 **Accessibility**, used for pasting from history, window snapping and auto-scrolling:
 
-1. Click **Open System Settings** next to Accessibility.
+1. Click **Grant…** next to Accessibility.
 2. Turn on **Cheese**. No restart is needed.
 
-The welcome guide and Settings show a green ✓ as soon as each permission is granted.
+**Notifications** (finished Files jobs, files received by Cheese Share), **Local Network** (Cheese Share finding nearby devices) and the **Finder extension** are asked for the same way, if you kept the tools that use them. macOS asks for Local Network itself the first time you open the Share panel.
 
-You can skip both for now. When you use a feature that needs a missing permission, Cheese explains why and links to the right page.
+The welcome screen and Settings show a green ✓ as soon as each permission is granted. You can skip all of them for now: when you use a tool that needs a missing permission, Cheese explains why and links to the right page.
 
 ### 3. Find Cheese in the menu bar
 
 Look for the cheese wedge near the clock.
 
-**Click** it to open the Cheese menu. Every feature is there, so you never *have* to remember a shortcut:
+**Click** it to open the Cheese menu. Every tool is there, so you never *have* to remember a shortcut:
 
 | Menu item | What it does |
 |---|---|
 | **Clipboard History** | Opens your history under the icon |
-| **Capture:** Region, Window, Full Screen, Scrolling Capture | Takes a screenshot (hold <kbd>⇧</kbd> as you finish to annotate) |
-| **Text:** Copy Text from Screen | OCR: drag over anything to copy its text |
-| **Windows:** Arrange Window ▸ | Left half, right half, maximize, bottom half, restore, for the window you were using |
-| **Clear History / Clear All…** | Empties history (Clear All also removes pins) |
-| **Keyboard Shortcuts…** | Change any shortcut |
-| **Settings… / Welcome Guide… / Quit Cheese** | |
+| **Capture ▸** Region, Window, Screen, OCR, Scrolling | Screenshots and text from the screen (hold <kbd>⇧</kbd> as you finish to annotate) |
+| **Draw on Screen** | Ink over everything |
+| **Files ▸** | Every Files tool; pick one, then the files |
+| **Share…** | Cheese Share: send to phones and computers nearby |
+| **Shelf** | The floating drop shelf |
+| **Tools ▸** | Show Clipboard as QR, Keep Awake ▸, Arrange Window ▸ |
+| **Clear History** | Empties history (hold <kbd>⌥</kbd> for **Clear All…**, which also removes pins) |
+| **Settings… / Quit Cheese** | |
 
-Each item shows its current shortcut on the right.
+Each item shows its current shortcut on the right. Tools you switched off aren't listed.
 
 ### 4. Make the shortcuts yours (optional)
 
-Click the menu bar icon → **Keyboard Shortcuts…**. Click any shortcut, press the new keys, and it takes effect immediately. Click **ⓧ** to turn a shortcut off, or **Restore Defaults** to start over.
+Open **Settings → Shortcuts**. Click any shortcut, press the new keys, and it takes effect immediately. Click **ⓧ** to turn a shortcut off, or **Restore Defaults** to start over.
 
 ### 5. Turn on the Finder menu (optional)
 
@@ -226,7 +227,7 @@ macOS can keep a stale entry after an app is replaced. For each permission:
 4. Quit and reopen Cheese.
 
 ### A shortcut does nothing
-Another app or a macOS shortcut may already use that combination. Click the menu bar icon → **Keyboard Shortcuts…** and choose a different one. Cheese warns you if macOS has already reserved a combination.
+Another app or a macOS shortcut may already use that combination. Open **Settings → Shortcuts** and choose a different one. Cheese warns you if macOS has already reserved a combination.
 
 ### Window snapping doesn't move a window
 Check Accessibility first. Some windows, like fixed-size panels and certain dialogs, can't be resized. Cheese moves them as far as they allow.

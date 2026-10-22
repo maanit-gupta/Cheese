@@ -21,7 +21,8 @@ if (mode === 'stills') {
   mkdirSync('frames', { recursive: true });
   const dur = await page.evaluate(() => window.DURATION);
   const n = Math.round(dur * fps);
-  for (let i = 0; i < n; i++) {
+  // START resumes a long render after a hiccup; frames are deterministic, so they match.
+  for (let i = Number(process.env.START || 0); i < n; i++) {
     await page.evaluate(t => window.seek(t), i / fps);
     await page.screenshot({ path: `frames/f${String(i).padStart(5, '0')}.png` });
     if (i % 150 === 0) console.log(`frame ${i}/${n}`);
