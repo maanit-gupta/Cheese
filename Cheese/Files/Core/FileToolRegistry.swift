@@ -25,6 +25,8 @@ final class FileToolRegistry {
             AnyFileTool(OfficeToPDFTool(kind: .powerPoint)),
             AnyFileTool(WebToPDFTool()),
             AnyFileTool(PDFToImagesTool()),
+            AnyFileTool(PDFToDocxTool()),
+            AnyFileTool(PDFToXlsxTool()),
             AnyFileTool(MarkdownToDocxTool()),
             AnyFileTool(ConvertImageTool()),
             AnyFileTool(ResizeImageTool()),
