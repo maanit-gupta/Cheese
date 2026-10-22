@@ -54,8 +54,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         registry.refresh()
         FilesHandoff.setEnabled(Preferences().isModuleEnabled(.files))
         observeDefaults()
-        welcomeWindow.showIfFirstLaunch()
         Logger.app.info("Cheese launched")
+        // After launch finishes, so the menu bar icon is already showing behind the prompt.
+        Task { [permissions, permissionPrompter] in
+            StartupSetupPrompt(permissions: permissions, permissionPrompter: permissionPrompter).showIfNeeded()
+            welcomeWindow.showIfFirstLaunch()
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {

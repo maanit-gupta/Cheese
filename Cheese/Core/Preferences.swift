@@ -7,6 +7,7 @@ enum PreferenceKey {
     static let historySize = "historySize"
     static let ocrLineBreakMode = "ocrLineBreakMode"
     static let hasSeenWelcome = "hasSeenWelcome"
+    static let skipsStartupSetup = "skipsStartupSetup"
 
     static func ocrLanguageEnabled(_ language: OCRLanguage) -> String {
         "ocrLanguageEnabled_\(language.rawValue)"
@@ -85,6 +86,11 @@ struct Preferences {
     /// False until the welcome window has been finished or closed once.
     var hasSeenWelcome: Bool {
         defaults.bool(forKey: PreferenceKey.hasSeenWelcome)
+    }
+
+    /// True once the user ticked "Don't ask again" on the launch prompt.
+    var skipsStartupSetup: Bool {
+        defaults.bool(forKey: PreferenceKey.skipsStartupSetup)
     }
 
     func isOCRLanguageEnabled(_ language: OCRLanguage) -> Bool {

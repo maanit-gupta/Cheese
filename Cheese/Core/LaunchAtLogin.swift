@@ -12,4 +12,9 @@ enum LaunchAtLogin {
             try SMAppService.mainApp.unregister()
         }
     }
+
+    /// System Settings → General → Login Items, where a login item waiting for approval is turned on.
+    static func openApprovalSettings() {
+        SMAppService.openSystemSettingsLoginItems()
+    }
 }

@@ -16,6 +16,7 @@ struct PreferencesTests {
         #expect(preferences.ocrLineBreakMode == .keepLineBreaks)
         #expect(preferences.screenshotSaveFolder == Preferences.defaultSaveFolder)
         #expect(!preferences.hasSeenWelcome)
+        #expect(!preferences.skipsStartupSetup)
         for language in OCRLanguage.allCases {
             #expect(preferences.isOCRLanguageEnabled(language))
         }
