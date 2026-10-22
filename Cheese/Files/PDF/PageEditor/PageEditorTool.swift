@@ -73,7 +73,7 @@ private struct PageEditorView: View {
             toolbar
             Divider()
             ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 18)], spacing: 18) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: DesignTokens.Spacing.xxLarge)], spacing: DesignTokens.Spacing.xxLarge) {
                     ForEach(Array(model.pages.enumerated()), id: \.element.id) { position, page in
                         PageCell(
                             page: page,
@@ -90,7 +90,7 @@ private struct PageEditorView: View {
                         }
                     }
                 }
-                .padding(20)
+                .padding(DesignTokens.Spacing.xxLarge)
             }
             .dropDestination(for: String.self) { items, _ in
                 return drop(items, before: nil)
@@ -100,7 +100,7 @@ private struct PageEditorView: View {
     }
 
     private var toolbar: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: DesignTokens.Spacing.xSmall) {
             Button("Rotate Left", systemImage: "rotate.left") { model.rotateSelected(by: -90) }
                 .disabled(model.selection.isEmpty)
                 .keyboardShortcut("[", modifiers: .command)
@@ -131,7 +131,7 @@ private struct PageEditorView: View {
                 .buttonStyle(.borderedProminent)
         }
         .labelStyle(.titleAndIcon)
-        .padding(10)
+        .padding(DesignTokens.Spacing.medium)
     }
 
     private func drop(_ items: [String], before target: Int?) -> Bool {
@@ -150,7 +150,7 @@ private struct PageCell: View {
     let isSelected: Bool
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: DesignTokens.Spacing.xSmall) {
             Group {
                 if let thumbnail {
                     Image(nsImage: thumbnail)
@@ -165,14 +165,14 @@ private struct PageCell: View {
             .frame(width: 130, height: 160)
             .rotationEffect(.degrees(Double(page.rotation)))
             .shadow(radius: 1.5)
-            .padding(6)
-            .background(isSelected ? Color.accentColor.opacity(0.25) : .clear, in: RoundedRectangle(cornerRadius: 8))
+            .padding(DesignTokens.Spacing.xSmall)
+            .background(isSelected ? Color.accentColor.opacity(DesignTokens.Opacity.activeTint) : .clear, in: RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
             .overlay {
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
                     .strokeBorder(isSelected ? Color.accentColor : .clear, lineWidth: 2)
             }
             Text("\(position)")
-                .font(.caption)
+                .font(DesignTokens.Typography.caption)
                 .foregroundStyle(page.source + 1 == position ? .secondary : .primary)
         }
         .contentShape(Rectangle())
