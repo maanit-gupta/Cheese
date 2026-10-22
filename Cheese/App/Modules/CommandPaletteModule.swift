@@ -60,7 +60,7 @@ final class CommandPaletteModule: CheeseModule {
         actions.filter { $0.id != .commandPalette && $0.showsInPalette }.map { action in
             PaletteEntry(
                 id: action.id,
-                title: action.title,
+                title: action.paletteTitle ?? action.title,
                 symbol: action.symbol,
                 moduleName: action.module?.title ?? "Cheese",
                 shortcut: action.shortcut.flatMap { KeyboardShortcuts.getShortcut(for: $0) }?.description

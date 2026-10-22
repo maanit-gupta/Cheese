@@ -26,7 +26,9 @@ final class FilesModule: CheeseModule {
 
     var actions: [CheeseAction] {
         registry.toolIDs.map { tool in
-            CheeseAction(id: .files(tool), title: "Files: \(tool.title)…", symbol: tool.symbol, module: id) { [weak self] context in
+            CheeseAction(
+                id: .files(tool), title: "Files: \(tool.title)…", symbol: tool.symbol, module: id, menuTitle: "\(tool.title)…"
+            ) { [weak self] context in
                 self?.openFromPalette(tool, context: context)
             }
         }

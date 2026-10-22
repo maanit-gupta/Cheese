@@ -148,15 +148,9 @@ struct ActionCatalogueTests {
     }
 
     @Test func everyModuleActionIsInTheMenu() {
-        var inMenu: Set<ActionID> = []
-        for entry in StatusMenu.layout.flatMap(\.entries) {
-            switch entry {
-            case let .action(id, _): inMenu.insert(id)
-            case let .submenu(_, _, actions): inMenu.formUnion(actions)
-            }
-        }
-        // Files tools are reached by dropping files on the icon, from Finder and from the palette.
-        let menuActions = actions.filter { $0.module != .files }
+        let inMenu = Set(MenuLayout.actionIDs(in: MenuLayout.standard))
+        // The palette is a keyboard tool; it isn't opened from the menu.
+        let menuActions = actions.filter { $0.module != nil && $0.id != .commandPalette }
         #expect(Set(menuActions.map(\.id)).isSubset(of: inMenu))
     }
 
@@ -296,40 +290,85 @@ struct ModuleManagerTests {
 
 // MARK: - Menu
 
-@MainActor
-struct StatusMenuLayoutTests {
-    private func ids(in sections: [StatusMenu.Section]) -> [ActionID] {
-        sections.flatMap(\.entries).flatMap { entry -> [ActionID] in
-            switch entry {
-            case let .action(id, _): [id]
-            case let .submenu(_, _, actions): actions
+struct MenuLayoutTests {
+    private typealias Node = MenuLayout.Node
+
+    private func titles(_ nodes: [Node]) -> [String] {
+        nodes.map { node in
+            switch node {
+            case let .action(id, _, full): full ? "\(id.rawValue)!" : id.rawValue
+            case let .alternate(id): "alt:\(id.rawValue)"
+            case let .submenu(title, _, _): "\(title)▸"
+            case let .header(title): "#\(title)"
+            case .separator: "—"
             }
         }
     }
 
-    @Test func everythingAvailableShowsTheWholeLayout() {
-        #expect(StatusMenu.visibleSections(of: StatusMenu.layout) { _ in true } == StatusMenu.layout)
+    private func submenu(_ title: String, in nodes: [Node]) -> [Node]? {
+        for node in nodes {
+            if case let .submenu(name, _, children) = node, name == title { return children }
+        }
+        return nil
     }
 
-    @Test func emptySectionsLoseTheirHeaders() {
-        let hidden: Set<ActionID> = [.captureRegion, .captureWindow, .captureFullScreen, .scrollingCapture]
-        let sections = StatusMenu.visibleSections(of: StatusMenu.layout) { !hidden.contains($0) }
-        #expect(!sections.contains { $0.header == "Capture" })
-        #expect(sections.contains { $0.header == "Text" })
-        #expect(sections.count == StatusMenu.layout.count - 1)
+    @Test func everythingAvailableShowsTheWholeGroupedMenu() {
+        let visible = MenuLayout.visible(MenuLayout.standard) { _ in true }
+        #expect(titles(visible) == [
+            "openHistory", "Capture▸", "drawOnScreen", "Files▸", "showShare", "toggleShelf", "Tools▸",
+            "—", "clearHistory", "alt:clearAll", "openSettings", "quit",
+        ])
+        #expect(titles(submenu("Capture", in: visible) ?? []) == [
+            "captureRegion", "captureWindow", "captureFullScreen", "ocrRegion", "scrollingCapture",
+        ])
+        #expect(titles(submenu("Tools", in: visible) ?? []) == ["showClipboardQR", "Keep Awake▸", "Arrange Window▸"])
     }
 
-    @Test func submenusKeepOnlyAvailableActionsAndVanishWhenEmpty() {
-        let partial = StatusMenu.visibleSections(of: StatusMenu.layout) { $0 != .maximize }
-        #expect(ids(in: partial).contains(.snapLeft))
-        #expect(!ids(in: partial).contains(.maximize))
+    @Test func filesSubmenuGroupsEveryToolUnderHeaders() {
+        let files = submenu("Files", in: MenuLayout.visible(MenuLayout.standard) { _ in true }) ?? []
+        #expect(files.first == .header("PDF"))
+        #expect(Set(MenuLayout.actionIDs(in: files)) == Set(ToolID.allCases.map { ActionID.files($0) }))
+        #expect(files.contains(.header("Images")))
+    }
 
-        let snapping: Set<ActionID> = [.snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow]
-        let none = StatusMenu.visibleSections(of: StatusMenu.layout) { !snapping.contains($0) }
-        #expect(!none.contains { $0.header == "Windows" })
+    @Test func disabledModulesDisappear() {
+        let capture: Set<ActionID> = [.captureRegion, .captureWindow, .captureFullScreen, .ocrRegion, .scrollingCapture]
+        let visible = MenuLayout.visible(MenuLayout.standard) { !capture.contains($0) }
+        #expect(submenu("Capture", in: visible) == nil)
+        #expect(!titles(visible).contains("Capture▸"))
+    }
+
+    @Test func aSubmenuWithOneItemBecomesAPlainItem() {
+        let visible = MenuLayout.visible(MenuLayout.standard) { $0 != .captureRegion && $0 != .captureWindow && $0 != .captureFullScreen && $0 != .scrollingCapture }
+        #expect(titles(visible).contains("ocrRegion!"))
+        #expect(!titles(visible).contains("Capture▸"))
+    }
+
+    @Test func nestedSubmenusCollapseIntoTheirParent() {
+        // Only Keep Awake is on: Tools holds just the Keep Awake submenu, which takes its place.
+        let keepAwake: Set<ActionID> = [.keepAwakeIndefinitely, .keepAwakeUntil]
+        let visible = MenuLayout.visible(MenuLayout.standard) { keepAwake.contains($0) || $0 == .quit }
+        #expect(titles(visible) == ["Keep Awake▸", "—", "quit"])
+
+        // With one keep-awake option left, it shows under Tools with its full title.
+        let one = MenuLayout.visible(MenuLayout.standard) { $0 == .keepAwakeIndefinitely || $0 == .showClipboardQR }
+        #expect(titles(submenu("Tools", in: one) ?? []) == ["showClipboardQR", "keepAwakeIndefinitely!"])
+    }
+
+    @Test func separatorsAndHeadersNeverDangle() {
+        let visible = MenuLayout.visible(MenuLayout.standard) { $0 == .openHistory }
+        #expect(titles(visible) == ["openHistory"])
+
+        let nodes: [Node] = [.separator, .header("A"), .separator, .header("B"), .action(.quit), .separator, .separator]
+        #expect(titles(MenuLayout.visible(nodes) { _ in true }) == ["#B", "quit"])
+    }
+
+    @Test func alternateWithoutItsPrimaryBecomesAnItem() {
+        let visible = MenuLayout.visible(MenuLayout.standard) { $0 == .clearAll || $0 == .quit }
+        #expect(titles(visible) == ["clearAll", "quit"])
     }
 
     @Test func nothingAvailableShowsNothing() {
-        #expect(StatusMenu.visibleSections(of: StatusMenu.layout) { _ in false }.isEmpty)
+        #expect(MenuLayout.visible(MenuLayout.standard) { _ in false }.isEmpty)
     }
 }

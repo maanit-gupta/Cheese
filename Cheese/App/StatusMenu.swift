@@ -1,56 +1,11 @@
 import AppKit
 import KeyboardShortcuts
 
-/// The menu bar menu: every available action, so nothing needs a hotkey. Items that have a global
-/// hotkey show its current binding, and update when it's rebound. Rebuilt each time it opens, so
-/// actions of disabled modules are left out.
+/// The menu bar menu, drawn from `MenuLayout`. Items that have a global hotkey show its current
+/// binding, and update when it's rebound. Rebuilt each time it opens, so actions of disabled
+/// modules are left out.
 @MainActor
 final class StatusMenu: NSObject {
-    struct Section: Equatable {
-        var header: String?
-        var entries: [Entry]
-    }
-
-    enum Entry: Equatable {
-        case action(ActionID, keyEquivalent: String = "")
-        case submenu(title: String, symbol: String, actions: [ActionID])
-    }
-
-    static let layout: [Section] = [
-        Section(entries: [.action(.openHistory)]),
-        Section(header: "Capture", entries: [.action(.captureRegion), .action(.captureWindow), .action(.captureFullScreen), .action(.scrollingCapture)]),
-        Section(header: "Text", entries: [.action(.ocrRegion)]),
-        // Snapping acts on the frontmost app's window. Opening this menu doesn't activate Cheese,
-        // so that's still the window the user was working in.
-        Section(header: "Windows", entries: [
-            .submenu(title: "Arrange Window", symbol: "macwindow.on.rectangle", actions: [.snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow]),
-        ]),
-        Section(header: "Utilities", entries: [
-            .action(.drawOnScreen),
-            .action(.showClipboardQR),
-            .submenu(title: "Keep Awake", symbol: "cup.and.saucer", actions: [.keepAwakeIndefinitely, .keepAwakeUntil, .keepAwakeOff]),
-        ]),
-        Section(entries: [.action(.clearHistory), .action(.clearAll)]),
-        Section(entries: [.action(.commandPalette), .action(.editShortcuts), .action(.openSettings, keyEquivalent: ","), .action(.showWelcome)]),
-        Section(entries: [.action(.quit, keyEquivalent: "q")]),
-    ]
-
-    /// The layout without unavailable actions, and without the submenus and sections they leave empty.
-    static func visibleSections(of layout: [Section], isAvailable: (ActionID) -> Bool) -> [Section] {
-        layout.compactMap { section in
-            let entries = section.entries.compactMap { entry -> Entry? in
-                switch entry {
-                case let .action(id, _):
-                    return isAvailable(id) ? entry : nil
-                case let .submenu(title, symbol, actions):
-                    let visible = actions.filter(isAvailable)
-                    return visible.isEmpty ? nil : .submenu(title: title, symbol: symbol, actions: visible)
-                }
-            }
-            return entries.isEmpty ? nil : Section(header: section.header, entries: entries)
-        }
-    }
-
     let menu = NSMenu()
     private let registry: ActionRegistry
     /// Items for work in progress, like running Files jobs, shown at the top of the menu.
@@ -69,35 +24,40 @@ final class StatusMenu: NSObject {
         for item in progress {
             menu.addItem(item)
         }
-        let sections = Self.visibleSections(of: Self.layout) { registry.isAvailable($0) }
-        for (index, section) in sections.enumerated() {
-            if index > 0 || !progress.isEmpty {
-                menu.addItem(.separator())
-            }
-            if let header = section.header {
-                menu.addItem(.sectionHeader(title: header))
-            }
-            for entry in section.entries {
-                if let item = item(for: entry) {
-                    menu.addItem(item)
-                }
-            }
+        let nodes = MenuLayout.visible(MenuLayout.standard) { registry.isAvailable($0) }
+        if !progress.isEmpty, !nodes.isEmpty {
+            menu.addItem(.separator())
         }
+        add(nodes, to: menu, inSubmenu: false)
     }
 
-    private func item(for entry: Entry) -> NSMenuItem? {
-        switch entry {
-        case let .action(id, keyEquivalent):
-            return actionItem(id, keyEquivalent: keyEquivalent)
-        case let .submenu(title, symbol, actions):
-            let submenu = NSMenu()
-            for item in actions.compactMap({ actionItem($0, inSubmenu: true) }) {
-                submenu.addItem(item)
+    private func add(_ nodes: [MenuLayout.Node], to menu: NSMenu, inSubmenu: Bool) {
+        for node in nodes {
+            switch node {
+            case let .action(id, keyEquivalent, fullTitle):
+                if let item = actionItem(id, keyEquivalent: keyEquivalent, inSubmenu: inSubmenu && !fullTitle) {
+                    menu.addItem(item)
+                }
+            case let .alternate(id):
+                // Shown instead of the item above while Option is held.
+                guard let item = actionItem(id, inSubmenu: inSubmenu) else { continue }
+                let primary = menu.items.last
+                item.keyEquivalent = primary?.keyEquivalent ?? ""
+                item.keyEquivalentModifierMask = (primary?.keyEquivalentModifierMask ?? []).union(.option)
+                item.isAlternate = true
+                menu.addItem(item)
+            case let .submenu(title, symbol, children):
+                let submenu = NSMenu()
+                add(children, to: submenu, inSubmenu: true)
+                let parent = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+                parent.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+                parent.submenu = submenu
+                menu.addItem(parent)
+            case let .header(title):
+                menu.addItem(.sectionHeader(title: title))
+            case .separator:
+                menu.addItem(.separator())
             }
-            let parent = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-            parent.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
-            parent.submenu = submenu
-            return parent
         }
     }
 

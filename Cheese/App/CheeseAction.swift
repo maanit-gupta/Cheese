@@ -42,6 +42,11 @@ extension ActionID {
     static let settingsPermissions = Self(rawValue: "settingsPermissions")
     static let settingsFiles = Self(rawValue: "settingsFiles")
     static let settingsAbout = Self(rawValue: "settingsAbout")
+    static let settingsShare = Self(rawValue: "settingsShare")
+    static let toggleShelf = Self(rawValue: "toggleShelf")
+    static let clearShelf = Self(rawValue: "clearShelf")
+    static let showShare = Self(rawValue: "showShare")
+    static let sendClipboard = Self(rawValue: "sendClipboard")
 
     /// "Files: Merge PDFs…" and the other Files tools.
     static func files(_ tool: ToolID) -> Self {
@@ -75,6 +80,8 @@ struct CheeseAction: Identifiable {
     let symbol: String
     /// Nil for app-level actions (Settings, Quit) that can't be switched off.
     let module: ModuleID?
+    /// How the command palette lists it, when that differs from the menu ("Show Shelf" for "Shelf").
+    var paletteTitle: String?
     /// A shorter title for inside a submenu, where the parent names the feature ("Until…" under Keep Awake).
     var menuTitle: String?
     var shortcut: KeyboardShortcuts.Name?
