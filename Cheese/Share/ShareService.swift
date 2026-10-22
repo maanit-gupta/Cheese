@@ -35,9 +35,15 @@ final class ShareService {
         var receivedText: @MainActor (_ text: String, _ from: String) -> Void
         /// Shows or clears the menu bar indicator.
         var setListening: @MainActor (Bool) -> Void
+        /// The address to listen on; the LAN address unless a test says otherwise.
+        var address: @MainActor () -> String? = { LANAddress.current() }
+        /// The TLS identity; the Keychain's unless a test says otherwise.
+        var identity: @MainActor () -> ShareIdentity? = { TLSIdentity.loadOrCreate() }
+        /// How long Share keeps listening after the panel closes.
+        var idleLifetime: Duration = ShareService.idleLifetime
     }
 
-    static let idleLifetime: Duration = .seconds(10 * 60)
+    nonisolated static let idleLifetime: Duration = .seconds(10 * 60)
 
     private(set) var listening = Listening.stopped
     /// LocalSend transfers use HTTPS (false only when the Keychain wouldn't hold a certificate).
@@ -144,7 +150,7 @@ final class ShareService {
     func panelClosed() {
         idleTask?.cancel()
         idleTask = Task { [weak self] in
-            try? await Task.sleep(for: Self.idleLifetime)
+            try? await Task.sleep(for: self?.hooks.idleLifetime ?? Self.idleLifetime)
             guard !Task.isCancelled, let self else { return }
             if self.receiver.isReceiving || !self.transferTasks.isEmpty {
                 // Finish what's moving first; check again later.
@@ -157,13 +163,13 @@ final class ShareService {
 
     private func start() async {
         guard listening == .stopped || { if case .unavailable = listening { return true } else { return false } }() else { return }
-        guard let address = LANAddress.current() else {
+        guard let address = hooks.address() else {
             listening = .unavailable("Not on a local network. Connect to Wi-Fi to share with nearby devices.")
             return
         }
         listening = .starting
         if identity == nil {
-            identity = TLSIdentity.loadOrCreate()
+            identity = hooks.identity()
         }
         isEncrypted = identity != nil
         discovery.identity = identity

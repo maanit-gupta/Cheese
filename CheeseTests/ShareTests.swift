@@ -705,3 +705,115 @@ struct DERTests {
         #expect(String(decoding: generalized.dropFirst(2), as: UTF8.self).hasPrefix("2052"))
     }
 }
+
+// MARK: - Lifetime and trust, end to end
+
+@MainActor
+struct ShareLifetimeTests {
+    private func makeService(lifetime: Duration, listening: @escaping @MainActor (Bool) -> Void = { _ in }) -> ShareService {
+        var hooks = ShareService.Hooks(ask: { _, _ in .decline }, receivedText: { _, _ in }, setListening: listening)
+        hooks.address = { "127.0.0.1" }
+        hooks.identity = { nil }
+        hooks.idleLifetime = lifetime
+        return ShareService(hooks: hooks)
+    }
+
+    private func waitUntil(_ condition: () -> Bool, within seconds: Double = 5) async {
+        let deadline = Date.now.addingTimeInterval(seconds)
+        while !condition(), Date.now < deadline {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+    }
+
+    @Test func listensOnlyFromOpeningUntilTheIdleLifetimeAfterClosing() async throws {
+        var indicator: [Bool] = []
+        let service = makeService(lifetime: .milliseconds(300)) { indicator.append($0) }
+        #expect(service.listening == .stopped)
+
+        service.panelOpened()
+        await waitUntil { service.isListening }
+        #expect(service.isListening)
+        #expect(indicator == [true])
+        guard case let .listening(_, port) = service.listening else { return }
+        let endpoint = HTTPClient.Endpoint(host: "127.0.0.1", port: port, usesTLS: false)
+        #expect(try await HTTPClient.send("GET", to: endpoint, target: LocalSend.apiPrefix + "/info").status == 200)
+        #expect(service.browserURL != nil)
+
+        // Reopening before the lifetime is up keeps it going.
+        service.panelClosed()
+        try await Task.sleep(for: .milliseconds(150))
+        service.panelOpened()
+        try await Task.sleep(for: .milliseconds(300))
+        #expect(service.isListening)
+
+        // Closed for the whole lifetime: everything stops, and the port refuses connections.
+        service.panelClosed()
+        await waitUntil { !service.isListening }
+        #expect(service.listening == .stopped)
+        #expect(indicator == [true, false])
+        #expect(service.browserURL == nil)
+        let refused = try? await HTTPClient.send("GET", to: endpoint, target: LocalSend.apiPrefix + "/info", timeout: .seconds(2))
+        #expect(refused == nil)
+    }
+
+    @Test func turningShareOffStopsAtOnce() async {
+        let service = makeService(lifetime: .seconds(600))
+        service.panelOpened()
+        await waitUntil { service.isListening }
+        service.panelClosed()
+        service.stop()
+        #expect(service.listening == .stopped)
+    }
+
+    @Test func theDefaultLifetimeIsTenMinutes() {
+        #expect(ShareService.idleLifetime == .seconds(600))
+    }
+}
+
+@MainActor
+struct ShareTrustFlowTests {
+    @Test func alwaysAcceptStopsAskingUntilRemoved() async throws {
+        let trust = TrustStore(defaults: UserDefaults(suiteName: "TrustFlow-\(UUID().uuidString)") ?? .standard)
+        final class Answers {
+            var next = ReceiveAnswer.alwaysAccept
+            var asked = 0
+        }
+        let answers = Answers()
+        var texts: [String] = []
+        let receiver = LocalSendReceiver(hooks: LocalSendReceiver.Hooks(
+            destination: { FileManager.default.temporaryDirectory },
+            maxBytes: { 1_000 },
+            ask: { _, _ in
+                answers.asked += 1
+                return answers.next
+            },
+            trustStore: trust,
+            onText: { text, _ in texts.append(text) },
+            onFilesReceived: { _, _ in }, onProblem: { _ in }
+        ))
+        let server = HTTPServer { [receiver] request, body in await receiver.prepareUpload(request, body: body) }
+        let port = try await server.start(on: "127.0.0.1")
+        defer { server.stop() }
+        let peer = try #require(LocalSendPeer(
+            info: LocalSend.DeviceInfo(alias: "Mac", version: "2.2", fingerprint: "mac", port: Int(port), transport: .http), address: "127.0.0.1"
+        ))
+        let pixel = LocalSend.DeviceInfo(alias: "Pixel 8", version: "2.2", fingerprint: "pixel-fp")
+
+        try await LocalSendSender.send([.text("one")], to: peer, as: pixel) { _ in }
+        #expect(answers.asked == 1)
+        #expect(trust.devices.map(\.alias) == ["Pixel 8"])
+
+        // Trusted: no question.
+        try await LocalSendSender.send([.text("two")], to: peer, as: pixel) { _ in }
+        #expect(answers.asked == 1)
+
+        // Removed in Settings → Share: asked again, and declining is respected.
+        trust.remove("pixel-fp")
+        answers.next = .decline
+        await #expect(throws: SendError.declined) {
+            try await LocalSendSender.send([.text("three")], to: peer, as: pixel) { _ in }
+        }
+        #expect(answers.asked == 2)
+        #expect(texts == ["one", "two"])
+    }
+}
