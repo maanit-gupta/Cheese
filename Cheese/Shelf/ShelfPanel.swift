@@ -456,15 +456,6 @@ private struct ShelfItemView: View {
                 model.selection.contains(item.id) ? model.store.items.filter { model.selection.contains($0.id) }.map(\.id) : [item.id]
             }, item: item)
         }
-        .contextMenu {
-            Button("Open") { model.open(item) }
-                .disabled(isMissing)
-            if let url = model.store.url(for: item) {
-                Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
-            }
-            Divider()
-            Button("Remove from Shelf") { model.remove(item) }
-        }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -543,6 +534,14 @@ final class ShelfDragSourceView: NSView, NSDraggingSource {
 
     override var mouseDownCanMoveWindow: Bool { false }
 
+    /// The item's right-click menu. Built here because this view sits on top of the card and gets
+    /// the click; a SwiftUI context menu underneath never would.
+    override func menu(for event: NSEvent) -> NSMenu? {
+        guard let model, let item else { return nil }
+        model.selection = [item.id]
+        return ShelfItemMenu.make(for: item, model: model)
+    }
+
     override func mouseDown(with event: NSEvent) {
         mouseDownEvent = event
     }
@@ -603,5 +602,23 @@ final class ShelfDragSourceView: NSView, NSDraggingSource {
         let ids = draggedIDs
         draggedIDs = []
         model?.dragEnded(ids, operation: operation)
+    }
+}
+
+/// Open · Show in Finder · Remove from Shelf, for one item.
+@MainActor
+enum ShelfItemMenu {
+    static func make(for item: ShelfItem, model: ShelfViewModel) -> NSMenu {
+        let menu = NSMenu()
+        let open = ClosureMenuItem(title: "Open") { model.open(item) }
+        open.isEnabled = !model.store.isMissing(item)
+        menu.autoenablesItems = false
+        menu.addItem(open)
+        if let url = model.store.url(for: item) {
+            menu.addItem(ClosureMenuItem(title: "Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) })
+        }
+        menu.addItem(.separator())
+        menu.addItem(ClosureMenuItem(title: "Remove from Shelf") { model.remove(item) })
+        return menu
     }
 }

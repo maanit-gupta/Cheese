@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 @testable import Cheese
@@ -195,5 +196,22 @@ struct ShelfActionTests {
         #expect(ShelfActions.zipName(for: [URL(filePath: "/x/Report.pdf")]) == "Report.zip")
         #expect(ShelfActions.zipName(for: [URL(filePath: "/x/Photos", directoryHint: .isDirectory)]) == "Photos.zip")
         #expect(ShelfActions.zipName(for: [URL(filePath: "/a"), URL(filePath: "/b")]) == "Archive.zip")
+    }
+}
+
+@MainActor
+struct ShelfItemMenuTests {
+    @Test func rightClickOffersOpenRevealAndRemove() {
+        let store = ShelfStore(folder: FileManager.default.temporaryDirectory.appending(path: "ShelfMenu-\(UUID().uuidString)"))
+        store.add([.text("note")])
+        let model = ShelfViewModel(store: store, services: ShelfServices())
+        let menu = ShelfItemMenu.make(for: store.items[0], model: model)
+        #expect(menu.items.map(\.title) == ["Open", "", "Remove from Shelf"])
+        // Running "Remove from Shelf" takes the item off.
+        let remove = menu.items[2]
+        if let action = remove.action {
+            NSApp.sendAction(action, to: remove.target, from: remove)
+        }
+        #expect(store.isEmpty)
     }
 }
