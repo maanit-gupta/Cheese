@@ -64,6 +64,16 @@ new UI uses CheeseUI components and system SF Symbols only, with no one-off styl
 | `CheeseSectionHeader` | Headings over groups | settings and welcome headings |
 | `CheeseEmptyState` | Empty and error states | QR panel messages, empty history |
 | `.cheesePanelBackground()` / `.cheeseSurface(in:)` | Material backgrounds that honor Reduce Transparency | every floating surface |
+| `PermissionNeedRow` | A permission, the tools that need it, live status and Grant | welcome screen and Settings → Permissions |
+| `DesignTokens.Overlay` | Badge background and fonts for AppKit-drawn overlays | capture overlay, radial menu |
+
+## Migration status
+
+Every screen in the audit above now uses CheeseUI: tokens and components for SwiftUI screens, and
+`DesignTokens.Overlay`, the radii, the accent tint and the durations for the AppKit and Core Animation
+overlays (capture overlay, window picker, radial menu). Each move is its own commit listing what
+visibly changed. The new v3 screens (welcome, Shelf, Share panel, receive prompt, Settings → Share)
+were built on CheeseUI from the start.
 
 ## Rules
 1. v3 UI uses only CheeseUI components and SF Symbols.
