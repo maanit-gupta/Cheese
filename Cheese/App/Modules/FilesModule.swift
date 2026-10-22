@@ -121,7 +121,15 @@ final class FilesModule: CheeseModule {
         }
     }
 
+    /// With Finder frontmost, the palette works on Finder's selection; otherwise, or when that
+    /// selection doesn't suit the tool, it asks for files.
     private func openFromPalette(_ tool: ToolID, context: ActionContext) {
+        if context.previousApp?.bundleIdentifier == FinderSelection.finderBundleID,
+           let selection = FinderSelection.selectedFiles(),
+           let files = FinderSelection.usable(selection, for: tool) {
+            open(tool, files: files)
+            return
+        }
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = tool.fileCount.upperBound > 1
         panel.canChooseDirectories = false

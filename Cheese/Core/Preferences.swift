@@ -92,6 +92,11 @@ struct Preferences {
             ?? Self.defaultOCRLanguageEnabled
     }
 
+    /// Use Microsoft Office or LibreOffice for Office → PDF when installed. Off unless the user opts in.
+    var usesNativeOfficeApps: Bool {
+        defaults.bool(forKey: PreferenceKey.filesNativeFallback)
+    }
+
     func isModuleEnabled(_ module: ModuleID) -> Bool {
         defaults.object(forKey: PreferenceKey.moduleEnabled(module)) as? Bool
             ?? Self.defaultModuleEnabled
