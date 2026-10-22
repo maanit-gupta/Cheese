@@ -14,12 +14,14 @@ final class FileToolRegistry {
 
     static var standardTools: [AnyFileTool] {
         [
+            AnyFileTool(MergeTool()),
+            AnyFileTool(SplitTool()),
             AnyFileTool(ConvertImageTool()),
         ]
     }
 
     static var standardWindowTools: [any WindowFileTool] {
-        []
+        [PageEditorTool()]
     }
 
     /// Registered tools in display order.
