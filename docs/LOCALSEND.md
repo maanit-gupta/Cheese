@@ -58,15 +58,17 @@ mode with a random fingerprint and Settings says the connection is unencrypted.
 
 ## Cheese's browser page (not part of LocalSend)
 
-The Phone (scan QR) tile serves `http://<mac-ip>:<port>/<128-bit token>/` from a second, plain-HTTP
-listener on its own port, because phone browsers refuse self-signed certificates (the spec's section 5
-notes the same):
+The Share panel's link and QR code serve `http://<mac-ip>:<port>/<128-bit token>/` from a second,
+plain-HTTP listener on its own port, because phone browsers refuse self-signed certificates (the
+spec's section 5 notes the same). `BrowserSharePageRenderer` draws the page; Show Clipboard as QR's
+links serve the same page, download-only, at `/<token>` with the item at `/<token>/download`.
 
 | Route | Does |
 |---|---|
-| `GET /<token>/` | The page (self-contained HTML, no remote resources) |
-| `GET /<token>/items` | What the Mac offers, as JSON |
+| `GET /<token>/` | The page (self-contained HTML under 35 KB, no remote resources) |
+| `GET /<token>/state` | The page's From your Mac section, its version and seconds left, as JSON (polled every 3 s) |
 | `GET /<token>/download/<id>` | One offered file or text |
+| `GET /<token>/download-all` | Every offered file as one zip, when there are several |
 | `POST /<token>/upload?name=<file name>` | A file from the phone, raw body |
 | `POST /<token>/text` | Text from the phone, onto the Mac's clipboard |
 

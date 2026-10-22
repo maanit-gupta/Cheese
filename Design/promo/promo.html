@@ -198,6 +198,54 @@
   .cal .ev { background: rgba(10,100,216,.12); color: #0a64d8; font-weight: 600; }
   .chip { position: absolute; padding: 8px 14px; border-radius: 12px; background: rgba(20,18,26,.85); color: #fff; font-size: 16px; font-weight: 600; z-index: 75; opacity: 0; white-space: nowrap; }
   .chip span { color: var(--cheese); margin-left: 8px; }
+  /* v4: drop hub, Share panel, the phone's Share page */
+  .ico { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .hub { position: absolute; top: 34px; width: 340px; border-radius: 14px; background: rgba(246,245,242,.97); box-shadow: 0 0 0 1px rgba(0,0,0,.09), 0 20px 50px rgba(0,0,0,.4); color: var(--ink); padding: 12px; font-size: 14px; z-index: 45; opacity: 0; display: flex; flex-direction: column; gap: 10px; }
+  .hpill { display: flex; align-items: center; gap: 8px; padding: 5px 10px 5px 6px; border-radius: 99px; background: rgba(0,0,0,.06); font-weight: 500; }
+  .hpill .th { width: 26px; height: 26px; border-radius: 6px; background: #fff; box-shadow: 0 0 0 1px #ddd; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .hpill .x { margin-left: auto; color: #8a8a8e; font-size: 12px; }
+  .hcards { display: flex; gap: 8px; }
+  .hcard { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 12px 6px; border-radius: 10px; background: rgba(0,0,0,.05); }
+  .hcard svg { width: 24px; height: 24px; color: #0a64d8; margin-bottom: 2px; }
+  .hcard b { font-size: 13px; } .hcard span { font-size: 11px; color: #8a8a8e; }
+  .hcard.on { background: rgba(10,100,216,.16); }
+  .hsep { height: 1px; background: rgba(0,0,0,.1); }
+  .hub .mh { padding: 2px 10px 0; text-transform: uppercase; letter-spacing: .4px; } .hub .mi { padding: 5px 10px; border-radius: 7px; }
+  .pcta svg { width: 14px; height: 14px; flex: none; } .toast .ic svg { width: 18px; height: 18px; }
+  .spanel { position: absolute; left: 90px; top: 70px; width: 380px; height: 460px; border-radius: 14px; background: #f3f2ef; box-shadow: 0 0 0 1px rgba(0,0,0,.09), 0 30px 70px rgba(0,0,0,.45); color: var(--ink); overflow: hidden; z-index: 60; opacity: 0; font-size: 13px; }
+  .sph { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid rgba(0,0,0,.1); }
+  .sph b { display: block; font-size: 14px; } .sph small { color: #8a8a8e; font-size: 11px; }
+  .sph .x { margin-left: auto; color: #555; } .sph .chev { color: #555; font-size: 18px; }
+  .spb { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .strip { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 10px; border-radius: 10px; background: rgba(0,0,0,.06); }
+  .strip small { display: block; font-size: 10px; color: #8a8a8e; } .strip b { font-weight: 600; }
+  .strip .clr { margin-left: auto; color: #0a64d8; font-weight: 600; } .strip .plus { font-size: 18px; color: #444; padding: 0 4px; }
+  .lcard { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; background: rgba(0,0,0,.06); }
+  .lcard .qw2 { padding: 10px; background: #fff; border-radius: 12px; }
+  .lpill { align-self: stretch; display: flex; align-items: center; gap: 6px; padding: 3px 3px 3px 10px; border-radius: 99px; background: rgba(255,255,255,.75); font: 11px "SF Mono", Menlo, monospace; color: #444; }
+  .lpill .cbtn { margin-left: auto; padding: 5px 11px; border-radius: 99px; background: #0a64d8; color: #fff; font: 600 12px -apple-system, sans-serif; white-space: nowrap; }
+  .lfoot { align-self: stretch; display: flex; align-items: center; gap: 6px; padding: 0 4px; font-size: 11px; color: #6e6e73; }
+  .lfoot i { width: 7px; height: 7px; border-radius: 50%; background: #30d158; } .lfoot .stop { margin-left: auto; color: #e5352b; font-weight: 600; font-size: 12px; }
+  .caps { font-size: 10px; font-weight: 700; letter-spacing: .4px; color: #8a8a8e; padding: 0 10px; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px; border-radius: 7px; background: rgba(0,0,0,.06); }
+  .tile svg { width: 18px; height: 18px; color: #0a64d8; } .tile b { display: block; font-size: 12px; } .tile small { font-size: 10px; color: #8a8a8e; }
+  .phone2 { position: absolute; left: 790px; top: 120px; width: 250px; height: 510px; border-radius: 40px; background: #0b0b0d; border: 3px solid #3a3a40; box-shadow: 0 30px 60px rgba(0,0,0,.5); overflow: hidden; z-index: 71; opacity: 0; }
+  .phone2 .scr { position: absolute; inset: 8px; border-radius: 32px; background: #f5f5f7; padding: 34px 12px 12px; color: #1d1d1f; font: 11px/1.35 -apple-system, sans-serif; overflow: hidden; }
+  .ppill { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 auto 14px; width: max-content; padding: 4px 10px; border-radius: 99px; background: #fff; border: 1px solid rgba(128,128,128,.16); color: #6e6e73; font-size: 10px; }
+  .ppill i { width: 6px; height: 6px; border-radius: 50%; background: #30d158; box-shadow: 0 0 0 2px rgba(48,209,88,.22); } .ppill b { color: #1d1d1f; }
+  .ph2 { font-size: 9px; font-weight: 600; letter-spacing: .3px; color: #6e6e73; margin: 0 3px 5px; }
+  .pcard { background: #fff; border: 1px solid rgba(128,128,128,.16); border-radius: 12px; overflow: hidden; }
+  .prow { display: flex; align-items: center; gap: 9px; padding: 8px 10px; } .prow b { display: block; font-weight: 500; } .prow small { color: #6e6e73; font-size: 10px; }
+  .pth { width: 30px; height: 30px; border-radius: 7px; background: linear-gradient(160deg, #7cc4f2, #f2c46b 70%, #e0a24a); }
+  .pcta { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 7px 0 16px; padding: 10px; border-radius: 10px; background: #1d1d1f; color: #fff; font-weight: 600; font-size: 12px; }
+  .pdrop { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 8px; border: 1.5px dashed rgba(128,128,128,.4); border-radius: 12px; background: #fff; }
+  .pdrop svg { width: 20px; height: 20px; color: #0071e3; } .pdrop b { font-size: 11px; } .pdrop small { font-size: 9px; color: #6e6e73; }
+  .pup { margin-top: 7px; padding: 8px 10px; opacity: 0; } .pup .upt { display: flex; justify-content: space-between; font-size: 10px; }
+  .pbar { height: 3px; margin-top: 6px; border-radius: 2px; background: rgba(128,128,128,.12); overflow: hidden; } .pbar i { display: block; height: 100%; width: 0; background: #0071e3; }
+  .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 12px; }
+  .photos div { height: 92px; border-radius: 6px; }
+  .photos .pick { box-shadow: 0 0 0 3px #0a64d8; }
 </style>
 </head>
 <body>
@@ -210,7 +258,7 @@
       <div class="wordmark" id="introWord">Cheese</div>
       <div class="tagline" id="introTag">The Swiss Army knife for your Mac.</div>
       <div class="pills" id="introPills" style="flex-wrap:wrap;justify-content:center;max-width:1500px;gap:12px;margin-top:36px">
-        <div class="pill">Clipboard history</div><div class="pill">Screenshots</div><div class="pill">OCR</div><div class="pill">Scrolling capture</div><div class="pill">Window snapping</div><div class="pill">Draw on screen</div><div class="pill">Command palette</div><div class="pill y">PDF &amp; file tools</div><div class="pill">Clipboard as QR</div><div class="pill">App hotkeys</div><div class="pill">Keep awake</div>
+        <div class="pill">Copy</div><div class="pill">Capture</div><div class="pill">Draw</div><div class="pill">Convert</div><div class="pill y">Share</div><div class="pill">Control</div>
       </div>
     </div>
   </div>
@@ -675,7 +723,19 @@ const docIcon = kind => kind === 'PDF'
   ? '<div class="doc-ic"><i style="top:12px"></i><i style="top:21px"></i><i style="top:30px;right:22px"></i><b>PDF</b></div>'
   : '<div class="doc-ic" style="background:linear-gradient(160deg,#7cc4f2,#f2c46b 70%,#e0a24a)"><b style="background:#3a7bd5">HEIC</b></div>';
 const fileIcon = (id, name, kind, x, y) => `<div class="ficon" id="${id}" style="left:${x}px;top:${y}px">${docIcon(kind)}<div class="nm">${name}</div></div>`;
-const DROP_MENU = ['#PDF', 'Merge PDFs…', 'Split PDF…', 'Compress PDF…', 'Watermark…', 'Page Numbers…', '#Convert', 'PDF to Word…', 'PDF to Excel…', 'PDF to Images…'];
+const DROP_MENU = ['#PDF', 'Merge PDFs…', 'Split PDF…', 'Compress PDF…', 'Add Watermark…', '#Convert', 'PDF to Word…', 'PDF to Images…'];
+const ICON = {
+  share: 'M12 15V3M7.5 7.5 12 3l4.5 4.5M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1',
+  tray: 'M12 3v9M8 8.5l4 4 4-4M3 14h5l1.5 2.5h5L16 14h5v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z',
+  download: 'M12 4v11M7 10l5 5 5-5M5 20h14', upload: 'M12 16V4M7 9l5-5 5 5M5 20h14',
+  phone: 'M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2', desktop: 'M3 4h18v12H3zM9 20h6M12 16v4',
+};
+const svg = (d, cls = '') => `<svg class="ico ${cls}" viewBox="0 0 24 24"><path d="${d}"/></svg>`;
+// The drop hub that opens under the 🧀 when something is dropped on it.
+const hubHTML = (id, thumb, summary, rows) => `<div class="hub" id="${id}">
+  <div class="hpill"><span class="th">${thumb}</span><span>${summary}</span><span class="x">✕</span></div>
+  <div class="hcards"><div class="hcard" data-k="share">${svg(ICON.share)}<b>Share Link / QR</b><span>Phone or nearby device</span></div><div class="hcard">${svg(ICON.tray)}<b>Add to Shelf</b><span>Keep it handy</span></div></div>
+  ${rows.length ? '<div class="hsep"></div>' + menuHTML(rows) : ''}</div>`;
 const menuHTML = items => items.map(m => m === '-' ? '<div class="msep"></div>' : m[0] === '#' ? `<div class="mh">${m.slice(1)}</div>` : `<div class="mi" data-k="${m.split('|')[0]}"><span>${m.split('|')[0]}</span><span>${m.split('|')[1] || ''}</span></div>`).join('');
 scene({
   id: 'files', start: 54.8, end: 63.6, num: '08 — FILES', title: 'PDF &amp; file tools', keys: ['Finder', 'Drop on 🧀', 'Palette'],
@@ -686,7 +746,7 @@ scene({
     ${FILES.map((f, i) => fileIcon('f' + i, f[0], f[1], 100 + i * 150, 175)).join('')}
     ${fileIcon('fm', 'Q3 Report (merged).pdf', 'PDF', 100, 340)}
     <div class="ghost" id="ghost">${docIcon('PDF')}<div style="position:absolute;left:12px;top:8px;transform:rotate(6deg)">${docIcon('PDF')}</div><div class="badge">2</div></div>
-    <div class="menu" id="dmenu" style="width:240px">${menuHTML(DROP_MENU)}</div>
+    ${hubHTML('dmenu', '<div style="transform:scale(.3)">' + docIcon('PDF') + '</div>', '2 items dropped', DROP_MENU)}
     <div class="win" id="opts" style="left:300px;top:170px;width:470px;height:300px;opacity:0;z-index:74">
       <div class="tb"><div class="dots"><i></i><i></i><i></i></div>Merge PDFs</div>
       <div style="padding:14px 20px 0;font-size:13px;color:#888">Drag to set the order</div>
@@ -711,7 +771,7 @@ scene({
     const icon = at($('mbCheese').querySelector('svg'));
     const f0 = [160, 215], f1 = [310, 215];
     const dm = s.q('#dmenu');
-    dm.style.left = Math.min(icon[0] - 14, 1100 - 252) + 'px';
+    dm.style.left = clamp(icon[0] - 170, 10, 1100 - 350) + 'px';
     popIn(dm, lt, 2.6, 3.75, .2);
     const merge = dm.querySelector('[data-k="Merge PDFs…"]');
     merge.classList.toggle('on', lt > 3.3);
@@ -737,68 +797,109 @@ scene({
   }
 });
 
-// 9. QR + app hotkeys --------------------------------------------------------
-const QR_MENU = ['Clipboard History|⌃⌥V', '-', '#Capture', 'Capture Region|⌃⌥4', 'Copy Text from Screen|⌃⌥T', '-', '#Utilities', 'Draw on Screen|⌃⌥D', 'Show Clipboard as QR|', 'Keep Awake|▸', '-', 'Settings…|⌘,'];
-const CAL_DAYS = Array.from({ length: 35 }, (_, i) => i - 2);
+// 9. Share: drop on the 🧀 → link and QR → the phone's page, both ways -------------
+const PHOTOS = ['linear-gradient(160deg,#7cc4f2,#f2c46b 70%,#e0a24a)', 'linear-gradient(160deg,#2f6f4f,#9fd18b)', 'linear-gradient(160deg,#f7a072,#8a3d6b)', 'linear-gradient(160deg,#3a7bd5,#00d2ff)', 'linear-gradient(160deg,#ffc83d,#f29e1f)', 'linear-gradient(160deg,#5a4bb5,#e0702f)'];
 scene({
-  id: 'more', start: 63.2, end: 71.2, num: '09 — AND MORE', title: 'QR codes &amp; app hotkeys', keys: ['⌃', '⌥', '⌘', 'C'],
-  desc: 'Show what you copied as a QR code for your phone. Give any app its own ⌃⌥⌘ shortcut, and Cheese suggests a free one.',
+  id: 'share', start: 63.2, end: 71.2, num: '09 — SHARE', title: 'Drop it on the 🧀, scan, done', keys: ['Drop on 🧀', 'Share Link / QR'],
+  desc: 'Drop anything on the menu bar icon to share it as a link and QR code, park it on the Shelf, or open the file tools that fit. Phones get a clean page to download from — and to send photos back.',
   html: `
-    <div class="win" id="notes" style="left:90px;top:90px;width:540px;height:380px;z-index:2"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Notes</div>
-      <div class="body"><b style="font-size:22px">For the team</b><br>Grab the latest build here:<br><span style="background:#b3d4fc;border-radius:3px;padding:1px 2px">https://github.com/maanit-gupta/Cheese</span><div class="line" style="width:70%;margin-top:22px"></div><div class="line" style="width:55%"></div></div></div>
-    <div class="win" id="cal" style="left:250px;top:150px;width:600px;height:440px;opacity:0;z-index:3"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Calendar — October</div>
-      <div class="cal">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(d => `<span style="font-weight:700;color:#999">${d}</span>`).join('')}${CAL_DAYS.map(d => `<span class="${d === 22 ? 'today' : d === 24 || d === 28 ? 'ev' : ''}">${d > 0 && d <= 31 ? d : ''}</span>`).join('')}</div></div>
-    <div class="menu" id="qmenu" style="width:250px">${menuHTML(QR_MENU)}</div>
-    <div class="qrpanel" id="qr">
-      <div class="qw"><div style="width:244px;height:244px"><div style="transform:scale(1.45);transform-origin:0 0">${qrHTML()}</div></div></div>
-      <div class="qp">https://github.com/maanit-gupta/Cheese</div>
-      <div class="qh">Esc to close</div>
+    <div class="win" style="left:70px;top:90px;width:470px;height:330px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Photos</div>
+      <div class="photos">${PHOTOS.map((g, i) => `<div id="ph${i}" style="background:${g}"></div>`).join('')}</div></div>
+    <div class="ghost" id="ghost"><div style="width:84px;height:64px;border-radius:8px;background:${PHOTOS[0]};box-shadow:0 8px 20px rgba(0,0,0,.35)"></div></div>
+    ${hubHTML('hub', `<div style="width:26px;height:26px;background:${PHOTOS[0]}"></div>`, 'Beach.heic · 2.4 MB', [])}
+    <div class="spanel" id="spanel">
+      <div class="sph"><span class="chev">‹</span><div><b>Cheese Share</b><small>Visible as MacBook Air · encrypted</small></div><span class="x">✕</span></div>
+      <div class="spb">
+        <div class="strip"><div style="width:22px;height:22px;border-radius:5px;background:${PHOTOS[0]}"></div><div><small>Ready to Share</small><b>Beach.heic · 2.4 MB</b></div><span class="clr">Clear</span><span class="plus">+</span></div>
+        <div class="lcard"><div class="qw2"><div style="width:140px;height:140px"><div style="transform:scale(.833);transform-origin:0 0">${qrHTML()}</div></div></div>
+          <div class="lpill"><span>192.168.1.42:54812/3f9a2c…</span><span class="cbtn" id="copy">Copy Link</span></div>
+          <div class="lfoot"><i id="ldot"></i>Same Wi-Fi · Live while Share is open<span class="stop">Stop</span></div></div>
+        <div class="caps">NEARBY DEVICES</div>
+        <div class="tiles"><div class="tile">${svg(ICON.phone)}<div><b>Maanit's iPhone</b><small>iPhone</small></div></div><div class="tile">${svg(ICON.desktop)}<div><b>Studio PC</b><small>Windows</small></div></div></div>
+      </div>
     </div>
-    <div class="phone" id="phone"><div class="cam"><div style="padding:8px;background:#fff;border-radius:8px;transform:scale(.62)">${qrHTML()}</div></div>
-      <div class="bn" id="banner"><b>Open in Safari</b><br>github.com/maanit-gupta/Cheese</div></div>
-    <div class="chip" id="c1">Calendar<span>⌃⌥⌘C</span></div>
-    <div class="chip" id="c2">Notes<span>⌃⌥⌘N</span></div>`,
+    <div class="phone2" id="phone"><div class="scr">
+      <div class="ppill"><i></i>Connected to <b>MacBook Air</b></div>
+      <div class="ph2">FROM YOUR MAC</div>
+      <div class="pcard"><div class="prow"><div class="pth"></div><div><b>Beach.heic</b><small>2.4 MB</small></div></div></div>
+      <div class="pcta" id="pcta">${svg(ICON.download)}<span id="pctaText">Download File</span></div>
+      <div class="ph2">SEND TO YOUR MAC</div>
+      <div class="pdrop">${svg(ICON.upload)}<b>Tap to choose photos or files</b><small>or drop them here</small></div>
+      <div class="pcard pup" id="pup"><div class="upt"><span>IMG_2041.heic</span><span id="pst">0%</span></div><div class="pbar"><i id="pfill"></i></div></div>
+    </div></div>
+    <div class="toast" id="toast"><div class="ic">${svg(ICON.download)}</div>Received IMG_2041.heic from your phone</div>`,
   update(lt, s) {
-    setHud(lt, [[.15, .8, ['⌘', 'C']], [3.85, 4.35, ['Esc']], [4.75, 5.5, ['⌃', '⌥', '⌘', 'C']], [6.25, 7.0, ['⌃', '⌥', '⌘', 'N']]]);
-    setIndicator('∞');
+    setHud(lt, [[.75, 1.6, ['Drag to 🧀']], [2.25, 2.6, ['Share Link / QR']], [3.7, 4.2, ['Copy Link']]]);
+    setIndicator(lt > 2.8 ? 'Share' : '');
     const icon = at($('mbCheese').querySelector('svg'));
-    const qm = s.q('#qmenu');
-    qm.style.left = Math.min(icon[0] - 14, 1100 - 262) + 'px';
-    popIn(qm, lt, 1.0, 2.05, .2);
-    const item = qm.querySelector('[data-k="Show Clipboard as QR"]');
-    item.classList.toggle('on', lt > 1.6);
-    $('mbCheese').classList.toggle('on', lt > 1.0 && lt < 2.05);
-    if (lt > .6 && lt < 2.0) { const m = at(item, .3); const [cx, cy] = path(lt, [[.6, 560, 520], [1.0, icon[0], icon[1]], [1.55, m[0], m[1]]]); setCursor(cx, cy, 1); }
-    else setCursor(0, 0, 0);
+    const photo = at(s.q('#ph0'));
+    s.q('#ph0').classList.toggle('pick', lt > .65 && lt < 1.65);
 
-    popIn(s.q('#qr'), lt, 2.05, 4.6, .3);
-    const ph = s.q('#phone'), po = win(lt, 2.5, 4.6, .35);
-    ph.style.opacity = po; ph.style.transform = `translateY(${(1 - eo(prog(lt, 2.5, 3.0))) * 90}px) rotate(-4deg)`;
-    s.q('#banner').style.opacity = prog(lt, 3.2, 3.45);
+    // Drag the photo onto the icon: it lights up and the hub opens under it.
+    const hovering = lt > 1.3 && lt < 1.65;
+    const mb = $('mbCheese');
+    mb.classList.toggle('on', hovering || (lt > 1.65 && lt < 2.75));
+    mb.style.background = hovering ? 'rgba(10,100,216,.28)' : '';
+    mb.style.transform = hovering ? `scale(${1 + .14 * Math.sin(prog(lt, 1.3, 1.6) * Math.PI)})` : '';
+    const hub = s.q('#hub');
+    hub.style.left = clamp(icon[0] - 170, 10, 1100 - 350) + 'px';
+    popIn(hub, lt, 1.68, 2.75, .2);
+    const card = hub.querySelector('[data-k="share"]');
+    card.classList.toggle('on', lt > 2.2);
 
-    const cal = s.q('#cal'), co = prog(lt, 5.05, 5.4);
-    cal.style.opacity = co; cal.style.transform = `scale(${lerp(.9, 1, back(co))})`;
-    const notes = s.q('#notes'), nf = lt > 6.55;
-    notes.style.zIndex = nf ? 4 : 2;
-    notes.style.transform = `scale(${nf ? lerp(.96, 1, back(prog(lt, 6.55, 6.9))) : 1})`;
-    const c1 = s.q('#c1'), c2 = s.q('#c2');
-    Object.assign(c1.style, { left: '270px', top: '110px', opacity: win(lt, 5.2, 6.5, .2) });
-    Object.assign(c2.style, { left: '110px', top: '50px', opacity: win(lt, 6.65, 7.9, .2) });
+    // The Share panel: the photo is ready, the link is live.
+    const sp = s.q('#spanel');
+    popIn(sp, lt, 2.8, 7.9, .3);
+    const copied = lt > 3.8 && lt < 5.3;
+    const copy = s.q('#copy');
+    copy.textContent = copied ? 'Copied ✓' : 'Copy Link';
+    copy.style.filter = lt > 3.75 && lt < 3.9 ? 'brightness(.8)' : 'none';
+    s.q('#ldot').style.opacity = .55 + .45 * Math.cos(lt * Math.PI);
+
+    // The phone opens the link: download, then send a photo back.
+    const ph = s.q('#phone'), po = win(lt, 3.9, 7.9, .35);
+    ph.style.opacity = po; ph.style.transform = `translateY(${(1 - eo(prog(lt, 3.9, 4.4))) * 90}px)`;
+    const tapped = lt > 4.7 && lt < 4.85;
+    s.q('#pcta').style.background = tapped ? '#444' : '#1d1d1f';
+    s.q('#pctaText').textContent = lt > 4.85 ? 'Downloaded ✓' : 'Download File';
+    const up = s.q('#pup');
+    up.style.opacity = prog(lt, 5.3, 5.5);
+    const fill = prog(lt, 5.5, 6.5);
+    s.q('#pfill').style.width = (fill * 100).toFixed(1) + '%';
+    const pst = s.q('#pst');
+    const sent = lt > 6.55;
+    pst.textContent = sent ? 'Sent to Mac ✓' : Math.round(fill * 100) + '%';
+    pst.style.color = sent ? '#30a14e' : '#6e6e73';
+    up.querySelector('.pbar').style.display = sent ? 'none' : 'block';
+    const toast = s.q('#toast'), tv = win(lt, 6.6, 7.9, .25);
+    toast.style.opacity = tv; toast.style.transform = `translateX(-50%) translateY(${(1 - eo(prog(lt, 6.6, 6.9))) * 20}px)`;
+
+    // Cursor: photo → icon (dragging), → Share Link card, → Copy Link.
+    const ghost = s.q('#ghost');
+    let c = null;
+    if (lt > .2 && lt < .75) c = path(lt, [[.2, 600, 560], [.6, photo[0], photo[1]]]);
+    else if (lt >= .75 && lt < 1.65) c = path(lt, [[.75, photo[0], photo[1]], [1.3, icon[0], icon[1]]]);
+    else if (lt >= 1.65 && lt < 2.7) { const k = at(card); c = path(lt, [[1.8, icon[0], icon[1]], [2.15, k[0], k[1]]]); }
+    else if (lt >= 2.9 && lt < 4.4) { const k = at(copy); c = path(lt, [[3.0, 420, 140], [3.65, k[0], k[1]]]); }
+    if (c) setCursor(c[0], c[1], 1); else setCursor(0, 0, 0);
+    const dragging = lt > .78 && lt < 1.65;
+    ghost.style.opacity = dragging ? .92 : 0;
+    if (c) Object.assign(ghost.style, { left: (c[0] - 30) + 'px', top: (c[1] - 22) + 'px' });
   }
 });
 
 // 10. Shortcuts --------------------------------------------------------------
 const SHORTCUT_ROWS = [['Open clipboard history', '⌃⌥V'], ['Capture region', '⌃⌥4'], ['Capture full screen', '⌃⌥3'], ['Capture window', '⌃⌥5'], ['Copy text from region (OCR)', '⌃⌥T'], ['Scrolling capture', '⌃⌥S']];
 scene({
-  id: 'keys', start: 70.8, end: 76.8, num: 'YOUR KEYS', title: 'Every shortcut is yours', keys: ['Keyboard Shortcuts…'],
-  desc: 'Every feature is one click away in the menu bar. Don\'t like a default? Choose Keyboard Shortcuts…, click one and press new keys.',
+  id: 'keys', start: 70.8, end: 76.8, num: 'YOUR KEYS', title: 'Every shortcut is yours', keys: ['Settings…', 'Shortcuts'],
+  desc: 'Every tool is one click away in the menu bar, grouped by what you do. Don\'t like a default? Open Settings → Shortcuts, click one and press new keys.',
   html: `
     <div class="menu" id="menu" style="padding:5px">
-      ${menuHTML(['Clipboard History|⌃⌥V', '-', '#Capture', 'Capture Region|⌃⌥4', 'Capture Window|⌃⌥5', 'Capture Full Screen|⌃⌥3', 'Scrolling Capture|⌃⌥S', '#Text', 'Copy Text from Screen|⌃⌥T', '#Windows', 'Arrange Window|▸', '#Utilities', 'Draw on Screen|⌃⌥D', 'Show Clipboard as QR|', 'Keep Awake|▸', '-', 'Clear History|', 'Clear All…|', '-', 'Command Palette|⌃⌥↩', 'Keyboard Shortcuts…|', 'Settings…|⌘,', 'Welcome Guide…|', 'Quit Cheese|⌘Q'])}
+      ${menuHTML(['Clipboard History|⌃⌥V', 'Capture|▸', 'Draw on Screen|⌃⌥D', 'Files|▸', 'Share…|', 'Shelf|⌃⌥F', 'Windows|▸', 'Tools|▸', '-', 'Clear History|', 'Settings…|⌘,', 'Quit Cheese|⌘Q'])}
     </div>
     <div class="win" id="settings" style="left:180px;top:70px;width:720px;height:590px;opacity:0">
       <div class="tb" style="justify-content:center;position:relative"><div class="dots" style="position:absolute;left:14px"><i></i><i></i><i></i></div>Cheese Settings</div>
-      <div class="tabs">${[['⚙︎', 'General'], ['⌨︎', 'Shortcuts'], ['📋', 'Clipboard'], ['⌕', 'OCR'], ['🚀', 'App Hotkeys'], ['📄', 'Files'], ['🔒', 'Permissions'], ['ⓘ', 'About']].map(([g, n]) => `<div class="tab ${n === 'Shortcuts' ? 'on' : ''}" style="width:82px"><span class="g">${g}</span>${n}</div>`).join('')}</div>
+      <div class="tabs">${[['⚙︎', 'General'], ['⌨︎', 'Shortcuts'], ['📋', 'Clipboard'], ['▦', 'Windows'], ['🚀', 'Hotkeys'], ['📄', 'Files'], ['⇪', 'Share'], ['🔒', 'Permissions']].map(([g, n]) => `<div class="tab ${n === 'Shortcuts' ? 'on' : ''}" style="width:82px"><span class="g">${g}</span>${n}</div>`).join('')}</div>
       <div style="font-size:13px;color:#888;margin:14px 26px 0">Click a shortcut and press the keys you want instead.</div>
       <div class="gtitle">Clipboard &amp; Capture</div>
       <div class="group">${SHORTCUT_ROWS.map((r, i) => `<div class="srow"><span>${r[0]}</span><div class="rec" id="rec${i}">${r[1]}</div></div>`).join('')}</div>
@@ -810,7 +911,7 @@ scene({
     const icon = at($('mbCheese').querySelector('svg'));
     m.style.left = Math.min(icon[0] - 14, 1100 - 282) + 'px';
     $('mbCheese').classList.toggle('on', lt > .25 && lt < 1.5);
-    for (const mi of m.querySelectorAll('.mi')) mi.classList.toggle('on', mi.dataset.k === 'Keyboard Shortcuts…' && lt > 1.0);
+    for (const mi of m.querySelectorAll('.mi')) mi.classList.toggle('on', mi.dataset.k === 'Settings…' && lt > 1.0);
     const st = s.q('#settings'), so = prog(lt, 1.5, 1.85);
     st.style.opacity = so; st.style.transform = `scale(${lerp(.95, 1, back(so))})`;
     const rec = s.q('#rec0');
@@ -818,7 +919,7 @@ scene({
     rec.classList.toggle('recording', recording);
     rec.textContent = recording ? 'Press shortcut' : changed ? '⇧⌘V' : '⌃⌥V';
     rec.style.background = changed ? `rgba(255,200,61,${.7 * (1 - prog(lt, 3.3, 4.6))})` : '#fff';
-    const ks = at(m.querySelector('[data-k="Keyboard Shortcuts…"]'), .35);
+    const ks = at(m.querySelector('[data-k="Settings…"]'), .35);
     if (lt < 1.5) { const [cx, cy] = path(lt, [[0, 600, 300], [.25, icon[0], icon[1]], [.6, icon[0], icon[1]], [1.0, ks[0], ks[1]]]); setCursor(cx, cy, win(lt, 0, 1.5, .15)); }
     else if (lt < 3.0) { const r = at(rec); const [cx, cy] = path(lt, [[1.8, 600, 500], [2.35, r[0], r[1]]]); setCursor(cx, cy, win(lt, 1.8, 3.2, .15)); }
     else setCursor(0, 0, 0);

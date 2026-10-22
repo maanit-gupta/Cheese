@@ -28,7 +28,8 @@ struct PanelSnapshotTests {
         hub.load(.files([report]))
         try render(StatusItemDropPanelView(model: hub), as: "drop-hub", in: folder)
 
-        // The Share panel, live, with two files and a nearby phone.
+        // The Share panel, live, with two files; then with nearby devices (their menus are AppKit, so
+        // they render as placeholders).
         var hooks = ShareService.Hooks(ask: { _, _ in .decline }, receivedText: { _, _ in }, setListening: { _ in })
         hooks.address = { "127.0.0.1" }
         hooks.identity = { nil }
@@ -41,13 +42,14 @@ struct PanelSnapshotTests {
             try await Task.sleep(for: .milliseconds(20))
         }
         service.stage([.file(report), .file(photo)])
+        try render(SharePanelView(model: model), as: "share-panel", in: folder)
         for (alias, model, type) in [("Maanit's iPhone", "iPhone", LocalSend.DeviceType.mobile), ("Studio PC", "Windows", .desktop)] {
             let info = LocalSend.DeviceInfo(alias: alias, version: "2.1", deviceModel: model, deviceType: type, fingerprint: alias, port: 53317)
             if let peer = LocalSendPeer(info: info, address: "192.168.1.\(alias.count)") {
                 service.found(peer)
             }
         }
-        try render(SharePanelView(model: model), as: "share-panel", in: folder)
+        try render(SharePanelView(model: model), as: "share-panel-devices", in: folder)
 
         // Show Clipboard as QR, sharing a file over a link.
         let qr = QRPanelModel()

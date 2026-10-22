@@ -2,7 +2,7 @@
 
 Everything Cheese does, tool by tool. The [README](../README.md) has the short version.
 
-- [Capture](#capture) · [Copy](#copy) · [Share](#share) · [Control: windows and apps](#control-windows-and-apps) · [Draw on screen](#draw-on-screen) · [Convert](#convert-offline-pdf-document-and-image-tools) · [Control: keep awake](#control-keep-awake)
+- [Capture](#capture) · [Copy](#copy) · [Share](#share) ([drop hub](#drop-anything-on-the-menu-bar-icon)) · [Control: windows and apps](#control-windows-and-apps) · [Draw on screen](#draw-on-screen) · [Convert](#convert-offline-pdf-document-and-image-tools) · [Control: keep awake](#control-keep-awake)
 - [The menu bar menu](#the-menu-bar-menu) · [Welcome and permissions](#welcome-and-permissions) · [Keyboard shortcuts](#keyboard-shortcuts) · [Settings](#settings) · [Troubleshooting](#troubleshooting) · [Uninstall](#uninstall)
 
 ## Capture
@@ -35,28 +35,36 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - Skips anything a password manager marks as concealed or transient.
 
 ### Show clipboard as QR
-- Pick **Show Clipboard as QR** from the menu or the command palette. A large QR code appears in the middle of the screen.
-- Short text and links go straight into the code. Anything bigger (long text, images, rich text, files, folders) is served from a **local Wi-Fi link** that expires after 10 minutes or when you press **Stop Sharing**. Your phone must be on the same Wi-Fi.
+- Pick **Show Clipboard as QR** from the menu or the command palette. A QR code appears in the middle of the screen, under a pill showing what's being shared.
+- Short text and links go straight into the code. Anything bigger (long text, images, rich text, files, folders) is served from a **local Wi-Fi link**: the panel shows the link with **Copy Link**, a live countdown, and **Stop**. Links expire after 10 minutes. Your phone must be on the same Wi-Fi.
+- Scanning the link opens the same clean page as Cheese Share (see below): the file with **Download File**, a picture with its preview, several files or a folder as **Download All (.zip)**, or long text with **Copy Text**. When the link stops, the page says so.
 - The first time Cheese shares over Wi-Fi, **the macOS firewall may ask** whether Cheese can accept incoming connections (only if the firewall is on). Allow it, or the phone can't reach the link.
 
 ## Share
 
 ### Shelf
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>F</kbd> shows a floating shelf near the pointer. Drag it anywhere; it remembers the spot.
-- Drop files, folders, images, text and links on it to park them while you find where they go. Or drop files on the menu bar icon and pick **Add to Shelf**.
+- Drop files, folders, images, text and links on it to park them while you find where they go. Or drop them on the menu bar icon and pick **Add to Shelf** in the drop hub.
 - Rather not drag? Click **+** (or **Upload Files…** on an empty shelf, or press <kbd>⌘</kbd><kbd>O</kbd>) to pick files and folders, or press <kbd>⌘</kbd><kbd>V</kbd> to add what's on the clipboard.
 - Files stay where they are: the shelf keeps a reference that survives renames and moves. Dropped images and text are kept in `~/Library/Application Support/Cheese/Shelf/`.
 - Drag an item (or the stack handle, for everything) somewhere and it leaves the shelf. Dragging follows Finder's rules: same disk moves, another disk copies, <kbd>⌥</kbd> forces a copy. The shelf hides once it's empty.
 - The toolbar has **Send…** (Cheese Share), **Files** tools for the shelf's files, **Zip** (to Downloads), **Copy Paths**, **Quick Look** (or <kbd>Space</kbd>) and **Clear**. Missing originals show greyed out.
 - The shelf survives restarts. There's one shelf.
 
+### Drop anything on the menu bar icon
+- Drag files, a picture from a browser, a link or a text selection onto the 🧀. The icon lights up, and a small **drop hub** opens under it when you let go.
+- At the top, a pill says what you dropped (`Report.pdf · 1.8 MB`, `4 items dropped`). Below it are two big buttons: **Share Link / QR** puts it in Cheese Share and shows the link, and **Add to Shelf** parks it on the shelf.
+- For files, the **Files** tools that fit them follow, under **PDF**, **CONVERT** and **IMAGES**. Click one to open its options with the files already in.
+- With Cheese Share switched off, Share Link / QR uses Show Clipboard as QR's 10-minute links instead.
+
 ### Cheese Share
-- **Share…** in the menu (or the palette, the shelf's **Send…**, **Cheese Share** in any app's Share menu, or the URL `cheese://share` from Shortcuts or a script) opens the Share panel.
-- **Phones, no app needed:** click **Phone** and scan the QR code. The page lets the phone send photos, files and text to the Mac, and download whatever you drop on the Phone tile.
-- **LocalSend:** devices running the free [LocalSend](https://localsend.org) app (Android, iPhone, Windows, Linux, Mac) on the same network show up as tiles. Drop files on a tile, click it to send what's ready, or use its menu for **Send Clipboard**. They can send to Cheese too: you're asked first, with **Always Accept from This Device** for your own devices (manage them in **Settings → Share**).
+- **Share…** in the menu (or the palette, the drop hub's **Share Link / QR**, the shelf's **Send…**, **Cheese Share** in any app's Share menu, or the URL `cheese://share` from Shortcuts or a script) opens the Share panel.
+- **Ready to Share:** the strip at the top holds what you're sharing, like `2 items · 4.2 MB`. Drop files anywhere on the panel, click **+** to choose some, or click **Share Clipboard**. **Clear** empties it.
+- **The link and QR code:** scan it with a phone, or **Copy Link** and paste it into any browser on the same Wi-Fi. No app needed. The page shows who it's connected to and what you're sharing: files with **Download File** or **Download All (.zip)**, picture previews, and text or links with **Copy Text** and **Open Link ↗**. From the same page the phone can **send photos, files and text back** with a live progress bar; received text lands on the Mac's clipboard. It follows the phone's light or dark mode, and when the link stops it says *Expired — Reopen Share on your Mac*. **Stop** ends the link at once.
+- **LocalSend:** devices running the free [LocalSend](https://localsend.org) app (Android, iPhone, Windows, Linux, Mac) on the same network show up under **Nearby devices**. Click one to send what's ready, drop files straight on it, or use its **…** menu for **Send Files…** and **Send Clipboard**. A thin bar shows progress. They can send to Cheese too: you're asked first, with **Always Accept from This Device** for your own devices (manage them in **Settings → Share**).
 - Received files go to **Downloads** (configurable) and a notification offers **Show in Finder**. Received text and links land on the clipboard, and in clipboard history.
 - **Nothing listens until you open the Share panel.** Cheese Share stops 10 minutes after you close it; **Share** shows next to the menu bar icon meanwhile (click it to reopen the panel). Turning the Share module off stops it at once.
-- LocalSend transfers are **encrypted** with a certificate Cheese makes for your Mac and keeps in the Keychain (its fingerprint is in **Settings → Share**). The Phone page uses plain HTTP, because phone browsers refuse self-signed certificates, so use it on networks you trust. Details: [LOCALSEND.md](LOCALSEND.md).
+- LocalSend transfers are **encrypted** with a certificate Cheese makes for your Mac and keeps in the Keychain (its fingerprint is in **Settings → Share**). The browser page uses plain HTTP, because phone browsers refuse self-signed certificates, so use it on networks you trust. Its address holds a random 128-bit token, and it stops working when Share stops. Details: [LOCALSEND.md](LOCALSEND.md).
 - The first time, macOS asks to let Cheese find devices on your **Local Network**. If you said no, turn Cheese on in **System Settings → Privacy & Security → Local Network**. If the macOS firewall is on, allow incoming connections for Cheese too.
 
 ## Control: windows and apps
@@ -121,7 +129,7 @@ Like iLovePDF, but **entirely offline**: no file leaves your Mac and nothing tou
 
 Three ways in, all listing only the tools that fit your files:
 - **Right-click in Finder → Cheese ▸**. Turn it on once in **Settings → Files → Open Extension Settings…** (it lists Cheese among the Finder extensions in System Settings → General → Login Items & Extensions).
-- **Drop files on the menu bar icon.** A menu pops up with the matching tools, grouped under PDF, Convert and Images.
+- **Drop files on the menu bar icon.** The drop hub lists the matching tools under PDF, Convert and Images.
 - **The command palette:** type "Files:". If Finder is in front, Cheese uses its selection (macOS asks once to let Cheese read it); otherwise it asks you to choose files.
 
 Pick a tool and a small panel shows the files (drag to reorder where order matters), the options, and **Run**. Options are remembered per tool. While jobs run, progress shows next to the icon (`3/10`) and the menu gets a **Cancel** item; a notification with **Show in Finder** arrives when they're done.
