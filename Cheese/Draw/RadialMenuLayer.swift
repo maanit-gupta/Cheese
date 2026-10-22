@@ -22,7 +22,7 @@ final class RadialMenuLayer {
         container.bounds = CGRect(x: -geometry.ringRadius, y: -geometry.ringRadius, width: size, height: size)
 
         disc.path = CGPath(ellipseIn: CGRect(x: -geometry.sliceRadius, y: -geometry.sliceRadius, width: geometry.sliceRadius * 2, height: geometry.sliceRadius * 2), transform: nil)
-        disc.fillColor = NSColor(white: 0.1, alpha: 0.82).cgColor
+        disc.fillColor = NSColor(white: 0.1, alpha: DesignTokens.reducesTransparency ? 1 : 0.82).cgColor
         disc.shadowColor = NSColor.black.cgColor
         disc.shadowOpacity = 0.35
         disc.shadowRadius = 12
@@ -68,8 +68,8 @@ final class RadialMenuLayer {
         brush.actions = ["path": NSNull(), "fillColor": NSNull()]
         container.addSublayer(brush)
 
-        label.fontSize = 12
-        label.font = NSFont.systemFont(ofSize: 12, weight: .semibold)
+        label.fontSize = DesignTokens.Overlay.labelFont.pointSize
+        label.font = DesignTokens.Overlay.labelFont
         label.foregroundColor = NSColor.white.cgColor
         label.alignmentMode = .center
         label.contentsScale = 2
@@ -101,13 +101,13 @@ final class RadialMenuLayer {
         let fade = CABasicAnimation(keyPath: "opacity")
         fade.fromValue = 0
         fade.toValue = 1
-        fade.duration = 0.12
+        fade.duration = DesignTokens.Duration.quick
         container.add(fade, forKey: "appear")
-        if !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+        if !DesignTokens.reducesMotion {
             let grow = CABasicAnimation(keyPath: "transform.scale")
             grow.fromValue = 0.8
             grow.toValue = 1
-            grow.duration = 0.16
+            grow.duration = DesignTokens.Duration.standard
             grow.timingFunction = CAMediaTimingFunction(name: .easeOut)
             container.add(grow, forKey: "grow")
         }
