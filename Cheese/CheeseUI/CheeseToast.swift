@@ -58,7 +58,7 @@ final class CheeseToast {
         panel.alphaValue = 0
         panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.15
+            context.duration = DesignTokens.duration(DesignTokens.Duration.standard)
             panel.animator().alphaValue = 1
         }
         dismissTask = Task { [weak self] in
@@ -77,7 +77,7 @@ final class CheeseToast {
             return
         }
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.25
+            context.duration = DesignTokens.duration(DesignTokens.Duration.gentle)
             panel.animator().alphaValue = 0
         }
         Task {
@@ -94,7 +94,7 @@ private struct ToastView: View {
     let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: DesignTokens.Spacing.medium) {
             Image(systemName: systemImage)
                 .font(.title3)
             Text(message)
@@ -106,10 +106,10 @@ private struct ToastView: View {
                     .controlSize(.small)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, DesignTokens.Spacing.xLarge)
+        .padding(.vertical, DesignTokens.Spacing.medium)
         .frame(maxWidth: 460)
-        .background(.regularMaterial, in: Capsule())
+        .cheeseSurface(in: Capsule())
         .fixedSize()
     }
 }
