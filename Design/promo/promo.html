@@ -220,6 +220,10 @@
   .strip { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 10px; border-radius: 10px; background: rgba(0,0,0,.06); }
   .strip small { display: block; font-size: 10px; color: #8a8a8e; } .strip b { font-weight: 600; }
   .strip .clr { margin-left: auto; color: #0a64d8; font-weight: 600; } .strip .plus { font-size: 18px; color: #444; padding: 0 4px; }
+  .rstrip { display: flex; align-items: center; gap: 8px; padding: 0 8px 0 10px; border-radius: 10px; background: rgba(48,161,78,.12); overflow: hidden; }
+  .rstrip .rdot { width: 16px; height: 16px; border-radius: 50%; background: #30a14e; color: #fff; display: flex; align-items: center; justify-content: center; flex: none; } .rstrip .rdot svg { width: 10px; height: 10px; }
+  .rstrip small { display: block; font-size: 10px; color: #8a8a8e; } .rstrip b { font-weight: 600; }
+  .rstrip .show { margin-left: auto; color: #0a64d8; font-weight: 600; } .rstrip .more { color: #444; padding: 0 4px; letter-spacing: 1px; }
   .lcard { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; background: rgba(0,0,0,.06); }
   .lcard .qw2 { padding: 10px; background: #fff; border-radius: 12px; }
   .lpill { align-self: stretch; display: flex; align-items: center; gap: 6px; padding: 3px 3px 3px 10px; border-radius: 99px; background: rgba(255,255,255,.75); font: 11px "SF Mono", Menlo, monospace; color: #444; }
@@ -801,7 +805,7 @@ scene({
 const PHOTOS = ['linear-gradient(160deg,#7cc4f2,#f2c46b 70%,#e0a24a)', 'linear-gradient(160deg,#2f6f4f,#9fd18b)', 'linear-gradient(160deg,#f7a072,#8a3d6b)', 'linear-gradient(160deg,#3a7bd5,#00d2ff)', 'linear-gradient(160deg,#ffc83d,#f29e1f)', 'linear-gradient(160deg,#5a4bb5,#e0702f)'];
 scene({
   id: 'share', start: 63.2, end: 71.2, num: '09 — SHARE', title: 'Drop it on the 🧀, scan, done', keys: ['Drop on 🧀', 'Share Link / QR'],
-  desc: 'Drop anything on the menu bar icon to share it as a link and QR code, park it on the Shelf, or open the file tools that fit. Phones get a clean page to download from — and to send photos back.',
+  desc: 'Drop anything on the menu bar icon to share it as a link and QR code, park it on the Shelf, or open the file tools that fit. Phones get a clean page to download from, and what they send back lands right in the panel.',
   html: `
     <div class="win" style="left:70px;top:90px;width:470px;height:330px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Photos</div>
       <div class="photos">${PHOTOS.map((g, i) => `<div id="ph${i}" style="background:${g}"></div>`).join('')}</div></div>
@@ -811,6 +815,7 @@ scene({
       <div class="sph"><span class="chev">‹</span><div><b>Cheese Share</b><small>Visible as MacBook Air · encrypted</small></div><span class="x">✕</span></div>
       <div class="spb">
         <div class="strip"><div style="width:22px;height:22px;border-radius:5px;background:${PHOTOS[0]}"></div><div><small>Ready to Share</small><b>Beach.heic · 2.4 MB</b></div><span class="clr">Clear</span><span class="plus">+</span></div>
+        <div class="rstrip" id="rstrip"><div class="rdot">${svg(ICON.download)}</div><div><small>Received from your phone</small><b>IMG_2041.heic · 2.4 MB</b></div><span class="show">Show</span><span class="more">···</span></div>
         <div class="lcard"><div class="qw2"><div style="width:140px;height:140px"><div style="transform:scale(.833);transform-origin:0 0">${qrHTML()}</div></div></div>
           <div class="lpill"><span>192.168.1.42:54812/3f9a2c…</span><span class="cbtn" id="copy">Copy Link</span></div>
           <div class="lfoot"><i id="ldot"></i>Same Wi-Fi · Live while Share is open<span class="stop">Stop</span></div></div>
@@ -871,6 +876,13 @@ scene({
     pst.textContent = sent ? 'Sent to Mac ✓' : Math.round(fill * 100) + '%';
     pst.style.color = sent ? '#30a14e' : '#6e6e73';
     up.querySelector('.pbar').style.display = sent ? 'none' : 'block';
+    // What the phone sent shows up in the panel's Received strip, which makes the panel taller.
+    const grow = eo(prog(lt, 6.6, 6.95));
+    const rs = s.q('#rstrip');
+    rs.style.height = (grow * 40).toFixed(1) + 'px';
+    rs.style.marginBottom = ((grow - 1) * 10).toFixed(1) + 'px';
+    rs.style.opacity = grow;
+    sp.style.height = (460 + grow * 50).toFixed(1) + 'px';
     const toast = s.q('#toast'), tv = win(lt, 6.6, 7.9, .25);
     toast.style.opacity = tv; toast.style.transform = `translateX(-50%) translateY(${(1 - eo(prog(lt, 6.6, 6.9))) * 20}px)`;
 

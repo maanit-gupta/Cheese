@@ -61,9 +61,10 @@ node scripts/phone-page-webkit.mjs $D
 
 ## Panels without a screen
 
-`PanelSnapshotTests` renders the drop hub, the Share panel and the QR panel to PNGs (light and dark) with
-`ImageRenderer`, to check their layout from a terminal. AppKit-backed controls (menus, some buttons) show as
-placeholders there; everything else is drawn as in the app.
+`PanelSnapshotTests` renders the drop hub, the Share panel (staged, with nearby devices, and with a received
+file) and the QR panel to PNGs (light and dark) through an offscreen hosting view, to check their layout from a
+terminal and to make the README stills. Menus and buttons are drawn as in the app. If Cheese itself is running
+with Share open, it holds LocalSend's port, so the panel reports that discovery failed; quit it first for a clean still.
 
 ```sh
 TEST_RUNNER_SNAPSHOT_DIR=$(mktemp -d) xcodebuild -project Cheese.xcodeproj -scheme Cheese -destination 'platform=macOS' \

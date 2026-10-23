@@ -28,8 +28,7 @@ struct PanelSnapshotTests {
         hub.load(.files([report]))
         try render(StatusItemDropPanelView(model: hub), as: "drop-hub", in: folder)
 
-        // The Share panel, live, with two files; then with nearby devices (their menus are AppKit, so
-        // they render as placeholders).
+        // The Share panel, live, with two files; then with nearby devices; then with a file received.
         var hooks = ShareService.Hooks(ask: { _, _ in .decline }, receivedText: { _, _ in }, setListening: { _ in })
         hooks.address = { "127.0.0.1" }
         hooks.identity = { nil }
@@ -50,6 +49,11 @@ struct PanelSnapshotTests {
             }
         }
         try render(SharePanelView(model: model), as: "share-panel-devices", in: folder)
+        // A photo the phone sent back, in the Received strip.
+        let received = files.appending(path: "IMG_2041.HEIC")
+        try Data(count: 2_400_000).write(to: received)
+        service.record([received], from: "your phone")
+        try render(SharePanelView(model: model), as: "share-panel-received", in: folder)
 
         // Show Clipboard as QR, sharing a file over a link.
         let qr = QRPanelModel()
@@ -64,12 +68,32 @@ struct PanelSnapshotTests {
             let content = view
                 .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: DesignTokens.Radius.panel))
                 .environment(\.colorScheme, scheme)
+                .environment(\.controlActiveState, .key)
                 .padding(24)
-            let renderer = ImageRenderer(content: content)
-            renderer.scale = 2
-            let image = try #require(renderer.cgImage)
-            let data = try #require(NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]))
+            // Drawn by a hosting view in an offscreen window, so AppKit-backed controls (menus) show
+            // as they do in the app rather than as ImageRenderer's placeholders.
+            let host = NSHostingView(rootView: content)
+            host.appearance = NSAppearance(named: scheme == .light ? .aqua : .darkAqua)
+            host.frame = CGRect(origin: .zero, size: host.fittingSize)
+            let window = KeyWindow(contentRect: host.frame, styleMask: .borderless, backing: .buffered, defer: false)
+            window.contentView = host
+            host.layoutSubtreeIfNeeded()
+            let size = host.bounds.size
+            let rep = try #require(NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: Int(size.width * 2), pixelsHigh: Int(size.height * 2),
+                bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+            ))
+            rep.size = size
+            host.cacheDisplay(in: host.bounds, to: rep)
+            let data = try #require(rep.representation(using: .png, properties: [:]))
             try data.write(to: folder.appending(path: "\(name)-\(scheme == .light ? "light" : "dark").png"))
         }
     }
+}
+
+/// Draws its controls as in the frontmost window (a blue Copy Link, not a grey one).
+private final class KeyWindow: NSWindow {
+    override var isKeyWindow: Bool { true }
+    override var isMainWindow: Bool { true }
 }

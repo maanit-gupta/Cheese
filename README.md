@@ -95,7 +95,7 @@ Get things from your Mac to a phone, a PC or another Mac nearby, and back, with 
 
 Drag files, a picture from a browser, a link or a text selection onto the 🧀. It lights up, and a small drop hub opens right under it:
 
-<p align="center"><img src="docs/media/share-mac.png" width="760" alt="The drop hub under the menu bar icon (Share Link / QR, Add to Shelf, and the PDF tools for a dropped report) next to the Cheese Share panel with its Ready to Share strip, QR code and Copy Link"></p>
+<p align="center"><img src="docs/media/share-mac.png" width="760" alt="The drop hub under the menu bar icon (Share Link / QR, Add to Shelf, and the PDF tools for a dropped report) next to the Cheese Share panel with its Ready to Share strip, a photo just received from a phone, the QR code with Copy Link, and nearby devices"></p>
 
 - **Share Link / QR** puts it in Cheese Share and shows its link and QR code at once.
 - **Add to Shelf** parks it on the [Shelf](#share).
@@ -104,6 +104,7 @@ Drag files, a picture from a browser, a link or a text selection onto the 🧀. 
 **Cheese Share** (menu bar → **Share…**, the palette, the Shelf's **Send…**, or any app's Share menu)
 - **Ready to Share:** drop files anywhere on the panel, click **+**, or click **Share Clipboard**.
 - **One link for everything:** scan the QR code with a phone, or **Copy Link** and open it in any browser on the same Wi-Fi. No app needed.
+- **What comes back lands in the panel:** files sent from a phone or another device appear in a green **Received** strip. **Show** reveals them in Finder, and **⋯** opens any one of them. The list stays after sharing stops, until you clear it.
 - **LocalSend built in:** phones and computers running the free [LocalSend](https://localsend.org) app (Android, iPhone, Windows, Linux, Mac) appear under **Nearby devices**. Click one to send what's ready, or drop files straight onto it. They can send to you too, after you accept (or always, for your own devices). Transfers are encrypted.
 
 **The page your phone opens** is clean and light, follows the phone's light or dark mode, and works over plain local Wi-Fi:
