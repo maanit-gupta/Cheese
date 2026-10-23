@@ -136,6 +136,13 @@ final class SharePanelModel {
         return bytes > 0 ? "\(items.count) items · \(size)" : "\(items.count) items"
     }
 
+    /// `IMG_2041.HEIC · 2.4 MB` or `3 files · 8 MB`. Nil when nothing's arrived.
+    nonisolated static func receivedSummary(of received: [ShareService.ReceivedFile]) -> String? {
+        guard let first = received.first else { return nil }
+        let size = ByteCountFormatter.string(fromByteCount: received.reduce(0) { $0 + $1.size }, countStyle: .file)
+        return received.count == 1 ? "\(first.url.lastPathComponent) · \(size)" : "\(received.count) files · \(size)"
+    }
+
     // MARK: Lifetime
 
     /// The panel opened: sharing starts (again) and the link goes live.
@@ -262,12 +269,16 @@ struct SharePanelView: View {
             CheeseDivider()
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                 ReadyStrip(model: model)
+                if !model.service.received.isEmpty {
+                    ReceivedStrip(service: model.service)
+                }
                 LinkSection(model: model)
                 DevicesSection(model: model)
             }
             .padding(DesignTokens.Spacing.panel)
         }
-        .frame(width: 380, height: 460, alignment: .top)
+        // Taller while the Received strip shows, so the devices keep their room.
+        .frame(width: 380, height: model.service.received.isEmpty ? 460 : 510, alignment: .top)
         .overlay {
             if model.isDropTargeted, model.targetedPeer == nil {
                 RoundedRectangle(cornerRadius: DesignTokens.Radius.panel)
@@ -350,6 +361,52 @@ private struct ReadyStrip: View {
                 shape.fill(.quaternary.opacity(0.6))
             }
         }
+    }
+}
+
+/// Files that came in from a phone or device: open one, or show them all in Finder.
+private struct ReceivedStrip: View {
+    let service: ShareService
+
+    var body: some View {
+        HStack(spacing: DesignTokens.Spacing.small) {
+            Image(systemName: "arrow.down.circle.fill")
+                .foregroundStyle(.green)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Received from \(service.received.first?.from ?? "your phone")")
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                Text(SharePanelModel.receivedSummary(of: service.received) ?? "")
+                    .font(DesignTokens.Typography.secondary.weight(.medium))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            .help(service.received.map { "\($0.url.lastPathComponent) — from \($0.from)" }.joined(separator: "\n"))
+            Spacer(minLength: DesignTokens.Spacing.xxSmall)
+            Button("Show") { NSWorkspace.shared.activateFileViewerSelecting(service.received.map(\.url)) }
+                .buttonStyle(CheeseTextButtonStyle())
+            Menu {
+                ForEach(service.received) { file in
+                    Button(file.url.lastPathComponent, systemImage: "doc") { NSWorkspace.shared.open(file.url) }
+                }
+                Divider()
+                Button("Show All in Finder", systemImage: "folder") {
+                    NSWorkspace.shared.activateFileViewerSelecting(service.received.map(\.url))
+                }
+                Button("Clear List", systemImage: "xmark.circle") { service.clearReceived() }
+            } label: {
+                Image(systemName: "ellipsis")
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("Open a received file")
+        }
+        .padding(.leading, DesignTokens.Spacing.medium)
+        .padding(.trailing, DesignTokens.Spacing.small)
+        .frame(minHeight: 40)
+        .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: DesignTokens.Radius.card))
     }
 }
 

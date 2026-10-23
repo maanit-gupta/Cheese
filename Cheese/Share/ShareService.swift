@@ -28,6 +28,14 @@ final class ShareService {
         var itemCount: Int
     }
 
+    /// A file that arrived from a phone or another device, listed in the Share panel.
+    struct ReceivedFile: Identifiable, Equatable {
+        let id = UUID()
+        let url: URL
+        let from: String
+        let size: Int64
+    }
+
     struct Hooks {
         /// Asks whether to accept a LocalSend device's files.
         var ask: @MainActor (_ summary: String, _ sender: LocalSend.DeviceInfo) async -> ReceiveAnswer
@@ -56,6 +64,8 @@ final class ShareService {
     /// Staged to share: offered on the browser link's page, and sent to a device with one click.
     /// Handed in from a drop, the Shelf, the clipboard or the macOS Share menu.
     private(set) var staged: [OutgoingItem] = []
+    /// Files received this session, newest first. Kept after sharing stops so they stay a click away.
+    private(set) var received: [ReceivedFile] = []
 
     @ObservationIgnored private let hooks: Hooks
     @ObservationIgnored private let trustStore = TrustStore()
@@ -69,14 +79,14 @@ final class ShareService {
         ask: { [hooks] summary, sender in await hooks.ask(summary, sender) },
         trustStore: trustStore,
         onText: { [hooks] text, from in hooks.receivedText(text, from) },
-        onFilesReceived: { files, from in Self.notifyReceived(files, from: from) },
+        onFilesReceived: { [weak self] files, from in self?.didReceive(files, from: from) },
         onProblem: { message in CheeseToast.show(message, systemImage: "exclamationmark.triangle.fill") }
     ))
     @ObservationIgnored private(set) lazy var browser = BrowserTransfer(hooks: BrowserTransfer.Hooks(
         destination: { Preferences().shareDestination },
         maxBytes: { Preferences().shareMaxBytes },
         onText: { [hooks] text in hooks.receivedText(text, "your phone") },
-        onFileReceived: { file in Self.notifyReceived([file], from: "your phone") }
+        onFileReceived: { [weak self] file in self?.didReceive([file], from: "your phone") }
     ))
     /// LocalSend's API, over HTTPS when there's a certificate.
     @ObservationIgnored private lazy var server: HTTPServer = makeServer { [weak self] request, body in
@@ -335,6 +345,28 @@ final class ShareService {
         default:
             return .status(404)
         }
+    }
+
+    // MARK: Receiving
+
+    func clearReceived() {
+        received.removeAll()
+    }
+
+    /// Files arrived from a transfer: listed in the panel, and announced.
+    func didReceive(_ files: [URL], from sender: String) {
+        guard !files.isEmpty else { return }
+        record(files, from: sender)
+        Self.notifyReceived(files, from: sender)
+    }
+
+    /// Lists arrived files in the panel, newest first, keeping the last 50.
+    func record(_ files: [URL], from sender: String) {
+        let new = files.reversed().map { url in
+            let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).flatMap { Int64($0) } ?? 0
+            return ReceivedFile(url: url, from: sender, size: size)
+        }
+        received = Array((new + received).prefix(50))
     }
 
     private static func notifyReceived(_ files: [URL], from sender: String) {

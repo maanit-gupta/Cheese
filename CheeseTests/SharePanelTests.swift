@@ -22,6 +22,14 @@ struct SharePanelTextTests {
         #expect(SharePanelModel.summary(of: [.text("a"), .text("b")]) == "2 items")
     }
 
+    @Test func receivedSummaries() {
+        let photo = ShareService.ReceivedFile(url: URL(filePath: "/tmp/IMG_2041.HEIC"), from: "your phone", size: 2_400_000)
+        let note = ShareService.ReceivedFile(url: URL(filePath: "/tmp/Notes.pdf"), from: "Pixel 8", size: 600_000)
+        #expect(SharePanelModel.receivedSummary(of: []) == nil)
+        #expect(SharePanelModel.receivedSummary(of: [photo]) == "IMG_2041.HEIC · 2.4 MB")
+        #expect(SharePanelModel.receivedSummary(of: [photo, note]) == "2 files · 3 MB")
+    }
+
     @Test func phases() {
         let link = URL(string: "http://10.0.0.2:5000/abc/")!
         #expect(SharePanelModel.phase(stoppedByUser: false, listening: .stopped, link: nil) == .starting)
@@ -145,5 +153,26 @@ struct SharePanelStateTests {
         model.service.clearStaged()
         #expect(model.service.staged.isEmpty)
         #expect(try await pageState(link).html.contains("Nothing from your Mac yet"))
+    }
+
+    @Test func receivedFilesListNewestFirstAndOutliveStop() {
+        let model = makeModel()
+        let service = model.service
+        let first = URL(filePath: "/tmp/a.jpg"), second = URL(filePath: "/tmp/b.pdf"), third = URL(filePath: "/tmp/c.txt")
+        service.record([first, second], from: "your phone")
+        service.record([third], from: "Pixel 8")
+        #expect(service.received.map(\.url) == [third, second, first])
+        #expect(service.received.map(\.from) == ["Pixel 8", "your phone", "your phone"])
+
+        // Only the last 50 are kept.
+        service.record((0..<60).map { URL(filePath: "/tmp/\($0).png") }, from: "your phone")
+        #expect(service.received.count == 50)
+        #expect(service.received.first?.url.lastPathComponent == "59.png")
+
+        // Stopping the link keeps them a click away; Clear List empties it.
+        model.stop()
+        #expect(service.received.count == 50)
+        service.clearReceived()
+        #expect(service.received.isEmpty)
     }
 }
