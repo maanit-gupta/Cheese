@@ -58,6 +58,11 @@ extension ActionID {
     static let restoreAllWindows = Self(rawValue: "restoreAllWindows")
     static let settingsWindows = Self(rawValue: "settingsWindows")
 
+    /// "After Capture: Copy to Clipboard" and the other capture destinations.
+    static func captureDestination(_ destination: CaptureDestination) -> Self {
+        Self(rawValue: "captureDestination.\(destination.rawValue)")
+    }
+
     /// "Files: Merge PDFs…" and the other Files tools.
     static func files(_ tool: ToolID) -> Self {
         Self(rawValue: "files.\(tool.rawValue)")
@@ -103,6 +108,8 @@ struct CheeseAction: Identifiable {
     var featureName: String?
     /// Beyond its module being on, whether the action can run right now.
     var precondition: @MainActor () -> Bool = { true }
+    /// For a choice among options: whether this one is current, shown as a checkmark in the menu.
+    var isChecked: (@MainActor () -> Bool)?
     /// Listed in the command palette. Draw mode isn't: it's entered from its hotkey or the menu bar.
     var showsInPalette = true
     /// Gets the hotkey's presses and releases instead of `perform` running on each press,

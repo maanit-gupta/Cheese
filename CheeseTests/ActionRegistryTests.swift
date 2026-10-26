@@ -350,7 +350,10 @@ struct MenuLayoutTests {
             "snapLeft", "snapRight", "maximize", "snapBottom", "restoreWindow",
         ])
         #expect(titles(submenu("Capture", in: visible) ?? []) == [
-            "captureRegion", "captureWindow", "captureFullScreen", "ocrRegion", "scrollingCapture",
+            "captureRegion", "captureWindow", "captureFullScreen", "ocrRegion", "scrollingCapture", "—", "After Capture▸",
+        ])
+        #expect(titles(submenu("After Capture", in: submenu("Capture", in: visible) ?? []) ?? []) == [
+            "captureDestination.clipboard", "captureDestination.folder", "captureDestination.clipboardAndFolder",
         ])
         #expect(titles(submenu("Tools", in: visible) ?? []) == [
             "autoKillPanel", "killAllApps", "—", "showClipboardQR", "Keep Awake▸",
@@ -365,14 +368,15 @@ struct MenuLayoutTests {
     }
 
     @Test func disabledModulesDisappear() {
-        let capture: Set<ActionID> = [.captureRegion, .captureWindow, .captureFullScreen, .ocrRegion, .scrollingCapture]
+        let destinations = CaptureDestination.allCases.map { ActionID.captureDestination($0) }
+        let capture = Set<ActionID>([.captureRegion, .captureWindow, .captureFullScreen, .ocrRegion, .scrollingCapture] + destinations)
         let visible = MenuLayout.visible(MenuLayout.standard) { !capture.contains($0) }
         #expect(submenu("Capture", in: visible) == nil)
         #expect(!titles(visible).contains("Capture▸"))
     }
 
     @Test func aSubmenuWithOneItemBecomesAPlainItem() {
-        let visible = MenuLayout.visible(MenuLayout.standard) { $0 != .captureRegion && $0 != .captureWindow && $0 != .captureFullScreen && $0 != .scrollingCapture }
+        let visible = MenuLayout.visible(MenuLayout.standard) { $0 == .ocrRegion || !$0.rawValue.hasPrefix("capture") && $0 != .scrollingCapture }
         #expect(titles(visible).contains("ocrRegion!"))
         #expect(!titles(visible).contains("Capture▸"))
     }

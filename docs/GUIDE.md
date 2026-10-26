@@ -9,13 +9,13 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 
 ### Screenshots
 - **Region** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>4</kbd>, **full screen** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>3</kbd> and **window** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>5</kbd> (with its shadow).
-- Copied straight to the clipboard at full Retina resolution. Nothing clutters your desktop.
+- Copied straight to the clipboard at full Retina resolution, so nothing clutters your desktop. Prefer files? **Capture ▸ After Capture** (or **Settings → General → Screenshots**) switches every capture to **Save to Folder**, or **Copy and Save** for both. The folder is set just below it (Desktop by default). This covers region, window, full-screen and scrolling captures and draw-mode snapshots.
 - **Hold <kbd>⇧</kbd> as you finish** to open the annotation editor: arrows, boxes, text, highlighter, blur, crop, and undo/redo. Save as PNG or copy.
 
 ### Scrolling capture
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd>, then select the scrollable area. Cheese scrolls for you and stitches one tall image.
 - Sticky headers and footers are detected and kept once, not repeated.
-- Stops by itself at the end of the page, or when you press <kbd>Esc</kbd>. Then copy, save, annotate or OCR the result.
+- Stops by itself at the end of the page, or when you press <kbd>Esc</kbd>. The result is copied and/or saved as set under **After Capture**, then a preview opens where you can also copy, save, annotate or OCR it.
 
 ### Copy text from anything (OCR)
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd>, then drag over any part of the screen: videos, images, locked PDFs or slides.

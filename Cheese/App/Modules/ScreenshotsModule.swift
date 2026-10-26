@@ -1,6 +1,7 @@
 import AppKit
 
-/// Region, window and full-screen screenshots: copied to the clipboard, or into the editor with Shift.
+/// Region, window and full-screen screenshots: copied and/or saved (After Capture), or into the
+/// editor with Shift.
 @MainActor
 final class ScreenshotsModule: CheeseModule {
     let id = ModuleID.screenshots
@@ -50,10 +51,6 @@ final class ScreenshotsModule: CheeseModule {
             editor.open(image)
             return
         }
-        Task {
-            if await ImageExport.copy(image) {
-                CheeseToast.show("Screenshot copied")
-            }
-        }
+        Task { await CaptureDelivery.deliver(image, noun: "Screenshot") }
     }
 }

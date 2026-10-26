@@ -1,6 +1,7 @@
 import os
 
-/// Scrolling capture: select a region, auto-scroll and stitch it, then show the preview.
+/// Scrolling capture: select a region, auto-scroll and stitch it, copy and/or save it (After Capture),
+/// then show the preview.
 @MainActor
 final class ScrollCaptureModule: CheeseModule {
     let id = ModuleID.scrollingCapture
@@ -53,6 +54,7 @@ final class ScrollCaptureModule: CheeseModule {
         let result = await session.run()
         self.session = nil
         if let result {
+            await CaptureDelivery.deliver(result, noun: "Scrolling capture")
             preview.show(result)
         }
     }

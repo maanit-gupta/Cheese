@@ -4,6 +4,7 @@ import Foundation
 /// No dots in keys: `@AppStorage` observes them with KVO.
 enum PreferenceKey {
     static let screenshotSaveFolder = "screenshotSaveFolder"
+    static let captureDestination = "captureDestination"
     static let historySize = "historySize"
     static let ocrLineBreakMode = "ocrLineBreakMode"
     static let hasSeenWelcome = "hasSeenWelcome"
@@ -83,6 +84,14 @@ struct Preferences {
             return Self.defaultSaveFolder
         }
         return URL(filePath: path, directoryHint: .isDirectory)
+    }
+
+    static let defaultCaptureDestination = CaptureDestination.clipboard
+
+    /// Where finished captures go: the clipboard unless the user chose the save folder (or both).
+    var captureDestination: CaptureDestination {
+        defaults.string(forKey: PreferenceKey.captureDestination).flatMap(CaptureDestination.init(rawValue:))
+            ?? Self.defaultCaptureDestination
     }
 
     var ocrLineBreakMode: OCRLineBreakMode {

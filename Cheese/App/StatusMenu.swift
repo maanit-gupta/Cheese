@@ -71,6 +71,9 @@ final class StatusMenu: NSObject {
         if let shortcut = action.shortcut {
             item.setShortcut(for: shortcut)
         }
+        if let isChecked = action.isChecked {
+            item.state = isChecked() ? .on : .off
+        }
         return item
     }
 

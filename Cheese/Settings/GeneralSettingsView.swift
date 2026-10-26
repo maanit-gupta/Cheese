@@ -8,6 +8,9 @@ struct GeneralSettingsView: View {
     @AppStorage(PreferenceKey.screenshotSaveFolder)
     private var saveFolderPath = Preferences.defaultSaveFolder.path(percentEncoded: false)
 
+    @AppStorage(PreferenceKey.captureDestination)
+    private var captureDestination = Preferences.defaultCaptureDestination
+
     @AppStorage(PreferenceKey.drawLetterKeys) private var drawLetterKeys = false
 
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
@@ -27,7 +30,12 @@ struct GeneralSettingsView: View {
                 }
             }
 
-            Section("Screenshots") {
+            Section {
+                Picker("After a capture", selection: $captureDestination) {
+                    ForEach(CaptureDestination.allCases) { destination in
+                        Text(destination.title).tag(destination)
+                    }
+                }
                 LabeledContent("Save folder") {
                     HStack {
                         Text((saveFolderPath as NSString).abbreviatingWithTildeInPath)
@@ -36,6 +44,12 @@ struct GeneralSettingsView: View {
                         Button("Choose…", action: chooseSaveFolder)
                     }
                 }
+            } header: {
+                Text("Screenshots")
+            } footer: {
+                Text("Applies to region, window, full-screen and scrolling captures and to draw-mode snapshots. Also under Capture ▸ After Capture in the menu bar. Hold ⇧ while capturing to open the editor instead.")
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section {

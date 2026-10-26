@@ -242,7 +242,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             CheeseAction(id: .quit, title: "Quit Cheese", symbol: "power", module: nil) { _ in
                 NSApp.terminate(nil)
             },
-        ] + settingsTabActions()
+        ] + settingsTabActions() + captureDestinationActions()
+    }
+
+    /// Capture ▸ After Capture: shared by screenshots, scrolling capture and draw snapshots, so it
+    /// stays while either capture module is on.
+    private func captureDestinationActions() -> [CheeseAction] {
+        CaptureDestination.allCases.map { destination in
+            CheeseAction(
+                id: .captureDestination(destination), title: "After Capture: \(destination.title)",
+                symbol: destination.symbol, module: nil, menuTitle: destination.title,
+                precondition: {
+                    let preferences = Preferences()
+                    return preferences.isModuleEnabled(.screenshots) || preferences.isModuleEnabled(.scrollingCapture)
+                },
+                isChecked: { Preferences().captureDestination == destination }
+            ) { _ in
+                UserDefaults.standard.set(destination.rawValue, forKey: PreferenceKey.captureDestination)
+                CheeseToast.show("After a capture: \(destination.title.lowercased())", systemImage: destination.symbol)
+            }
+        }
     }
 
     /// "Settings: General" and friends, so the palette can open Settings on any tab.

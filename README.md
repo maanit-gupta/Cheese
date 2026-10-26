@@ -50,7 +50,7 @@ Keep everything you copy, find it in a keystroke, and get it where it needs to g
 
 ## Capture
 
-Screenshots go straight to the clipboard, at full Retina resolution, without cluttering your desktop.
+Screenshots go straight to the clipboard at full Retina resolution, or into a folder, or both: pick under **Capture ▸ After Capture** or in **Settings → General**.
 
 | Shortcut | Does |
 |---|---|
@@ -58,7 +58,7 @@ Screenshots go straight to the clipboard, at full Retina resolution, without clu
 | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>5</kbd> | Click a window, shadow and all |
 | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>3</kbd> | The display under the pointer |
 | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> | **Copy text** from any region: videos, images, locked PDFs, slides. English and Hindi. QR codes and barcodes too, and links get an *Open* button |
-| <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd> | **Scrolling capture:** pick an area and Cheese scrolls and stitches one tall image, keeping sticky headers once. Then copy, save, annotate or read its text |
+| <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd> | **Scrolling capture:** pick an area and Cheese scrolls and stitches one tall image, keeping sticky headers once. It's copied or saved like any capture, and a preview lets you copy, save, annotate or read its text |
 
 **Hold <kbd>⇧</kbd> as you finish** any capture to open the annotation editor instead: arrows, boxes, text, highlighter, blur, crop and undo, then **Copy** or **Save** as PNG.
 

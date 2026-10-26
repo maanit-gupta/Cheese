@@ -1155,8 +1155,8 @@ final class DrawModeController {
                 if shiftHeld {
                     exit()
                     services.openEditor(image)
-                } else if await ImageExport.copy(image) {
-                    CheeseToast.show("Snapshot copied", systemImage: "camera.fill")
+                } else {
+                    await CaptureDelivery.deliver(image, noun: "Snapshot")
                 }
             } catch {
                 Logger.draw.error("Snapshot failed: \(error.localizedDescription, privacy: .public)")
