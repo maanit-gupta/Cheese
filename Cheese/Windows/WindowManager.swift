@@ -63,8 +63,16 @@ final class WindowManager: WindowControlling {
         return frame(of: window)
     }
 
+    /// Measured against the live Dock on every call, since `NSScreen.visibleFrame` can be stale.
     func visibleFrames() -> [CGRect] {
-        NSScreen.screens.map { Screens.quartzRect(fromAppKit: $0.visibleFrame) }
+        let dock = DockDetector.current()
+        return NSScreen.screens.map { screen in
+            DockLayout.visibleFrame(
+                display: Screens.quartzRect(fromAppKit: screen.frame),
+                cachedVisible: Screens.quartzRect(fromAppKit: screen.visibleFrame),
+                dock: dock
+            )
+        }
     }
 
     func standardWindows() -> [AXWindow] {
