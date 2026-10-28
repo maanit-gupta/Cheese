@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/maanit-gupta/Cheese/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/maanit-gupta/Cheese?color=FFC83D&label=download"></a>
-  <img alt="macOS 27+" src="https://img.shields.io/badge/macOS-27%2B-1d1d1f">
+  <img alt="macOS 15+" src="https://img.shields.io/badge/macOS-15%2B-1d1d1f">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138">
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-2f9e74"></a>
 </p>
@@ -173,7 +173,7 @@ Running a Files tool from the palette with Finder in front asks once for **Autom
 
 ## Install
 
-Requires **macOS 27** or later on an Apple silicon Mac. Paste this into **Terminal**:
+Requires **macOS 15 Sequoia** or later on an Apple silicon Mac. Paste this into **Terminal**:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/maanit-gupta/Cheese/main/install.sh | bash

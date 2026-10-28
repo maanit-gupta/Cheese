@@ -23,7 +23,7 @@ fail() { printf '\033[1;31mError: %s\033[0m\n' "$*" >&2; exit 1; }
 
 [[ "$(uname)" == "Darwin" ]] || fail "Cheese runs on macOS only."
 major=$(sw_vers -productVersion | cut -d. -f1)
-(( major >= 27 )) || fail "Cheese needs macOS 27 or later (this Mac has $(sw_vers -productVersion))."
+(( major >= 15 )) || fail "Cheese needs macOS 15 or later (this Mac has $(sw_vers -productVersion))."
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT

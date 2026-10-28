@@ -13,9 +13,9 @@ This guide takes you from download to a working Cheese in about two minutes. Pic
 
 ## Requirements
 
-- **macOS 27** or later (check with  → About This Mac)
+- **macOS 15 Sequoia** or later (check with  → About This Mac)
 - An **Apple silicon** Mac (M1 or newer)
-- About 10 MB of disk space
+- About 15 MB of disk space
 
 Cheese ships as a **zip file**, not a `.dmg`. There's nothing to mount or eject.
 
@@ -210,8 +210,8 @@ This is Gatekeeper's quarantine flag on a download that isn't notarized, not rea
 xattr -dr com.apple.quarantine /Applications/Cheese.app
 ```
 
-### "Cheese needs macOS 27 or later" from the install script
-Cheese uses APIs that only exist in macOS 27. Update macOS in **System Settings → General → Software Update**.
+### "Cheese needs macOS 15 or later" from the install script
+Cheese uses APIs that first shipped in macOS 15 Sequoia (the newer text recognizer, among others). Update macOS in **System Settings → General → Software Update**.
 
 ### Screenshots show only the wallpaper, or nothing happens
 Screen Recording isn't active yet. Turn it on (see [Grant permissions](#2-grant-permissions)), then **quit and reopen** Cheese. macOS only applies a new Screen Recording grant after a relaunch.
