@@ -28,7 +28,8 @@ Cheese lives in your menu bar and stays out of the way until you press a shortcu
 
 | | |
 |---|---|
-| **[Copy](#copy)** | Clipboard history that searches the text inside screenshots · **batch paste** · drag to chat · edit before pasting · **Terminal Trace** · clipboard as QR |
+| **[Copy](#copy)** | Clipboard history that searches the text inside screenshots · **batch paste** · drag to chat · edit before pasting · clipboard as QR |
+| **[Terminal Trace](#terminal-trace)** | One shortcut copies your last command and everything it printed, errors pulled out, as Markdown for a chat, an issue or an AI assistant |
 | **[Capture](#capture)** | Region, window and full-screen screenshots · annotation editor · copy text and QR codes from anything on screen · scrolling capture |
 | **[Draw](#draw)** | Ink over any app, even full screen · magic-pen shapes · laser, spotlight and zoom · whiteboard and blackboard |
 | **[Convert](#convert)** | Offline PDF merge, split, compress, watermark and page numbers · Word, Excel, PowerPoint, images and Markdown to PDF · PDF to Word, Excel and images · image convert, resize, compress and background removal |
@@ -42,7 +43,7 @@ Cheese lives in your menu bar and stays out of the way until you press a shortcu
 ## New in 2.3
 
 **Terminal Trace** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>T</kbd>
-Build failed? One shortcut copies **the last command and everything it printed** from the terminal you're in, as a Markdown block ready to paste into a chat, an issue or an LLM. No scrolling, no selecting. Long output keeps the newest 120 lines, and the error lines (`error:`, `Traceback`, `npm ERR!`, `fatal:`, `panic:`…) get a block of their own. Works with Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm and the terminals in VS Code and Cursor. [More](#copy)
+Build failed? One shortcut copies **the last command and everything it printed** from the terminal you're in, as a Markdown block ready to paste into a chat, an issue or an LLM. No scrolling, no selecting. Long output keeps the newest 120 lines, and the error lines (`error:`, `Traceback`, `npm ERR!`, `fatal:`, `panic:`…) get a block of their own. Works with Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm and the terminals in VS Code and Cursor. [More](#terminal-trace)
 
 **Caffeinate, even with the lid closed** (menu bar → **Caffeinate**)
 Keep your Mac awake for 30 minutes, 1 or 2 hours, until a time or indefinitely, **with the lid shut**, with a countdown next to the icon (`Lid 42m`). Sleep comes back by itself: when the time runs out (a closed Mac then goes to sleep), at 10 % battery (adjustable), and if Cheese quits, crashes or the Mac restarts. Covering the lid takes your administrator password **once**, to install a small helper. [More](#control)
@@ -70,11 +71,6 @@ Keep everything you copy, find it in a keystroke, and get it where it needs to g
 - <kbd>↩</kbd> pastes them all with a single <kbd>⌘</kbd><kbd>V</kbd>, in the order you picked them: text is joined with blank lines, and screenshots and files go in together, so a whole batch of screenshots lands in Slack, Finder, Notes or a chat box at once.
 - <kbd>⌥</kbd><kbd>↩</kbd> pastes them **one by one** for apps that only take one image per paste, and <kbd>⌘</kbd><kbd>C</kbd> just copies the batch.
 
-**Terminal Trace** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>T</kbd>
-- Copies **the last command and everything it printed** from your terminal, without scrolling or selecting, ready to paste into a chat or an issue as a Markdown code block. Long output keeps the newest 120 lines, and error lines (`error:`, `Traceback`, `npm ERR!`, `fatal:`, `panic:`…) get their own block.
-- Works with Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm, and the terminals in VS Code and Cursor.
-- **Tools ▸ Terminal Trace** switches between **Last Response** and **Everything** (the whole scrollback, uncut); the shortcut copies with whichever you picked last.
-
 **Drag to chat, edit in place**
 - **Drag any item straight out of the history** (a row, or the image or file in the preview) into Messages, Slack, Discord, WhatsApp, a browser chat, Mail or Finder. The history fades while you aim, then closes after the drop. Images travel as both a file and image data, so web chats and native apps both accept them.
 - **Fix text before you send it:** click the small ✏️ in the bottom-right corner of a text preview (or press <kbd>⌘</kbd><kbd>E</kbd>), edit in place, then <kbd>⌘</kbd><kbd>↩</kbd> to paste or grab the drag handle to drop the edited text into a chat. The edit replaces the item rather than adding a copy.
@@ -82,6 +78,14 @@ Keep everything you copy, find it in a keystroke, and get it where it needs to g
 **Show Clipboard as QR** (menu bar → **Tools**, or the palette)
 - Short text and links go straight into a QR code for your phone's camera.
 - Anything bigger (long text, images, files, folders) becomes a **10-minute local Wi-Fi link** with **Copy Link**, a live countdown and **Stop**. Scanning it opens the same clean page as [Cheese Share](#share).
+
+## Terminal Trace
+
+Build failed? Don't scroll up and drag-select it: press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>T</kbd>.
+
+- Copies **the last command and everything it printed** from your terminal, ready to paste into a chat or an issue as a Markdown code block. Long output keeps the newest 120 lines, and error lines (`error:`, `Traceback`, `npm ERR!`, `fatal:`, `panic:`…) get their own block.
+- Works with Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm, and the terminals in VS Code and Cursor.
+- **Tools ▸ Terminal Trace** switches between **Last Response** and **Everything** (the whole scrollback, uncut); the shortcut copies with whichever you picked last.
 
 ## Capture
 
