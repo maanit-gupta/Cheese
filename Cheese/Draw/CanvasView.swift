@@ -472,6 +472,7 @@ final class CanvasView: NSView, NSTextViewDelegate {
     }
 
     override func mouseDown(with event: NSEvent) {
+        guard controller?.shouldDrawOnCanvasClick() ?? true else { return }
         window?.makeKey()
         if window?.firstResponder !== self, !isEditingText {
             window?.makeFirstResponder(self)
@@ -504,6 +505,7 @@ final class CanvasView: NSView, NSTextViewDelegate {
 
     // Right-click (or a two-finger click) held down opens the radial menu.
     override func rightMouseDown(with event: NSEvent) {
+        guard controller?.shouldDrawOnCanvasClick() ?? true else { return }
         window?.makeKey()
         controller?.radialBegan(on: page, at: location(of: event), time: event.timestamp)
     }

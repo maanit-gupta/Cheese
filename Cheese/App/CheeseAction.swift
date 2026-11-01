@@ -60,6 +60,8 @@ extension ActionID {
     static let restoreAllWindows = Self(rawValue: "restoreAllWindows")
     static let settingsWindows = Self(rawValue: "settingsWindows")
     static let terminalTrace = Self(rawValue: "terminalTrace")
+    static let checkForUpdates = Self(rawValue: "checkForUpdates")
+    static let installUpdate = Self(rawValue: "installUpdate")
 
     /// "Caffeinate: For 1 Hour" and the other fixed lengths.
     static func caffeinate(_ preset: CaffeinatePreset) -> Self {
@@ -123,6 +125,8 @@ struct CheeseAction: Identifiable {
     var precondition: @MainActor () -> Bool = { true }
     /// For a choice among options: whether this one is current, shown as a checkmark in the menu.
     var isChecked: (@MainActor () -> Bool)?
+    /// The menu title when it changes while Cheese runs ("Update Available (2.4)…"); `title` otherwise.
+    var liveTitle: (@MainActor () -> String)?
     /// Listed in the command palette. Draw mode isn't: it's entered from its hotkey or the menu bar.
     var showsInPalette = true
     /// Gets the hotkey's presses and releases instead of `perform` running on each press,

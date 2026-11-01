@@ -4,6 +4,7 @@ import os
 
 struct GeneralSettingsView: View {
     let showWelcome: @MainActor () -> Void
+    @ObservedObject var updates: UpdateService
 
     @AppStorage(PreferenceKey.screenshotSaveFolder)
     private var saveFolderPath = Preferences.defaultSaveFolder.path(percentEncoded: false)
@@ -11,7 +12,7 @@ struct GeneralSettingsView: View {
     @AppStorage(PreferenceKey.captureDestination)
     private var captureDestination = Preferences.defaultCaptureDestination
 
-    @AppStorage(PreferenceKey.drawLetterKeys) private var drawLetterKeys = false
+    @AppStorage(PreferenceKey.drawLetterKeys) private var drawLetterKeys = true
 
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var launchAtLoginMessage: String?
@@ -53,11 +54,11 @@ struct GeneralSettingsView: View {
             }
 
             Section {
-                Toggle("Advanced: single-letter tool keys", isOn: $drawLetterKeys)
+                Toggle("Single-letter tool keys", isOn: $drawLetterKeys)
             } header: {
                 Text("Draw on Screen")
             } footer: {
-                Text("Draw mode works with the mouse alone: hold the right button for tools and colors, ⇧ for straight lines, ⌘ to erase, ⌥ to highlight, and scroll to size the brush. Turn this on to also pick tools with letters (P, H, E, R…).")
+                Text("Pick tools with one letter while drawing: P pen, H highlighter, E eraser, I line, A arrow, R rectangle, O ellipse, T text, V select, M click-through. Each letter shows on its button in the draw HUD. Turn this off if you'd rather keep letters for the apps underneath; the mouse alone still does everything.")
                     .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }
@@ -70,6 +71,37 @@ struct GeneralSettingsView: View {
                 Text("Modules")
             } footer: {
                 Text("A module that's off has no shortcuts, runs nothing in the background, and leaves the menu.")
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Toggle("Automatically check for updates", isOn: $updates.autoCheckEnabled)
+                LabeledContent("Version") {
+                    HStack {
+                        Text(verbatim: "Cheese \(updates.currentVersion)")
+                        if updates.updateAvailable {
+                            Button("Update to \(updates.latestVersion)…") {
+                                updates.presentUpdatePrompt()
+                            }
+                            .disabled(updates.isInstalling)
+                        } else {
+                            Button("Check Now") {
+                                Task { await updates.checkForUpdates(userInitiated: true) }
+                            }
+                            .disabled(updates.isChecking || updates.isInstalling)
+                        }
+                    }
+                }
+                if !updates.statusMessage.isEmpty {
+                    Text(updates.statusMessage)
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Updates")
+            } footer: {
+                Text("Cheese asks GitHub for its newest release when it starts and every 12 hours; nothing about you or this Mac is sent. Updating downloads Cheese.zip, checks its checksum and signature, replaces Cheese where it is, and reopens it. Also under Check for Updates… in the menu bar.")
                     .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }

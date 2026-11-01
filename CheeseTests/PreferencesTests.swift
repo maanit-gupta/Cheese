@@ -25,6 +25,13 @@ struct PreferencesTests {
         }
     }
 
+    /// Draw mode's letter keys are on until the user turns them off.
+    @Test func drawLetterKeysDefaultOn() {
+        #expect(preferences.usesDrawLetterKeys)
+        defaults.set(false, forKey: PreferenceKey.drawLetterKeys)
+        #expect(!preferences.usesDrawLetterKeys)
+    }
+
     @Test func disabledModuleIsRead() {
         defaults.set(false, forKey: PreferenceKey.moduleEnabled(.clipboard))
         #expect(!preferences.isModuleEnabled(.clipboard))

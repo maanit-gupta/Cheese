@@ -47,6 +47,10 @@ enum DesignTokens {
         static let numeric = Font.callout.monospacedDigit()
         /// Licenses, fingerprints and other machine text.
         static let code = Font.system(.caption, design: .monospaced)
+        /// A draw HUD tool glyph: a touch larger than other toolbar glyphs, for a drawing tool.
+        static let hudSymbol = Font.system(size: 15)
+        /// The tiny letter in the corner of a draw HUD button that picks the tool from the keyboard.
+        static let keyHint = Font.system(size: 8, weight: .semibold, design: .rounded)
     }
 
     enum Size {
@@ -74,6 +78,22 @@ enum DesignTokens {
         static let hoverTint = 0.06
         /// The hairline inside every panel's edge, so panels stay crisp on any background.
         static let panelBorder = 0.09
+        /// A control that can't be used right now, like Undo with nothing to undo.
+        static let disabled = 0.35
+    }
+
+    /// The draw HUD: touch-sized, since it's used mid-drawing with a pen or a quick flick of the mouse.
+    enum HUD {
+        /// A tool button's hit area: larger than `Size.iconButton` (28×26) on purpose.
+        static let button = CGSize(width: 32, height: 28)
+        /// The ring around the active tool, on top of the active tint.
+        static let activeRing: CGFloat = 1.5
+        static let popoverWidth: CGFloat = 200
+        static let swatch: CGFloat = 22
+        /// The ring around the chosen swatch, drawn just outside it.
+        static let swatchRing: CGFloat = 3
+        /// A width preset's slot, the size of its largest dot plus room for the tint.
+        static let widthPresetSlot: CGFloat = 28
     }
 
     /// Animation lengths, in seconds. With Reduce Motion on, `duration(_:)` gives 0.

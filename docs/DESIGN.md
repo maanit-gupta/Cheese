@@ -15,7 +15,7 @@ new UI uses CheeseUI components and system SF Symbols only, with no one-off styl
 | Scroll HUD (`ScrollCaptureHUD`) | floating panel | 12 | `.regularMaterial` | 16×10, spacing 12 | `.headline` + `.caption` | `.borderedProminent`, `.small` | none |
 | QR panel (`QRPanel`) | `FloatingPanel` (now `CheesePanel`) | panel 18, quiet zone 12 | `.regularMaterial` | 20, spacing 14 / 8 / 4 | `.title3.semibold` title, `.callout` preview, `.caption` status | plain bordered Close / Stop Sharing | 40 pt message symbol |
 | Command palette (`PalettePanel`) | `FloatingPanel` (now `CheesePanel`) | panel 16, rows 8 | `.regularMaterial` | search 16×14, list 6, rows 10×7, spacing 10 / 2 | `.title2` search, rounded `.callout` shortcut | none (keyboard driven) | SF Symbols, 22 pt column |
-| Draw toolbar (`ToolbarPanel`) | non-activating `NSPanel` | rail 12, buttons 7, swatch rings circular, collapsed pill capsule | `.regularMaterial` | rail 4×6, buttons 32×27, flyout 12 | `.system(size: 15)` glyphs, `.caption` flyout labels | `.plain` with 0.28 accent tint when active | SF Symbols |
+| Draw HUD (`DrawHUD`) | non-activating `NSPanel`, never key, `FirstMouseHostingView` | rail 12, buttons 6, popovers 12, More rows 7 | `.regularMaterial` + 0.09 border | rail 4×6, buttons `HUD.button` 32×28, popovers 12 at `HUD.popoverWidth` 200 | `Typography.hudSymbol` glyphs, `Typography.keyHint` letters, `.caption` popover labels | press-to-act, accent 0.25 tint + `HUD.activeRing` 1.5 ring when active (green for pass-through), 0.06 hover | SF Symbols |
 | Radial menu (`RadialMenuLayer`) | Core Animation layers in the overlay | disc | dark disc, 0.35 shadow | n/a | system | slices | emoji + SF Symbols |
 | Files options panel (`OptionsPanel`) | titled utility panel | none | window background | 12, spacing 8 | `.callout` hint, `.caption` labels | `.borderless` remove, default Run | file icons 20 pt |
 | Page editor (`PageEditorTool`) | titled window | thumbnails 8 | window background | grid 20, spacing 18, cells 6 | `.caption` page numbers | `.borderedProminent` Save, `.small` | SF Symbols |
@@ -36,7 +36,7 @@ new UI uses CheeseUI components and system SF Symbols only, with no one-off styl
 ### What drifted
 - Panel corner radius: palette 16, QR 18. Standardised on **16**.
 - Row radius: history 6, palette 8. Standardised on **8** for rows, **6** for keycaps and swatches.
-- Rail button hit area: 32×27 in the draw rail vs 28×26 elsewhere. CheeseUI uses **28×26**; the rail keeps 32×27 because it's a touch-sized drawing tool.
+- Rail button hit area: 32×28 in the draw HUD (`DesignTokens.HUD.button`) vs 28×26 elsewhere. CheeseUI uses **28×26**; the HUD is touch-sized because it's used mid-drawing. `DesignTokens.HUD` and `Typography.hudSymbol`/`keyHint` exist because the HUD was the last screen with literal sizes (15 pt glyphs, 32×27 buttons, a 180 pt flyout); `Opacity.disabled` (0.35) is for its disabled Undo/Redo.
 - Reduce Transparency was ignored everywhere. CheeseUI swaps the material for the window color.
 - Reduce Motion was handled only by draw mode. CheeseUI's panels and animations honor it.
 
@@ -60,7 +60,8 @@ new UI uses CheeseUI components and system SF Symbols only, with no one-off styl
 | `CheeseToast` | Brief confirmations with one optional action | `Toast` |
 | `CheeseCard` | Tiles: shelf items, device tiles, welcome tool groups | history preview, page editor thumbnails |
 | `CheeseListRow` + `CheeseKeycap` | Rows with symbol, title, grey detail, trailing shortcut; a 0.06 hover fill that never shifts layout | palette row, welcome shortcut rows |
-| `CheeseIconButton` | Toolbar glyph buttons with tooltip and active tint | draw rail buttons |
+| `CheeseIconButton` | Toolbar glyph buttons with tooltip and active tint | — (the draw HUD has its own press-to-act button) |
+| `FirstMouseHostingView` | SwiftUI in a panel that never becomes key: takes the first click and every point inside it | draw HUD rail and popovers |
 | `CheeseToolbar` | A row of controls along a panel edge | editor / scroll preview toolbars |
 | `CheeseSectionHeader` | Headings over groups | settings and welcome headings |
 | `CheeseSectionCaps` | Small-capital group labels inside compact panels (PDF, CONVERT, NEARBY DEVICES) | v4 drop hub |

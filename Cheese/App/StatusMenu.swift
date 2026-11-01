@@ -63,7 +63,7 @@ final class StatusMenu: NSObject {
 
     private func actionItem(_ id: ActionID, keyEquivalent: String = "", inSubmenu: Bool = false) -> NSMenuItem? {
         guard let action = registry.action(id) else { return nil }
-        let title = inSubmenu ? action.menuTitle ?? action.title : action.title
+        let title = action.liveTitle?() ?? (inSubmenu ? action.menuTitle ?? action.title : action.title)
         let item = NSMenuItem(title: title, action: #selector(itemSelected(_:)), keyEquivalent: keyEquivalent)
         item.target = self
         item.representedObject = id.rawValue

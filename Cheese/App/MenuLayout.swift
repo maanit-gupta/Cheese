@@ -61,6 +61,11 @@ enum MenuLayout {
         .separator,
         .action(.clearHistory),
         .alternate(.clearAll),
+        .separator,
+        // The running version, then whichever of the two update items applies.
+        .header(Brand.versionTitle),
+        .action(.checkForUpdates),
+        .action(.installUpdate),
         .action(.openSettings, keyEquivalent: ","),
         .action(.quit, keyEquivalent: "q"),
     ]

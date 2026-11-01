@@ -36,9 +36,15 @@ Cheese lives in your menu bar and stays out of the way until you press a shortcu
 | **[Share](#share)** | Drop anything on the menu bar icon · links and QR codes for your phone · LocalSend to phones and PCs · a floating Shelf |
 | **[Control](#control)** | Window snapping · **edge-to-edge Fill to Screen** · **Caffeinate, even with the lid closed** · Auto-Kill · app hotkeys · command palette |
 
-[New in 2.3](#new-in-23) · [Shortcuts](#keyboard-shortcuts) · [Permissions](#permissions) · [Install](#install) · [Privacy](#privacy) · [Under the hood](#under-the-hood) · [Build from source](#build-from-source)
+[New in 2.4](#new-in-24) · [New in 2.3](#new-in-23) · [Shortcuts](#keyboard-shortcuts) · [Permissions](#permissions) · [Install](#install) · [Privacy](#privacy) · [Under the hood](#under-the-hood) · [Build from source](#build-from-source)
 
 ---
+
+## New in 2.4
+
+- **New app icon.** A fresh cheese wedge, everywhere Cheese shows its icon.
+- **Cheese updates itself.** When a release is out, a note appears and the menu shows **Update Available**; **Update & Relaunch** downloads it, checks its SHA-256 and signature, and reopens. **Check for Updates…** is in the menu, and **Settings → General → Updates** turns the automatic check off. [More](#install)
+- **Draw toolbar, rebuilt.** Every button works on the first click, the toolbar stays put, and style options open only when you ask. Single-letter tool keys (<kbd>P</kbd> pen, <kbd>H</kbd> highlighter, <kbd>E</kbd> eraser…) are on by default, and the command palette opens while you draw. [More](#draw)
 
 ## New in 2.3
 
@@ -221,6 +227,8 @@ curl -fsSL https://raw.githubusercontent.com/maanit-gupta/Cheese/main/install.sh
 
 The [script](install.sh) downloads the latest release, checks its SHA-256, installs it to `/Applications` and opens Cheese.
 
+After that, **Cheese updates itself**: when a new release is out, a note appears and the menu shows **Update Available**. Pick **Update & Relaunch** and Cheese downloads it, checks its SHA-256 and code signature, swaps itself out in place and reopens. **Check for Updates…** is in the menu too.
+
 Or download **`Cheese.zip`** from the [latest release](https://github.com/maanit-gupta/Cheese/releases/latest), unzip it and drag **Cheese.app** into **Applications**. Cheese isn't notarized by Apple, so macOS blocks the first launch:
 
 1. Open **System Settings → Privacy & Security** and scroll to *"Cheese" was blocked…*.
@@ -237,7 +245,8 @@ The [install guide](docs/INSTALL.md) covers updating, uninstalling and fixes for
 Everything runs on your Mac. No accounts, no telemetry, no cloud.
 
 - Files are converted on your Mac and never uploaded. The Office renderers are bundled and blocked from loading anything remote.
-- The only network use is sharing on **your own local network**, and nothing listens unless you ask. Show Clipboard as QR links expire after 10 minutes. Cheese Share listens only while its panel is open and for 10 minutes after, with a fresh random link each time.
+- Sharing stays on **your own local network**, and nothing listens unless you ask. Show Clipboard as QR links expire after 10 minutes. Cheese Share listens only while its panel is open and for 10 minutes after, with a fresh random link each time.
+- The one request to the internet is the **update check**: at launch and every 12 hours Cheese asks GitHub's public API for the latest release, sending nothing about you or your Mac. Turn it off in **Settings → General → Updates**.
 - The phone page is entirely self-contained: no outside scripts, fonts or trackers.
 - Items that password managers mark as secret are never recorded.
 
@@ -247,6 +256,7 @@ Everything runs on your Mac. No accounts, no telemetry, no cloud.
 - **Every tool is a module** you can switch off in **Settings → General**. A tool that's off costs nothing: no shortcuts, timers, listeners or menu entries.
 - **Every action is defined once** and shared by the menu, the shortcuts and the command palette, so they never disagree.
 - The Finder menu and the Share menu entry are small sandboxed extensions that only hand work to the app.
+- Updates need no framework: a small built-in updater reads GitHub's latest release, checks the download's SHA-256 and that it's signed by the same team, and swaps the app in place with a script that keeps the old copy until the new one is in.
 - The one privileged piece is Caffeinate's lid-closed helper: a short shell script run by launchd that turns lid-close sleep off only while Cheese asks for it, and back on when the session ends or Cheese is gone. Its every line is covered by tests that run it against stand-ins for `pmset`.
 - The logic behind each tool (stitching, snapping, ink smoothing, shape recognition, Terminal Trace parsing, batch paste ordering, PDF planning…) is plain Swift with no UI, covered by several hundred unit tests.
 

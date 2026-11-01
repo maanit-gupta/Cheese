@@ -29,6 +29,16 @@ enum PreferenceKey {
     static let stageManagerStripInset = "stageManagerStripInset"
     static let caffeinateLidClosed = "caffeinateLidClosed"
     static let caffeinateBatteryFloor = "caffeinateBatteryFloor"
+    /// Whether Cheese checks GitHub for a newer release at launch and every 12 hours (on unless set false).
+    static let updaterAutoCheck = "updaterAutoCheck"
+    /// A version the user chose "Skip This Version" for; automatic checks stay quiet about it.
+    static let updaterSkippedVersion = "updaterSkippedVersion"
+    /// When the last check got an answer from GitHub, as seconds since 1970.
+    static let updaterLastCheck = "updaterLastCheck"
+    /// The version that ran last, to tell the first launch after an upgrade.
+    static let updaterLastLaunchedVersion = "updaterLastLaunchedVersion"
+    /// The version handed to the swap script, so the next launch can say whether it went in.
+    static let updaterPendingVersion = "updaterPendingVersion"
 
     /// Last-used options of a Files tool, as JSON.
     static func fileToolOptions(_ tool: ToolID) -> String {
@@ -122,9 +132,9 @@ struct Preferences {
         defaults.bool(forKey: PreferenceKey.filesNativeFallback)
     }
 
-    /// Single-letter tool keys in draw mode (P, H, E…). Off unless the user turns them on.
+    /// Single-letter tool keys in draw mode (P, H, E…). On unless the user turns them off.
     var usesDrawLetterKeys: Bool {
-        defaults.bool(forKey: PreferenceKey.drawLetterKeys)
+        defaults.object(forKey: PreferenceKey.drawLetterKeys) as? Bool ?? true
     }
 
     static let defaultShareMaxGigabytes = 10

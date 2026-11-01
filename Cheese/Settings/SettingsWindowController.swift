@@ -10,6 +10,7 @@ struct SettingsDependencies {
     var appHotkeys: AppHotkeysSettingsModel
     var files: FilesSettingsModel
     var caffeinate: CaffeinateController
+    var updates: UpdateService
 }
 
 /// Hosts `SettingsView` in a plain window. A SwiftUI `Settings` scene is awkward to open

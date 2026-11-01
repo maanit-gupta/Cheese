@@ -323,6 +323,8 @@ struct ModuleManagerTests {
 
 struct MenuLayoutTests {
     private typealias Node = MenuLayout.Node
+    /// The "Cheese 2.3" header above the update items.
+    private let version = "#\(Brand.versionTitle)"
 
     private func titles(_ nodes: [Node]) -> [String] {
         nodes.map { node in
@@ -347,7 +349,8 @@ struct MenuLayoutTests {
         let visible = MenuLayout.visible(MenuLayout.standard) { _ in true }
         #expect(titles(visible) == [
             "openHistory", "Capture▸", "drawOnScreen", "Files▸", "showShare", "toggleShelf", "Windows▸", "Tools▸",
-            "Caffeinate▸", "—", "clearHistory", "alt:clearAll", "openSettings", "quit",
+            "Caffeinate▸", "—", "clearHistory", "alt:clearAll", "—", version, "checkForUpdates", "installUpdate",
+            "openSettings", "quit",
         ])
         #expect(titles(submenu("Windows", in: visible) ?? []) == [
             "fillAllWindows", "fillCurrentWindow", "restoreAllWindows", "—",
@@ -403,7 +406,7 @@ struct MenuLayoutTests {
         // Only Terminal Trace is on: Tools holds just the Terminal Trace submenu, which takes its place.
         let trace: Set<ActionID> = [.terminalTrace, .terminalTraceScope(.lastResponse)]
         let visible = MenuLayout.visible(MenuLayout.standard) { trace.contains($0) || $0 == .quit }
-        #expect(titles(visible) == ["Terminal Trace▸", "—", "quit"])
+        #expect(titles(visible) == ["Terminal Trace▸", "—", version, "quit"])
 
         // With one Terminal Trace option left, it shows under Tools with its full title.
         let one = MenuLayout.visible(MenuLayout.standard) { $0 == .terminalTrace || $0 == .showClipboardQR }
@@ -411,7 +414,7 @@ struct MenuLayoutTests {
 
         // One keep-awake option left: Caffeinate becomes that item, with its full title.
         let awake = MenuLayout.visible(MenuLayout.standard) { $0 == .caffeinateIndefinitely || $0 == .quit }
-        #expect(titles(awake) == ["caffeinateIndefinitely!", "—", "quit"])
+        #expect(titles(awake) == ["caffeinateIndefinitely!", "—", version, "quit"])
     }
 
     @Test func separatorsAndHeadersNeverDangle() {
@@ -424,7 +427,7 @@ struct MenuLayoutTests {
 
     @Test func alternateWithoutItsPrimaryBecomesAnItem() {
         let visible = MenuLayout.visible(MenuLayout.standard) { $0 == .clearAll || $0 == .quit }
-        #expect(titles(visible) == ["clearAll", "quit"])
+        #expect(titles(visible) == ["clearAll", "—", version, "quit"])
     }
 
     @Test func nothingAvailableShowsNothing() {

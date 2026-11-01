@@ -18,7 +18,7 @@ enum DrawTool: String, CaseIterable, Sendable {
     case spotlight
     case zoom
 
-    /// The single-letter key that picks the tool while drawing, when Settings turns letter keys on.
+    /// The single-letter key that picks the tool while drawing (on unless Settings turns letter keys off).
     var key: Character? {
         switch self {
         case .select: "V"
@@ -76,14 +76,6 @@ enum DrawTool: String, CaseIterable, Sendable {
         case .laser: "smallcircle.filled.circle"
         case .spotlight: "flashlight.on.fill"
         case .zoom: "plus.magnifyingglass"
-        }
-    }
-
-    /// Tools with a flyout of options (color, width, fill, font size, sticky color).
-    var hasOptions: Bool {
-        switch self {
-        case .pen, .highlighter, .rectangle, .ellipse, .line, .arrow, .text, .sticky, .stamp: true
-        default: false
         }
     }
 
@@ -152,6 +144,12 @@ enum RadialSlice: Int, CaseIterable, Sendable {
     }
 }
 
+/// The HUD's popovers: the brush's style, and the tools and switches that don't fit on the rail.
+enum HUDPopover: Sendable {
+    case style
+    case more
+}
+
 enum BoardMode: Sendable {
     case off
     case whiteboard
@@ -193,18 +191,15 @@ final class DrawSettings {
     /// Strokes fade away 3 s after the pen lifts instead of staying.
     var isDisappearingInk = false
     var stampKind = StampKind.check
-    /// The rail shrinks to a pill while drawing and grows back on hover.
-    var isToolbarCollapsed = false
     var fontSize: CGFloat = 28
     var stickyColor = CanvasColor.stickyColors[0]
     var board = BoardMode.off
-    var isFlyoutOpen = false
+    /// The HUD popover that's open, if any. Only the HUD's own buttons open one; picking a tool never does.
+    var openPopover: HUDPopover?
     var canUndo = false
     var canRedo = false
     var spotlightRadius: CGFloat = 160
     var zoomFactor: CGFloat = 2
-
-    var showsFlyout: Bool { isFlyoutOpen && tool.hasOptions }
 
     var style: CanvasStyle {
         CanvasStyle(color: color, width: width, isFilled: isFilled, fontSize: fontSize)

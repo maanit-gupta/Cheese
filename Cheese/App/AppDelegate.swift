@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let appHotkeyStore = AppHotkeyStore()
     private let installedApps = InstalledAppIndex()
     private let caffeinate = CaffeinateController()
+    private let updates = UpdateService.shared
     private var defaultsObserver: Task<Void, Never>?
 
     private static var isRunningUnitTests: Bool {
@@ -46,7 +47,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self?.takenAppHotkeyCharacters() ?? []
                 },
                 files: FilesSettingsModel(),
-                caffeinate: caffeinate
+                caffeinate: caffeinate,
+                updates: updates
             )
         )
 
@@ -70,6 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ShareHandoff.setEnabled(Preferences().isModuleEnabled(.share))
         observeDefaults()
         Logger.app.info("Cheese launched")
+        updates.configureOnLaunch()
         // After launch finishes, so the menu bar icon is already showing behind the prompt.
         Task { [permissions, permissionPrompter] in
             StartupSetupPrompt(permissions: permissions, permissionPrompter: permissionPrompter).showIfNeeded()
@@ -148,11 +151,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             qr,
             caffeinateModule(),
             AppHotkeysModule(store: appHotkeyStore, index: installedApps),
-            // Draw mode never routes through the palette, and the palette stays shut while drawing.
+            // Draw mode's tools stay out of the palette, but the palette opens above the canvas while drawing.
             CommandPaletteModule(
                 availableActions: { [weak self] in self?.registry?.availableActions ?? [] },
-                perform: { [weak self] id, context in self?.registry?.perform(id, context: context) },
-                isSuppressed: { [draw] in draw.isDrawing }
+                perform: { [weak self] id, context in self?.registry?.perform(id, context: context) }
             ),
             files,
             shelf,
@@ -247,7 +249,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             CheeseAction(id: .quit, title: "Quit Cheese", symbol: "power", module: nil) { _ in
                 NSApp.terminate(nil)
             },
-        ] + settingsTabActions() + captureDestinationActions()
+        ] + updateActions() + settingsTabActions() + captureDestinationActions()
+    }
+
+    /// Check for Updates… while there's nothing newer known; once there is, the item names the
+    /// version and opens the update prompt.
+    private func updateActions() -> [CheeseAction] {
+        [
+            CheeseAction(
+                id: .checkForUpdates, title: "Check for Updates…", symbol: "arrow.triangle.2.circlepath", module: nil,
+                precondition: { [updates] in !updates.updateAvailable }
+            ) { [updates] _ in
+                Task { await updates.checkForUpdates(userInitiated: true) }
+            },
+            CheeseAction(
+                id: .installUpdate, title: "Install Cheese Update…", symbol: "sparkles", module: nil,
+                precondition: { [updates] in updates.updateAvailable },
+                liveTitle: { [updates] in
+                    updates.isInstalling
+                        ? "Installing Cheese \(updates.latestVersion)…"
+                        : "Update Available (\(updates.latestVersion))…"
+                }
+            ) { [updates] _ in
+                updates.presentUpdatePrompt()
+            },
+        ]
     }
 
     /// Capture ▸ After Capture: shared by screenshots, scrolling capture and draw snapshots, so it

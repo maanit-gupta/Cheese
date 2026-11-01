@@ -32,7 +32,7 @@ struct SettingsView: View {
             // Grouped only because a tab builder takes at most ten children.
             Group {
                 Tab("General", systemImage: "gearshape", value: SettingsTab.general) {
-                    GeneralSettingsView(showWelcome: dependencies.showWelcome)
+                    GeneralSettingsView(showWelcome: dependencies.showWelcome, updates: dependencies.updates)
                 }
                 Tab("Shortcuts", systemImage: "keyboard", value: SettingsTab.shortcuts) {
                     ShortcutsSettingsView()

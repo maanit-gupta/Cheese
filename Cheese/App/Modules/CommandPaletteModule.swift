@@ -6,8 +6,6 @@ final class CommandPaletteModule: CheeseModule {
     let id = ModuleID.commandPalette
     private let availableActions: () -> [CheeseAction]
     private let perform: (ActionID, ActionContext) -> Void
-    /// While true (draw mode is on) the palette doesn't open, and leaves the menu.
-    private let isSuppressed: () -> Bool
     /// Where the palette was opened from: the app pastes and snaps should target.
     private var context = ActionContext()
     private lazy var panel = PalettePanel { [weak self] id in
@@ -18,22 +16,21 @@ final class CommandPaletteModule: CheeseModule {
     /// - Parameters:
     ///   - availableActions: the registry's actions that can run right now.
     ///   - perform: runs an action through the registry with the given context.
-    ///   - isSuppressed: whether the palette is off for now, like while drawing on screen.
+    ///
+    /// The palette opens while drawing on screen too: it sits above the canvas, and draw mode steps
+    /// aside while it has the keyboard.
     init(
         availableActions: @escaping () -> [CheeseAction],
-        perform: @escaping (ActionID, ActionContext) -> Void,
-        isSuppressed: @escaping () -> Bool = { false }
+        perform: @escaping (ActionID, ActionContext) -> Void
     ) {
         self.availableActions = availableActions
         self.perform = perform
-        self.isSuppressed = isSuppressed
     }
 
     var actions: [CheeseAction] {
         [
             CheeseAction(
-                id: .commandPalette, title: "Command Palette", symbol: "command", module: id, shortcut: .commandPalette,
-                precondition: { [isSuppressed] in !isSuppressed() }
+                id: .commandPalette, title: "Command Palette", symbol: "command", module: id, shortcut: .commandPalette
             ) { [weak self] context in
                 self?.toggle(context: context)
             },

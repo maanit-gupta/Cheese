@@ -177,9 +177,19 @@ The Files tools may ask for two more permissions, each only when first needed: *
 
 ## Updating
 
-Run the [one-line install](#option-1-one-line-install-recommended) again, or download the new `Cheese.zip` and replace the app in Applications. Your history, pins, settings and shortcuts are kept.
+Cheese updates itself. At launch and every 12 hours it asks GitHub for the latest release; when there's a newer one, a note appears and the menu bar menu shows **Update Available (2.4)…** in place of **Check for Updates…**. Choose **Update & Relaunch** (or **Later**, or **Skip This Version**), and Cheese:
 
-Permissions usually carry over because every release is signed with the same certificate. If a feature stops working after an update, see [Permissions are on but features still don't work](#permissions-are-on-but-features-still-dont-work).
+1. downloads `Cheese.zip` and its `Cheese.zip.sha256` from the release, and checks they match,
+2. unpacks it with `ditto` and checks it's Cheese, newer than yours, and code-signed by the same developer,
+3. quits, swaps the new `Cheese.app` in where the old one was (keeping the old one until the new one is in place), and reopens.
+
+The next launch says **Updated to Cheese 2.4**, or that the update couldn't be installed, in which case the old version is still there. The swap script writes what it did to `~/Library/Logs/Cheese/Update.log`.
+
+Self-updating needs Cheese to be somewhere your account can change: `/Applications` on an admin account, or `~/Applications`. Opened straight from Downloads (macOS runs such apps from a read-only copy) or from a disk image, Cheese asks you to move it to Applications first. On a standard account, where `/Applications` belongs to an administrator, run the [one-line install](#option-1-one-line-install-recommended) again instead, or download the new `Cheese.zip` and replace the app yourself. Your history, pins, settings and shortcuts are kept either way.
+
+Turn the automatic check off in **Settings → General → Updates**; **Check for Updates…** in the menu and **Check Now** in Settings still work.
+
+Permissions usually carry over because every release is signed with the same certificate. On the first launch after an update, Cheese clears a stale Accessibility or Screen Recording entry if macOS reports it as not granted (one that looks on in System Settings but no longer matches the app), so asking again adds a working one. If a feature stops working after an update, see [Permissions are on but features still don't work](#permissions-are-on-but-features-still-dont-work).
 
 ## Uninstalling
 
@@ -187,7 +197,7 @@ Permissions usually carry over because every release is signed with the same cer
 2. Delete the app and its data:
 
    ```sh
-   rm -rf /Applications/Cheese.app "$HOME/Library/Application Support/Cheese"
+   rm -rf /Applications/Cheese.app "$HOME/Library/Application Support/Cheese" "$HOME/Library/Logs/Cheese"
    defaults delete com.maanitgupta.cheese
    ```
 

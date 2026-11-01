@@ -394,7 +394,7 @@ struct DrawReworkModelTests {
 
 // MARK: - Mouse-first draw mode
 
-/// Drives the controller with synthesized events and the default settings: letter keys off.
+/// Drives the controller with synthesized events, with letter keys turned off in Settings.
 @MainActor
 struct MouseFirstDrawTests {
     private let page: CanvasPageID = 3
@@ -627,13 +627,10 @@ struct DrawPaletteTests {
         #expect(draw.actions.first?.hotkeyHandler != nil)
     }
 
-    @Test func thePaletteIsOffWhileSuppressed() {
-        var drawing = true
-        let palette = CommandPaletteModule(availableActions: { [] }, perform: { _, _ in }, isSuppressed: { drawing })
-        let action = palette.actions[0]
-        #expect(!action.precondition())
-        drawing = false
-        #expect(action.precondition())
+    /// The palette used to stay shut while drawing; now it opens above the canvas, so nothing turns it off.
+    @Test func thePaletteIsAlwaysAvailable() {
+        let palette = CommandPaletteModule(availableActions: { [] }, perform: { _, _ in })
+        #expect(palette.actions[0].precondition())
     }
 
     @Test func releasesOnlyReachActionsThatHandleThem() {

@@ -23,4 +23,5 @@ extension Logger {
     static let share = Logger(subsystem: subsystem, category: "Share")
     static let appSweep = Logger(subsystem: subsystem, category: "AppSweep")
     static let terminalTrace = Logger(subsystem: subsystem, category: "TerminalTrace")
+    static let update = Logger(subsystem: subsystem, category: "Update")
 }

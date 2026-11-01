@@ -110,7 +110,7 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - **Settings → Auto-Kill** lists the protected apps, and can make every sweep force-quit apps still open after 3 seconds.
 
 ### Command palette
-- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, QR, Caffeinate, Files tools, history and each Settings tab. (Draw mode stays out of it, and the palette doesn't open while you're drawing.)
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, QR, Caffeinate, Files tools, history and each Settings tab. It opens while you're drawing too: it sits above the canvas, and when it closes you're straight back to drawing. (Draw mode's own tools stay out of it.)
 - Each row shows the action's shortcut, so you learn them as you go. Recently used actions come first.
 
 ## Draw on screen
@@ -118,7 +118,7 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - Ink is smooth and keeps up with fast strokes: it thins as you speed up, thickens with pressure on a Force Touch trackpad or tablet, and tapers at the ends. The cursor becomes the brush.
 - **Magic pen:** draw a rough rectangle, circle, triangle, line or arrow and **hold still for a moment** before letting go. It snaps into a clean shape. Handwriting stays as you wrote it.
 - **Scratch out** ink with a quick zig-zag over it.
-- Everything works with the mouse alone:
+- Everything works with the mouse alone, or with one letter per tool:
 
 | Do this | To |
 |---|---|
@@ -131,15 +131,20 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 | Pinch (trackpad) | Zoom lens around the cursor |
 | Double-click empty space | Type text there |
 | <kbd>⌘</kbd><kbd>Z</kbd> / <kbd>⌘</kbd><kbd>⇧</kbd><kbd>Z</kbd> | Undo / redo |
-| <kbd>Esc</kbd> | Hide the canvas. Drawings come back next time, until you **Clear All** or quit |
+| <kbd>P</kbd> <kbd>H</kbd> <kbd>E</kbd> | Magic pen, highlighter, eraser |
+| <kbd>I</kbd> <kbd>A</kbd> <kbd>R</kbd> <kbd>O</kbd> <kbd>T</kbd> | Line, arrow, rectangle, ellipse, text |
+| <kbd>V</kbd> / <kbd>M</kbd> | Select and move / click through to the apps underneath |
+| <kbd>N</kbd> <kbd>L</kbd> <kbd>S</kbd> <kbd>Z</kbd> <kbd>B</kbd> | Sticky note, laser, spotlight, zoom, board |
+| <kbd>1</kbd>–<kbd>9</kbd>, <kbd>[</kbd> <kbd>]</kbd> | Color, thinner / thicker |
+| <kbd>Esc</kbd> | Step back: close a popover, finish a text box, deselect, then hide the canvas. Drawings come back next time, until you **Clear All** or quit |
 
 - **Stamps:** ✓, ✗, ⭐, ❓ and numbered steps (①②③…, counting up with each click).
-- **Disappearing ink** (toolbar): strokes fade 3 seconds after you lift the pen, which is great while presenting. **Neon** (in the pen's options) gives ink a glow.
+- **Disappearing ink** (under ⋯ on the tool rail): strokes fade 3 seconds after you lift the pen, which is great while presenting. **Neon** (in the color and stroke popover, with the pen) gives ink a glow.
 - Presenting? **Laser pointer**, **spotlight** and **zoom** (scroll to resize or magnify), plus a whiteboard or blackboard behind your drawings.
-- The tool rail on the left shrinks to a small pill while you draw; hover over it for shapes, select, pass-through, boards, undo, clear and snapshot.
-- **Pass-through** lets you click and type in the apps underneath while drawings stay visible.
+- The tool rail stays on the left edge, where you can drag it by its grip. Every tool works on the first click, and each button shows its letter. The colored dot opens **color and stroke**; **⋯** holds sticky notes, stamps, laser, spotlight, zoom, boards, disappearing ink and snapshot. **✓** is Done.
+- **Pass-through** (<kbd>M</kbd>) lets you click and type in the apps underneath while drawings stay visible. Click any tool on the rail, or press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd>, to draw again.
 - **Snapshot** (<kbd>⌘</kbd><kbd>⇧</kbd><kbd>S</kbd>) copies the screen with your drawings; Shift-click it to annotate instead.
-- Prefer single-letter tool keys (P, H, E, R…)? Turn on **Settings → General → Advanced: single-letter tool keys**.
+- Would you rather keep letters for the apps underneath? Turn off **Settings → General → Single-letter tool keys**.
 
 ## Convert: offline PDF, document and image tools
 Like iLovePDF, but **entirely offline**: no file leaves your Mac and nothing touches the network. Results are saved **next to the original** (`Report.pdf` → `Report (compressed).pdf`) and nothing is ever overwritten.
@@ -182,6 +187,9 @@ Keeping a Mac awake with the lid closed needs administrator rights (`pmset -a di
 
 The helper only switches lid-close sleep off while Cheese asks, and always switches it back on: when you turn Caffeinate off, when the time runs out or the battery hits the floor, when Cheese quits or crashes, and at startup if the Mac restarted mid-session. It does nothing while idle; launchd only starts it when Cheese changes its request. **Settings → Caffeinate** shows its status, and **Remove…** uninstalls it.
 
+## Updates
+Cheese keeps itself up to date from its GitHub releases. It checks when it starts and every 12 hours (the request carries nothing about you or your Mac); a new version shows a short note with **Update…**, and the menu's **Check for Updates…** becomes **Update Available (2.5)…**. **Update & Relaunch** downloads it, checks its SHA-256 and that it's signed by the same developer, replaces Cheese where it is and reopens it; **Skip This Version** stops the reminders until the next one. The next launch confirms **Updated to Cheese 2.5**. Turn the automatic check off, see your version or **Check Now** in **Settings → General → Updates**. Cheese has to be somewhere your account can change (Applications on an admin account, or `~/Applications`); otherwise it says so and offers the download page. Details are in [INSTALL.md](INSTALL.md#updating).
+
 ## Turning tools off
 Don't need a tool? Switch it off in **Settings → General → Modules** (or in the welcome screen's tool picker). A module that's off has no shortcuts, runs nothing in the background and disappears from the menu and the palette.
 
@@ -204,6 +212,9 @@ Click the 🧀 in the menu bar for every tool, so shortcuts are optional:
                                         Keep Awake With Lid Closed ✓ · Turn Off
  ───────────────────────────────────
  Clear History                          (hold ⌥ for Clear All…)
+ ───────────────────────────────────
+ Cheese 2.4
+ Check for Updates…                     (Update Available (2.5)… once there is one)
  Settings…                         ⌘,
  Quit Cheese                       ⌘Q
 ```
@@ -285,7 +296,7 @@ Cheese warns you if a combination is already taken by macOS or the menu. The men
 
 | Tab | What's there |
 |---|---|
-| **General** | Launch at login, screenshot save folder (default: Desktop), tool on/off switches, Show Welcome… |
+| **General** | Launch at login, screenshot save folder (default: Desktop), single-letter draw keys, updates (check automatically, on by default; version and Check Now), tool on/off switches, Show Welcome… |
 | **Shortcuts** | Rebind every global shortcut |
 | **Clipboard** | History size (default 200 unpinned items) |
 | **OCR** | Languages (English, Hindi) and line-break handling |
@@ -383,7 +394,7 @@ More fixes are in the [install guide](INSTALL.md#troubleshooting).
 Quit Cheese, then:
 
 ```sh
-rm -rf /Applications/Cheese.app "$HOME/Library/Application Support/Cheese"
+rm -rf /Applications/Cheese.app "$HOME/Library/Application Support/Cheese" "$HOME/Library/Logs/Cheese"
 defaults delete com.maanitgupta.cheese
 tccutil reset ScreenCapture com.maanitgupta.cheese
 tccutil reset Accessibility com.maanitgupta.cheese

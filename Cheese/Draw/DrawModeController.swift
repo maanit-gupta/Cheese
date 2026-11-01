@@ -1,8 +1,12 @@
 import AppKit
 import os
 
-/// Draw on screen: transparent overlays on every display plus the toolbar. Drawings are kept in
+/// Draw on screen: transparent overlays on every display plus the HUD. Drawings are kept in
 /// memory while draw mode is off and come back when it's turned on again.
+///
+/// Whenever another Cheese window takes the keyboard (the command palette, Share, an alert) draw
+/// mode yields: drawings stay on screen, but the canvas stops drawing and taking focus until that
+/// window goes, then hands the keyboard straight back to the canvas.
 ///
 /// Everyday drawing needs only the mouse and at most one held modifier: the magic pen snaps rough
 /// shapes, ⇧ draws straight, ⌘ erases, ⌥ highlights, scrolling sizes the brush, and holding the
@@ -16,7 +20,7 @@ final class DrawModeController {
         var openEditor: (CapturedImage) -> Void
         var isScreenRecordingGranted: () -> Bool
         var explainMissingScreenRecording: (_ feature: String) -> Void
-        /// Settings → General → "Advanced: single-letter tool keys".
+        /// Settings → General → "Single-letter tool keys" (on by default).
         var usesLetterKeys: () -> Bool = { Preferences().usesDrawLetterKeys }
     }
 
@@ -96,7 +100,7 @@ final class DrawModeController {
     private var history = CanvasHistory()
     private let services: Services
     private var overlays: [CanvasPageID: (window: DrawOverlayWindow, view: CanvasView)] = [:]
-    private lazy var toolbar = ToolbarPanel(settings: settings, actions: makeToolbarActions())
+    private lazy var hud = DrawHUD(settings: settings, actions: makeHUDActions())
     private var interaction = Interaction.idle
     private var selection: Selection?
     private var editing: TextEditing?
@@ -122,6 +126,18 @@ final class DrawModeController {
     private var lastDot: (id: UUID, page: CanvasPageID)?
     /// Bumped on every enter and exit, so a fade-out that finishes late doesn't hide a fresh session.
     private var transition = 0
+    /// Another Cheese window (the palette, Share, an alert) has the keyboard; the canvas waits.
+    private(set) var isYielded = false
+    /// The window draw mode yielded to.
+    private weak var yieldingWindow: NSWindow?
+    private var keyWindowObservers: [NSObjectProtocol] = []
+    /// Windows raised above the canvas while drawing, with the level each goes back to on exit.
+    private var liftedWindows: [LiftedWindow] = []
+
+    private struct LiftedWindow {
+        weak var window: NSWindow?
+        let level: NSWindow.Level
+    }
 
     init(services: Services) {
         self.services = services
@@ -142,7 +158,8 @@ final class DrawModeController {
         if settings.tool == .passThrough {
             settings.tool = toolBeforePassThrough
         }
-        settings.isToolbarCollapsed = false
+        isYielded = false
+        yieldingWindow = nil
         rebuildOverlays()
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         for overlay in overlays.values {
@@ -156,14 +173,13 @@ final class DrawModeController {
                 overlay.window.animator().alphaValue = 1
             }
         }
-        if let screen = Screens.underMouse {
-            toolbar.show(on: screen, animated: !reduceMotion)
-        }
+        hud.show(animated: !reduceMotion)
         applyTool()
         refreshAll()
         syncHistoryState()
         focusCanvasUnderPointer()
         observeScreens()
+        observeKeyWindows()
         Logger.draw.info("Draw mode on")
     }
 
@@ -178,6 +194,10 @@ final class DrawModeController {
         selection = nil
         isActive = false
         isPinchZooming = false
+        isYielded = false
+        yieldingWindow = nil
+        stopObservingKeyWindows()
+        restoreLiftedWindows()
         transition += 1
         let generation = transition
         screenObserver?.cancel()
@@ -201,7 +221,7 @@ final class DrawModeController {
                 }
             }
         }
-        toolbar.hide(animated: !reduceMotion)
+        hud.hide(animated: !reduceMotion)
         NSCursor.arrow.set()
         refreshAll()
         Logger.draw.info("Draw mode off")
@@ -249,6 +269,7 @@ final class DrawModeController {
                     overlay.window.alphaValue = 1
                     overlay.window.orderFrontRegardless()
                 }
+                self.hud.keepOnScreen()
                 self.applyTool()
                 self.refreshAll()
             }
@@ -256,13 +277,112 @@ final class DrawModeController {
     }
 
     private func focusCanvasUnderPointer() {
-        guard isActive, settings.tool != .passThrough else { return }
+        guard isActive, !isYielded, settings.tool != .passThrough else { return }
         let mouse = NSEvent.mouseLocation
         let overlay = overlays.values.first { $0.window.frame.contains(mouse) } ?? overlays.values.first
         overlay?.window.makeKey()
         if let overlay, overlay.window.firstResponder !== overlay.view, !overlay.view.isEditingText {
             overlay.window.makeFirstResponder(overlay.view)
         }
+    }
+
+    // MARK: Sharing the keyboard with other Cheese windows
+
+    /// Follows which Cheese window has the keyboard, so draw mode steps aside for the palette and
+    /// other panels and takes the keyboard back as soon as they go.
+    private func observeKeyWindows() {
+        guard keyWindowObservers.isEmpty else { return }
+        let center = NotificationCenter.default
+        let became = center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { [weak self] note in
+            let window = (note.object as? NSObject).map { ObjectIdentifier($0) }
+            MainActor.assumeIsolated { self?.windowBecameKey(window) }
+        }
+        let resigned = center.addObserver(forName: NSWindow.didResignKeyNotification, object: nil, queue: .main) { [weak self] note in
+            let window = (note.object as? NSObject).map { ObjectIdentifier($0) }
+            MainActor.assumeIsolated { self?.windowLostKey(window) }
+        }
+        let closed = center.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: .main) { [weak self] note in
+            let window = (note.object as? NSObject).map { ObjectIdentifier($0) }
+            MainActor.assumeIsolated { self?.windowLostKey(window) }
+        }
+        keyWindowObservers = [became, resigned, closed]
+    }
+
+    private func stopObservingKeyWindows() {
+        for observer in keyWindowObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        keyWindowObservers.removeAll()
+    }
+
+    /// The canvases and the HUD.
+    private func isDrawWindow(_ id: ObjectIdentifier) -> Bool {
+        overlays.values.contains { ObjectIdentifier($0.window) == id } || hud.owns(id)
+    }
+
+    private func windowBecameKey(_ id: ObjectIdentifier?) {
+        guard isActive, let id, !isDrawWindow(id), let window = NSApp.windows.first(where: { ObjectIdentifier($0) == id }) else { return }
+        lift(window)
+        yieldingWindow = window
+        guard !isYielded else { return }
+        isYielded = true
+        endTextEditing()
+        finishInteraction(constrained: false)
+        cancelRadial()
+        NSCursor.arrow.set()
+    }
+
+    /// A window that sits below the canvas (Settings, the shelf, the color panel) would open hidden
+    /// under the drawing; it's raised above it until draw mode ends.
+    private func lift(_ window: NSWindow) {
+        guard window.level.rawValue < DrawLevels.hud.rawValue else { return }
+        liftedWindows.append(LiftedWindow(window: window, level: window.level))
+        window.level = DrawLevels.panels
+    }
+
+    private func restoreLiftedWindows() {
+        for lifted in liftedWindows {
+            lifted.window?.level = lifted.level
+        }
+        liftedWindows.removeAll()
+    }
+
+    private func windowLostKey(_ id: ObjectIdentifier?) {
+        guard isYielded, let id, let yieldingWindow, ObjectIdentifier(yieldingWindow) == id else { return }
+        // Wait until the event that closed it has been handled: a click on the canvas that
+        // dismissed the palette mustn't also draw (see `shouldDrawOnCanvasClick`).
+        Task { @MainActor [weak self] in
+            self?.resumeAfterYield()
+        }
+    }
+
+    private func resumeAfterYield() {
+        guard isYielded else { return }
+        // Another Cheese window took over, like an action the palette ran.
+        if let key = NSApp.keyWindow, !isDrawWindow(ObjectIdentifier(key)) {
+            yieldingWindow = key
+            return
+        }
+        isYielded = false
+        yieldingWindow = nil
+        guard isActive else { return }
+        focusCanvasUnderPointer()
+        cursor.set()
+    }
+
+    /// The canvas was clicked. Returns whether the click should draw: a click that dismissed the
+    /// palette only gives the canvas the keyboard back, while a panel that stays up (the shelf)
+    /// just loses focus and the click draws as usual.
+    func shouldDrawOnCanvasClick() -> Bool {
+        guard isYielded else { return true }
+        let panelStillShowing = yieldingWindow?.isVisible == true
+        isYielded = false
+        yieldingWindow = nil
+        if !panelStillShowing {
+            focusCanvasUnderPointer()
+            cursor.set()
+        }
+        return panelStillShowing
     }
 
     // MARK: The draw hotkey: tap to toggle, hold for quick ink
@@ -305,6 +425,10 @@ final class DrawModeController {
     }
 
     var cursor: NSCursor {
+        // Over the palette or another panel, the pointer is a plain arrow, never a brush or hidden.
+        if isYielded {
+            return .arrow
+        }
         if settings.tool.grabsItems, isOverGrabbableItem {
             return .openHand
         }
@@ -326,30 +450,37 @@ final class DrawModeController {
         }
     }
 
-    /// Picks a tool. From the toolbar, picking the current tool again toggles its options flyout.
-    func chooseTool(_ tool: DrawTool, fromToolbar: Bool = false) {
+    /// Picks a tool, from the HUD, a letter key or the radial menu. Never opens a popover; closes any that's open.
+    func chooseTool(_ tool: DrawTool) {
         endTextEditing()
         finishInteraction(constrained: false)
+        closePopover()
         if tool == .zoom, !services.isScreenRecordingGranted() {
             services.explainMissingScreenRecording("The Zoom tool")
             return
         }
-        if fromToolbar {
-            settings.isFlyoutOpen = settings.tool == tool ? !settings.isFlyoutOpen : tool.hasOptions
-        } else {
-            settings.isFlyoutOpen = false
-        }
         if tool == .passThrough, settings.tool != .passThrough {
             toolBeforePassThrough = settings.tool
         }
+        // Only a selection's handles depend on the tool, so the canvas repaints only when there is one.
+        let repaints = selection != nil
         if tool != .select {
             selection = nil
         }
         isOverGrabbableItem = false
         settings.tool = tool
         applyTool()
-        refreshAll()
+        if repaints {
+            refreshAll()
+        }
         focusCanvasUnderPointer()
+    }
+
+    /// Closes the HUD's popover, if one is open.
+    private func closePopover() {
+        if settings.openPopover != nil {
+            hud.setPopover(nil)
+        }
     }
 
     private func togglePassThrough() {
@@ -431,8 +562,10 @@ final class DrawModeController {
     // MARK: Mouse
 
     func mouseDown(on page: CanvasPageID, at point: CGPoint, event: NSEvent) {
-        // The tool rail and the radial menu are for picking, never for drawing.
-        guard radial == nil, !isOverToolbar(point, on: page) else { return }
+        // The HUD and the radial menu are for picking, never for drawing.
+        guard radial == nil, !isOverHUD(point, on: page) else { return }
+        // Clicking the canvas closes a popover and draws on: no extra click.
+        closePopover()
         let flags = effectiveModifiers(event.modifierFlags)
         modifiers = event.modifierFlags
         if editing != nil {
@@ -441,9 +574,6 @@ final class DrawModeController {
             if settings.tool == .text || settings.tool == .sticky || settings.tool == .select || settings.tool.isInk {
                 return
             }
-        }
-        if isActive {
-            toolbar.noteDrawing()
         }
         let items = document.items(on: page)
         if settings.tool.allowsModifierErasing, flags.contains(.command) {
@@ -497,11 +627,11 @@ final class DrawModeController {
         }
     }
 
-    /// Whether `point` on `page` lies under the tool rail (including its flyout and margins).
-    private func isOverToolbar(_ point: CGPoint, on page: CanvasPageID) -> Bool {
-        guard isActive, let view = view(page), let window = view.window, let toolbarFrame = toolbar.visibleFrame else { return false }
+    /// Whether `point` on `page` lies under the HUD's rail or its open popover.
+    private func isOverHUD(_ point: CGPoint, on page: CanvasPageID) -> Bool {
+        guard isActive, let view = view(page), let window = view.window else { return false }
         let screenPoint = window.convertPoint(toScreen: view.convert(point, to: nil))
-        return toolbarFrame.contains(screenPoint)
+        return hud.interactiveFrames.contains { $0.contains(screenPoint) }
     }
 
     /// The resize handle under `point` when exactly one item is selected on `page`.
@@ -912,70 +1042,54 @@ final class DrawModeController {
 
     // MARK: Keyboard
 
-    /// Esc, Delete and the ⌘ shortcuts; single-letter tool keys only when Settings turns them on.
-    /// Returns whether the key was used.
+    /// Runs a key through `DrawKeyRouter`. Returns whether the key was used.
     func handleKeyDown(_ event: NSEvent) -> Bool {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        let characters = event.charactersIgnoringModifiers ?? ""
-
-        if event.keyCode == 53 {
-            if radial != nil {
-                cancelRadial()
-            } else if editing != nil {
-                endTextEditing()
-            } else {
-                exit()
-            }
-            return true
-        }
-        if flags.contains(.command) {
-            switch characters.lowercased() {
-            case "z":
-                flags.contains(.shift) ? redo() : undo()
-                return true
-            case "s" where flags.contains(.shift):
-                snapshot(shiftHeld: false)
-                return true
-            default:
-                return false
-            }
-        }
-        guard editing == nil, flags.isDisjoint(with: [.control, .option, .command]),
-              characters.count == 1, let character = characters.first
-        else { return false }
-
-        let letterKeys = services.usesLetterKeys()
-        // In pass-through only M (back to drawing) works.
-        if settings.tool == .passThrough {
-            guard letterKeys, DrawTool.forKey(character) == .passThrough else { return false }
-            togglePassThrough()
-            return true
-        }
-        if event.keyCode == 51 || event.keyCode == 117 {
-            deleteSelection()
-            return true
-        }
-        guard letterKeys else { return false }
-        if let tool = DrawTool.forKey(character) {
-            tool == .passThrough ? togglePassThrough() : chooseTool(tool)
-            return true
-        }
-        switch character {
-        case "b", "B":
-            cycleBoard()
-        case "[":
-            settings.adjustWidth(thicker: false)
-        case "]":
-            settings.adjustWidth(thicker: true)
-        case "1"..."9":
-            if let digit = character.wholeNumberValue {
-                settings.color = CanvasColor.presets[digit - 1]
-            }
-        default:
-            return false
-        }
-        cursor.set()
+        var modifiers: DrawKeyRouter.Modifiers = []
+        if flags.contains(.shift) { modifiers.insert(.shift) }
+        if flags.contains(.control) { modifiers.insert(.control) }
+        if flags.contains(.option) { modifiers.insert(.option) }
+        if flags.contains(.command) { modifiers.insert(.command) }
+        let state = DrawKeyRouter.State(
+            isEditingText: editing != nil,
+            isPassThrough: settings.tool == .passThrough,
+            hasSelection: selection != nil,
+            isRadialOpen: radial != nil,
+            isPopoverOpen: settings.openPopover != nil,
+            usesLetterKeys: services.usesLetterKeys()
+        )
+        guard let command = DrawKeyRouter.route(
+            keyCode: event.keyCode, characters: event.charactersIgnoringModifiers ?? "", modifiers: modifiers, state: state
+        ) else { return false }
+        perform(command)
         return true
+    }
+
+    private func perform(_ command: DrawCommand) {
+        switch command {
+        case let .tool(tool): chooseTool(tool)
+        case .togglePassThrough: togglePassThrough()
+        case .undo: undo()
+        case .redo: redo()
+        case .snapshot: snapshot(shiftHeld: false)
+        case .deleteSelection: deleteSelection()
+        case .closePopover: closePopover()
+        case .cancelRadial: cancelRadial()
+        case .endTextEditing: endTextEditing()
+        case .deselect:
+            selection = nil
+            refreshAll()
+        case .exit: exit()
+        case .cycleBoard: cycleBoard()
+        case let .adjustWidth(thicker): settings.adjustWidth(thicker: thicker)
+        case let .color(index):
+            if CanvasColor.presets.indices.contains(index) {
+                settings.color = CanvasColor.presets[index]
+            }
+        }
+        if isActive {
+            cursor.set()
+        }
     }
 
     private func deleteSelection() {
@@ -991,7 +1105,7 @@ final class DrawModeController {
     // MARK: Radial menu
 
     func radialBegan(on page: CanvasPageID, at point: CGPoint, time: TimeInterval) {
-        guard settings.tool != .passThrough, !isOverToolbar(point, on: page) else { return }
+        guard settings.tool != .passThrough, !isOverHUD(point, on: page) else { return }
         endTextEditing()
         finishInteraction(constrained: false)
         cancelRadial()
@@ -1132,6 +1246,7 @@ final class DrawModeController {
     func snapshot(shiftHeld: Bool) {
         endTextEditing()
         finishInteraction(constrained: false)
+        closePopover()
         selection = nil
         refreshAll()
         guard let screen = Screens.underMouse, let displayID = screen.displayID, let overlay = overlays[displayID] else { return }
@@ -1165,20 +1280,16 @@ final class DrawModeController {
         }
     }
 
-    private func makeToolbarActions() -> ToolbarActions {
-        ToolbarActions(
-            chooseTool: { [weak self] tool in self?.chooseTool(tool, fromToolbar: true) },
+    private func makeHUDActions() -> HUDActions {
+        HUDActions(
+            chooseTool: { [weak self] tool in self?.chooseTool(tool) },
             cycleBoard: { [weak self] in self?.cycleBoard() },
             toggleDisappearingInk: { [weak self] in self?.toggleDisappearingInk() },
             undo: { [weak self] in self?.undo() },
             redo: { [weak self] in self?.redo() },
             clearAll: { [weak self] in self?.clearAll() },
             snapshot: { [weak self] shiftHeld in self?.snapshot(shiftHeld: shiftHeld) },
-            exit: { [weak self] in self?.exit() },
-            returnFocus: { [weak self] in
-                self?.focusCanvasUnderPointer()
-                self?.cursor.set()
-            }
+            exit: { [weak self] in self?.exit() }
         )
     }
 
@@ -1253,6 +1364,8 @@ final class DrawModeController {
 
     func pointerMoved(on page: CanvasPageID, to point: CGPoint) {
         pointer = (page, point)
+        // The laser doesn't trail, nor the lens follow, under the palette.
+        guard !isYielded else { return }
         if settings.tool.grabsItems {
             let overItem = grabbableItem(at: point, on: page, items: document.items(on: page))
             if overItem != isOverGrabbableItem {

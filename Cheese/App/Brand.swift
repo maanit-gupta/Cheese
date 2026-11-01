@@ -9,4 +9,9 @@ enum Brand {
     static let subline = "Every little tool your Mac forgot."
     static let privacy = "Everything runs on your Mac. No accounts, no telemetry, no cloud."
     static let repository = URL(string: "https://github.com/maanit-gupta/Cheese")
+    /// "Cheese 2.3", as the menu shows it above Check for Updates.
+    static var versionTitle: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        return "\(name) \(version)"
+    }
 }
