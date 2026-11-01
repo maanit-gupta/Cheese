@@ -2,11 +2,11 @@ import CoreGraphics
 
 /// How Fill to Screen sizes windows (Settings → Windows).
 enum WindowFillMode: String, CaseIterable, Identifiable, Sendable {
+    /// The whole visible frame (menu bar and Dock respected), even with Stage Manager on. The default.
+    case fullVisibleFrame
     /// Leaves room for the Stage Manager strip whenever Stage Manager shows it; otherwise the same
     /// as `fullVisibleFrame`.
     case stageManagerSafe
-    /// The whole visible frame (menu bar and Dock respected), even with Stage Manager on.
-    case fullVisibleFrame
 
     var id: Self { self }
 

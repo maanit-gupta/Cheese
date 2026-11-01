@@ -29,9 +29,11 @@ extension ActionID {
     static let showWelcome = Self(rawValue: "showWelcome")
     static let about = Self(rawValue: "about")
     static let quit = Self(rawValue: "quit")
-    static let keepAwakeIndefinitely = Self(rawValue: "keepAwakeIndefinitely")
-    static let keepAwakeUntil = Self(rawValue: "keepAwakeUntil")
-    static let keepAwakeOff = Self(rawValue: "keepAwakeOff")
+    static let caffeinateUntil = Self(rawValue: "caffeinateUntil")
+    static let caffeinateIndefinitely = Self(rawValue: "caffeinateIndefinitely")
+    static let caffeinateLidClosed = Self(rawValue: "caffeinateLidClosed")
+    static let caffeinateOff = Self(rawValue: "caffeinateOff")
+    static let settingsCaffeinate = Self(rawValue: "settingsCaffeinate")
     static let showClipboardQR = Self(rawValue: "showClipboardQR")
     static let commandPalette = Self(rawValue: "commandPalette")
     static let drawOnScreen = Self(rawValue: "drawOnScreen")
@@ -57,6 +59,17 @@ extension ActionID {
     static let fillCurrentWindow = Self(rawValue: "fillCurrentWindow")
     static let restoreAllWindows = Self(rawValue: "restoreAllWindows")
     static let settingsWindows = Self(rawValue: "settingsWindows")
+    static let terminalTrace = Self(rawValue: "terminalTrace")
+
+    /// "Caffeinate: For 1 Hour" and the other fixed lengths.
+    static func caffeinate(_ preset: CaffeinatePreset) -> Self {
+        Self(rawValue: "caffeinate.\(preset.rawValue)")
+    }
+
+    /// "Terminal Trace: Last Response" and "Terminal Trace: Everything".
+    static func terminalTraceScope(_ scope: TerminalTraceScope) -> Self {
+        Self(rawValue: "terminalTraceScope.\(scope.rawValue)")
+    }
 
     /// "After Capture: Copy to Clipboard" and the other capture destinations.
     static func captureDestination(_ destination: CaptureDestination) -> Self {
@@ -97,7 +110,7 @@ struct CheeseAction: Identifiable {
     let module: ModuleID?
     /// How the command palette lists it, when that differs from the menu ("Show Shelf" for "Shelf").
     var paletteTitle: String?
-    /// A shorter title for inside a submenu, where the parent names the feature ("Until…" under Keep Awake).
+    /// A shorter title for inside a submenu, where the parent names the feature ("Until…" under Caffeinate).
     var menuTitle: String?
     var shortcut: KeyboardShortcuts.Name?
     /// Extra bindings that also run the action but aren't shown, like Shift + the full-screen shortcut.

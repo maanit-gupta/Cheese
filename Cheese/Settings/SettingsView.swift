@@ -11,6 +11,7 @@ enum SettingsTab: Hashable {
     case files
     case share
     case autoKill
+    case caffeinate
     case permissions
     case about
 }
@@ -57,6 +58,9 @@ struct SettingsView: View {
             }
             Tab("Auto-Kill", systemImage: "xmark.app", value: .autoKill) {
                 AutoKillSettingsView()
+            }
+            Tab("Caffeinate", systemImage: "cup.and.saucer", value: .caffeinate) {
+                CaffeinateSettingsView(controller: dependencies.caffeinate)
             }
             Tab("Permissions", systemImage: "lock.shield", value: .permissions) {
                 PermissionsSettingsView(

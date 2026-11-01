@@ -238,8 +238,8 @@ struct JobTextTests {
         #expect(JobTitles.indicator([]) == nil)
     }
 
-    @Test func menuBarTextJoinsKeepAwakeAndFiles() {
-        #expect(IndicatorSource.joined([.files: "3/10", .keepAwake: "∞"]) == "∞ · 3/10")
+    @Test func menuBarTextJoinsCaffeinateAndFiles() {
+        #expect(IndicatorSource.joined([.files: "3/10", .caffeinate: "∞"]) == "∞ · 3/10")
         #expect(IndicatorSource.joined([.files: "3/10"]) == "3/10")
         #expect(IndicatorSource.joined([:]) == nil)
     }

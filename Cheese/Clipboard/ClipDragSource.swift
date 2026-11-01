@@ -128,7 +128,8 @@ final class ClipDragSourceView: NSView, NSDraggingSource {
         }
     }
 
-    private static func pasteboardItem(for item: ClipDragItem) -> NSPasteboardItem {
+    /// The pasteboard item for one drag or batch-paste payload. Also used by `Paster` for batches.
+    static func pasteboardItem(for item: ClipDragItem) -> NSPasteboardItem {
         let pasteboardItem = NSPasteboardItem()
         for representation in item.representations {
             let type = NSPasteboard.PasteboardType(representation.type)
@@ -142,7 +143,7 @@ final class ClipDragSourceView: NSView, NSDraggingSource {
                     pasteboardItem.setData(try Data(contentsOf: url), forType: type)
                 } catch {
                     // The file URL still goes along, which is enough for most drop targets.
-                    Logger.clipboard.error("Couldn't read the dragged image: \(error.localizedDescription, privacy: .public)")
+                    Logger.clipboard.error("Couldn't read the image: \(error.localizedDescription, privacy: .public)")
                 }
             }
         }

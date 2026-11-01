@@ -4,7 +4,7 @@
 enum MenuLayout {
     indirect enum Node: Equatable {
         /// An action. `fullTitle` is set when a one-item submenu collapsed into its parent, so
-        /// "Indefinitely" reads "Keep Awake: Indefinitely" once it's no longer under Keep Awake.
+        /// "Indefinitely" reads "Caffeinate: Indefinitely" once it's no longer under Caffeinate.
         case action(ActionID, keyEquivalent: String = "", fullTitle: Bool = false)
         /// Shown in place of the item before it while Option is held, like "Clear All…" for "Clear History".
         case alternate(ActionID)
@@ -43,9 +43,20 @@ enum MenuLayout {
             .action(.killAllApps),
             .separator,
             .action(.showClipboardQR),
-            .submenu(title: "Keep Awake", symbol: "cup.and.saucer", children: [
-                .action(.keepAwakeIndefinitely), .action(.keepAwakeUntil), .action(.keepAwakeOff),
-            ]),
+            .submenu(title: "Terminal Trace", symbol: "terminal", children: [
+                .action(.terminalTrace),
+                .separator,
+            ] + TerminalTraceScope.allCases.map { .action(.terminalTraceScope($0)) }),
+        ]),
+        // Keeping the Mac awake, lid open or closed, in one menu of its own.
+        .submenu(title: "Caffeinate", symbol: "cup.and.saucer", children: CaffeinatePreset.allCases.map {
+            .action(.caffeinate($0))
+        } + [
+            .action(.caffeinateUntil), .action(.caffeinateIndefinitely),
+            .separator,
+            .action(.caffeinateLidClosed),
+            .separator,
+            .action(.caffeinateOff),
         ]),
         .separator,
         .action(.clearHistory),

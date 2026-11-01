@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import Cheese
 
-struct KeepAwakeScheduleTests {
+struct CaffeinateScheduleTests {
     private var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Asia/Kolkata") ?? .gmt
@@ -14,22 +14,22 @@ struct KeepAwakeScheduleTests {
     }
 
     @Test func laterTodayStaysToday() {
-        let target = KeepAwakeSchedule.targetDate(hour: 18, minute: 30, after: date(22, 14, 5), calendar: calendar)
+        let target = CaffeinateSchedule.targetDate(hour: 18, minute: 30, after: date(22, 14, 5), calendar: calendar)
         #expect(target == date(22, 18, 30))
     }
 
     @Test func earlierTimeMeansTomorrow() {
-        let target = KeepAwakeSchedule.targetDate(hour: 9, minute: 0, after: date(22, 14, 5), calendar: calendar)
+        let target = CaffeinateSchedule.targetDate(hour: 9, minute: 0, after: date(22, 14, 5), calendar: calendar)
         #expect(target == date(23, 9, 0))
     }
 
     @Test func theCurrentMinuteMeansTomorrow() {
-        let target = KeepAwakeSchedule.targetDate(hour: 14, minute: 5, after: date(22, 14, 5, 30), calendar: calendar)
+        let target = CaffeinateSchedule.targetDate(hour: 14, minute: 5, after: date(22, 14, 5, 30), calendar: calendar)
         #expect(target == date(23, 14, 5))
     }
 
     @Test func midnightRollsOverTheMonth() {
-        let target = KeepAwakeSchedule.targetDate(hour: 0, minute: 15, after: date(31, 23, 50), calendar: calendar)
+        let target = CaffeinateSchedule.targetDate(hour: 0, minute: 15, after: date(31, 23, 50), calendar: calendar)
         #expect(target == calendar.date(from: DateComponents(year: 2026, month: 11, day: 1, hour: 0, minute: 15)))
     }
 
@@ -48,7 +48,7 @@ struct KeepAwakeScheduleTests {
         (0.0, "0s"),
     ])
     func indicatorText(_ remaining: TimeInterval, _ expected: String) {
-        #expect(KeepAwakeSchedule.indicatorText(remaining: remaining) == expected)
+        #expect(CaffeinateSchedule.indicatorText(remaining: remaining) == expected)
     }
 
     @Test(arguments: [
@@ -60,20 +60,20 @@ struct KeepAwakeScheduleTests {
         (0.0, 0.0),
     ])
     func refreshesWhenTheTextWouldChange(_ remaining: TimeInterval, _ expected: TimeInterval) {
-        #expect(abs(KeepAwakeSchedule.nextRefresh(remaining: remaining) - expected) < 0.0001)
+        #expect(abs(CaffeinateSchedule.nextRefresh(remaining: remaining) - expected) < 0.0001)
     }
 
     @Test func textChangesExactlyAtEachRefresh() {
         var remaining: TimeInterval = 3_725.5
         while remaining > 0 {
-            let before = KeepAwakeSchedule.indicatorText(remaining: remaining)
-            let step = KeepAwakeSchedule.nextRefresh(remaining: remaining)
+            let before = CaffeinateSchedule.indicatorText(remaining: remaining)
+            let step = CaffeinateSchedule.nextRefresh(remaining: remaining)
             #expect(step > 0)
             // Just before the refresh the text hasn't changed; at it, it has.
-            #expect(KeepAwakeSchedule.indicatorText(remaining: remaining - step + 0.001) == before)
+            #expect(CaffeinateSchedule.indicatorText(remaining: remaining - step + 0.001) == before)
             remaining -= step
             if remaining > 0 {
-                #expect(KeepAwakeSchedule.indicatorText(remaining: remaining) != before)
+                #expect(CaffeinateSchedule.indicatorText(remaining: remaining) != before)
             }
         }
     }

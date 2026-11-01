@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// The "Keep Awake Until…" picker: hour and minute, shown 12- or 24-hour per the system locale.
+/// The "Caffeinate: Until…" picker: hour and minute, shown 12- or 24-hour per the system locale.
 struct TimePickerView: View {
     @State var time: Date
     let onStart: (Date) -> Void
@@ -9,7 +9,7 @@ struct TimePickerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.large) {
-            Text("Keep the Mac awake until")
+            Text("Keep your Mac awake until")
                 .font(DesignTokens.Typography.heading)
             DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
                 .datePickerStyle(.stepperField)
@@ -21,7 +21,7 @@ struct TimePickerView: View {
                 Spacer()
                 Button("Cancel", role: .cancel, action: onCancel)
                     .keyboardShortcut(.cancelAction)
-                Button("Keep Awake") { onStart(time) }
+                Button("Start") { onStart(time) }
                     .keyboardShortcut(.defaultAction)
             }
         }
@@ -49,7 +49,7 @@ final class TimePickerWindow {
             onCancel: { [weak self] in self?.close() }
         )
         let window = NSWindow(contentViewController: NSHostingController(rootView: view))
-        window.title = "Keep Awake"
+        window.title = "Caffeinate"
         window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
         window.level = .floating

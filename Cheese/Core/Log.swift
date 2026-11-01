@@ -13,7 +13,7 @@ extension Logger {
     static let scrollCapture = Logger(subsystem: subsystem, category: "ScrollCapture")
     static let windows = Logger(subsystem: subsystem, category: "Windows")
     static let welcome = Logger(subsystem: subsystem, category: "Welcome")
-    static let keepAwake = Logger(subsystem: subsystem, category: "KeepAwake")
+    static let caffeinate = Logger(subsystem: subsystem, category: "Caffeinate")
     static let qr = Logger(subsystem: subsystem, category: "QR")
     static let appHotkeys = Logger(subsystem: subsystem, category: "AppHotkeys")
     static let palette = Logger(subsystem: subsystem, category: "Palette")
@@ -22,4 +22,5 @@ extension Logger {
     static let shelf = Logger(subsystem: subsystem, category: "Shelf")
     static let share = Logger(subsystem: subsystem, category: "Share")
     static let appSweep = Logger(subsystem: subsystem, category: "AppSweep")
+    static let terminalTrace = Logger(subsystem: subsystem, category: "TerminalTrace")
 }

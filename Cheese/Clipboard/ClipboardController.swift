@@ -28,6 +28,7 @@ final class ClipboardController {
         popover = HistoryPopover(model: model)
 
         model.onPaste = { [weak self] item, plainText in self?.paste(item, plainText: plainText) }
+        model.onBatch = { [weak self] items, mode in self?.pasteBatch(items, mode: mode) }
         model.onClose = { [weak self] in self?.popover.close() }
         model.onEditSaved = { [weak self] item in self?.copyEdit(of: item) }
     }
@@ -94,6 +95,39 @@ final class ClipboardController {
                 return
             }
             await paster.paste(into: target)
+        }
+    }
+
+    /// Delay between pastes when a batch goes in one item at a time.
+    private static let oneByOneDelay = Duration.milliseconds(150)
+
+    /// Pastes or copies several items. `.oneByOne` writes and pastes each in turn, for apps that
+    /// take one image per paste. Without Accessibility, the batch is copied and the prompt shown.
+    private func pasteBatch(_ items: [ClipItem], mode: ClipBatchMode) {
+        let target = targetApp
+        Task {
+            popover.close()
+            let livingTarget = target.flatMap { $0.isTerminated ? nil : $0 }
+            if mode == .oneByOne, let livingTarget, canPostEvents() {
+                var isFirst = true
+                for item in items {
+                    if !isFirst { try? await Task.sleep(for: Self.oneByOneDelay) }
+                    isFirst = false
+                    guard let changeCount = await paster.write(item, plainTextOnly: false) else { continue }
+                    monitor?.ignoreChange(changeCount)
+                    await paster.paste(into: livingTarget)
+                }
+                return
+            }
+
+            guard let changeCount = paster.writeBatch(items) else { return }
+            monitor?.ignoreChange(changeCount)
+            guard mode != .copyOnly, let livingTarget else { return }
+            guard canPostEvents() else {
+                onMissingAccessibility()
+                return
+            }
+            await paster.paste(into: livingTarget)
         }
     }
 }

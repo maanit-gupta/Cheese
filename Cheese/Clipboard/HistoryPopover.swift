@@ -69,7 +69,8 @@ final class HistoryPopover: NSObject, NSPopoverDelegate {
                     keyCode: keyCode,
                     modifiers: modifiers,
                     charactersIgnoringModifiers: characters,
-                    isEditing: self.model.isEditingText
+                    isEditing: self.model.isEditingText,
+                    isBatch: self.model.isBatchSelected
                 )
                 return self.handle(command, inWindowNumbered: windowNumber)
             }

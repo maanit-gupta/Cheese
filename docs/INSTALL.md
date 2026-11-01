@@ -127,7 +127,7 @@ Cheese asks for these only because the tools can't work without them. Nothing le
 2. Turn on **Cheese** in the list.
 3. If macOS offers **Quit & Reopen**, click it. Otherwise click the menu bar icon → **Quit Cheese**, then open Cheese again.
 
-**Accessibility**, used for pasting from history, window snapping and auto-scrolling:
+**Accessibility**, used for pasting from history, window snapping, Fill to Screen, auto-scrolling, and Terminal Trace in terminals other than Terminal and iTerm2:
 
 1. Click **Grant…** next to Accessibility.
 2. Turn on **Cheese**. No restart is needed.
@@ -150,8 +150,9 @@ Look for the cheese wedge near the clock.
 | **Files ▸** | Every Files tool; pick one, then the files |
 | **Share…** | Cheese Share: send to phones and computers nearby |
 | **Shelf** | The floating drop shelf |
-| **Windows ▸** | Fill every window to the screen (Stage Manager aware), fill or restore one, and snap to halves |
-| **Tools ▸** | Auto-Kill Apps…, Kill All Open Apps Now, Show Clipboard as QR, Keep Awake ▸ |
+| **Windows ▸** | Fill every window to the screen edge to edge (Stage Manager aware), fill or restore one, and snap to halves |
+| **Tools ▸** | Auto-Kill Apps…, Kill All Open Apps Now, Show Clipboard as QR, Terminal Trace ▸ (copy your terminal's last response) |
+| **Caffeinate ▸** | Keep the Mac awake for 30 minutes, 1 or 2 hours, until a time or indefinitely; **Keep Awake With Lid Closed** makes it survive closing the lid |
 | **Clear History** | Empties history (hold <kbd>⌥</kbd> for **Clear All…**, which also removes pins) |
 | **Settings… / Quit Cheese** | |
 
@@ -169,6 +170,8 @@ The Files tools (merge, split and compress PDFs, convert Office documents and im
 2. Turn on **Cheese** in the list of Finder extensions.
 
 Settings → Files shows **On** once it's enabled. You can also drop files on the menu bar icon, or type "Files:" in the command palette, without the extension.
+
+Terminal Trace asks once for **Automation → Terminal** (or **iTerm2**) the first time it reads that terminal, and **Caffeinate** asks for your administrator password once, to install the small helper that keeps the Mac awake with the lid closed (it runs `pmset -a disablesleep 1` only while a session asks). macOS then shows **Background Items Added** for it.
 
 The Files tools may ask for two more permissions, each only when first needed: **Notifications**, to tell you when a job finishes, and **Automation → Finder**, when you run a tool from the command palette with Finder in front (Cheese reads the selected files). If you turn on Microsoft Office or LibreOffice for Office → PDF, macOS also asks once per Office app.
 
@@ -198,6 +201,14 @@ Permissions usually carry over because every release is signed with the same cer
    ```
 
 4. If you turned on launch at login, remove Cheese from **System Settings → General → Login Items**.
+5. If Caffeinate's lid-closed helper is installed, remove it **before** deleting Cheese: **Settings → Caffeinate → Remove…**. Or by hand:
+
+   ```sh
+   sudo launchctl bootout system/com.maanitgupta.cheese.caffeinate
+   sudo rm -f /Library/PrivilegedHelperTools/com.maanitgupta.cheese.caffeinate /Library/LaunchDaemons/com.maanitgupta.cheese.caffeinate.plist
+   sudo rm -rf "/Library/Application Support/Cheese"
+   sudo pmset -a disablesleep 0
+   ```
 
 `~/Library/Application Support/Cheese` holds your clipboard history (`History.store`) and copied images (`Images/`). Screenshots you saved yourself stay where you put them.
 

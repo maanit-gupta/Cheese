@@ -1,7 +1,7 @@
 import Foundation
 
 /// Keep-awake time math: when a picked time ends, and how the menu bar countdown reads.
-enum KeepAwakeSchedule {
+enum CaffeinateSchedule {
     /// The next moment the clock reads `hour:minute`. A time that has already passed today means tomorrow.
     static func targetDate(hour: Int, minute: Int, after now: Date, calendar: Calendar = .current) -> Date {
         let components = DateComponents(hour: hour, minute: minute, second: 0)

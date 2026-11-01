@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var qr: QRModule?
     private let appHotkeyStore = AppHotkeyStore()
     private let installedApps = InstalledAppIndex()
+    private let caffeinate = CaffeinateController()
     private var defaultsObserver: Task<Void, Never>?
 
     private static var isRunningUnitTests: Bool {
@@ -44,7 +45,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 appHotkeys: AppHotkeysSettingsModel(store: appHotkeyStore, index: installedApps) { [weak self] in
                     self?.takenAppHotkeyCharacters() ?? []
                 },
-                files: FilesSettingsModel()
+                files: FilesSettingsModel(),
+                caffeinate: caffeinate
             )
         )
 
@@ -144,7 +146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager()) { FillLayout.current() }),
             draw,
             qr,
-            KeepAwakeModule { [weak self] text in self?.menuBar?.setIndicator(text, for: .keepAwake) },
+            caffeinateModule(),
             AppHotkeysModule(store: appHotkeyStore, index: installedApps),
             // Draw mode never routes through the palette, and the palette stays shut while drawing.
             CommandPaletteModule(
@@ -156,6 +158,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             shelf,
             share,
             AppSweepModule(),
+            TerminalTraceModule { [permissionPrompter] in
+                permissionPrompter.presentAlert(for: .accessibility, feature: "Terminal Trace")
+            },
         ]
         let preferences = Preferences()
         return ActionRegistry(
@@ -264,6 +269,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func caffeinateModule() -> CaffeinateModule {
+        caffeinate.onIndicatorChange = { [weak self] text in self?.menuBar?.setIndicator(text, for: .caffeinate) }
+        return CaffeinateModule(controller: caffeinate)
+    }
+
     /// "Settings: General" and friends, so the palette can open Settings on any tab.
     private func settingsTabActions() -> [CheeseAction] {
         let tabs: [(ActionID, String, String, SettingsTab)] = [
@@ -276,6 +286,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             (.settingsFiles, "Files", "doc.on.doc", .files),
             (.settingsShare, "Share", "dot.radiowaves.left.and.right", .share),
             (.settingsAutoKill, "Auto-Kill", "xmark.app", .autoKill),
+            (.settingsCaffeinate, "Caffeinate", "cup.and.saucer", .caffeinate),
             (.settingsPermissions, "Permissions", "lock.shield", .permissions),
             (.settingsAbout, "About", "info.circle", .about),
         ]

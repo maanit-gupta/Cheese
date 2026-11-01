@@ -9,6 +9,8 @@ struct HistoryPreview: View {
     let model: HistoryViewModel
     let item: ClipItem
     let imageURL: URL?
+    /// How many items are selected. More than one turns the footer into the batch-paste hint.
+    var batchCount = 1
 
     private var isEditing: Bool { model.editingID == item.id }
 
@@ -101,6 +103,15 @@ struct HistoryPreview: View {
             if isEditing {
                 shortcut("⌘↩", "Save & Paste")
                 shortcut("esc", "Done")
+            } else if batchCount > 1 {
+                Text("\(batchCount) selected")
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.horizontal, DesignTokens.Spacing.small)
+                    .padding(.vertical, 2)
+                    .background(Color.accentColor.opacity(DesignTokens.Opacity.hoverTint), in: Capsule())
+                shortcut("↩", "Paste All")
+                shortcut("⌥↩", "One by One")
+                shortcut("⌘C", "Copy")
             } else {
                 shortcut("↩", "Paste")
                 shortcut("⌥↩", "Plain")

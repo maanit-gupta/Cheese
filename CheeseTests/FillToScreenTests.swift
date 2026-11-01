@@ -117,7 +117,9 @@ struct StageManagerDetectorTests {
     @Test func preferencesClampTheInsetAndDefaultTheMode() throws {
         let stored = try defaults([PreferenceKey.stageManagerStripInset: 1000.0])
         #expect(Preferences(defaults: stored).stageManagerStripInset == 260)
-        #expect(Preferences(defaults: stored).windowFillMode == .stageManagerSafe)
+        #expect(Preferences(defaults: stored).windowFillMode == .fullVisibleFrame)
+        let safe = try defaults([PreferenceKey.windowFillMode: WindowFillMode.stageManagerSafe.rawValue])
+        #expect(Preferences(defaults: safe).windowFillMode == .stageManagerSafe)
         let full = try defaults([PreferenceKey.windowFillMode: WindowFillMode.fullVisibleFrame.rawValue])
         #expect(Preferences(defaults: full).windowFillMode == .fullVisibleFrame)
         #expect(Preferences(defaults: full).stageManagerStripInset == StageManagerLayout.defaultStripInset)

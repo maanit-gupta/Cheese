@@ -69,13 +69,14 @@ struct ActionCatalogueTests {
                 explainMissingScreenRecording: { _ in }
             )),
             QRModule(),
-            KeepAwakeModule { _ in },
+            CaffeinateModule(controller: CaffeinateHarness().controller),
             AppHotkeysModule(store: AppHotkeyStore(defaults: UserDefaults(suiteName: "ActionCatalogueTests") ?? .standard), index: InstalledAppIndex(folders: [])),
             CommandPaletteModule(availableActions: { [] }, perform: { _, _ in }),
             FilesModule { _ in },
             ShelfModule(services: ShelfServices()),
             ShareModule { _ in },
             AppSweepModule(),
+            TerminalTraceModule {},
         ]
     }
 
@@ -149,12 +150,15 @@ struct ActionCatalogueTests {
         #expect(action(.clearAll)?.shortcut == nil)
     }
 
-    @Test func keepAwakeHasNoHotkeysAndTurnOffOnlyWhenActive() {
-        let ids: [ActionID] = [.keepAwakeIndefinitely, .keepAwakeUntil, .keepAwakeOff]
+    @Test func caffeinateHasNoHotkeysAndTurnOffOnlyWhenActive() {
+        let ids: [ActionID] = CaffeinatePreset.allCases.map { .caffeinate($0) }
+            + [.caffeinateUntil, .caffeinateIndefinitely, .caffeinateLidClosed, .caffeinateOff]
         #expect(ids.allSatisfy { action($0)?.shortcut == nil })
-        #expect(action(.keepAwakeIndefinitely)?.precondition() == true)
-        #expect(action(.keepAwakeOff)?.precondition() == false)
-        #expect(action(.keepAwakeUntil)?.menuTitle == "Until…")
+        #expect(action(.caffeinateIndefinitely)?.precondition() == true)
+        #expect(action(.caffeinateOff)?.precondition() == false)
+        #expect(action(.caffeinateUntil)?.menuTitle == "Until…")
+        #expect(action(.caffeinate(.oneHour))?.title == "Caffeinate: For 1 Hour")
+        #expect(action(.caffeinateLidClosed)?.isChecked?() == true)
     }
 
     @Test func everyModuleActionIsInTheMenu() {
@@ -343,7 +347,7 @@ struct MenuLayoutTests {
         let visible = MenuLayout.visible(MenuLayout.standard) { _ in true }
         #expect(titles(visible) == [
             "openHistory", "Capture▸", "drawOnScreen", "Files▸", "showShare", "toggleShelf", "Windows▸", "Tools▸",
-            "—", "clearHistory", "alt:clearAll", "openSettings", "quit",
+            "Caffeinate▸", "—", "clearHistory", "alt:clearAll", "openSettings", "quit",
         ])
         #expect(titles(submenu("Windows", in: visible) ?? []) == [
             "fillAllWindows", "fillCurrentWindow", "restoreAllWindows", "—",
@@ -356,8 +360,22 @@ struct MenuLayoutTests {
             "captureDestination.clipboard", "captureDestination.folder", "captureDestination.clipboardAndFolder",
         ])
         #expect(titles(submenu("Tools", in: visible) ?? []) == [
-            "autoKillPanel", "killAllApps", "—", "showClipboardQR", "Keep Awake▸",
+            "autoKillPanel", "killAllApps", "—", "showClipboardQR", "Terminal Trace▸",
         ])
+    }
+
+    @Test func caffeinateHasOneListOfLengthsAndTheLidToggle() {
+        let visible = MenuLayout.visible(MenuLayout.standard) { _ in true }
+        #expect(titles(submenu("Caffeinate", in: visible) ?? []) == [
+            "caffeinate.thirtyMinutes", "caffeinate.oneHour", "caffeinate.twoHours", "caffeinateUntil", "caffeinateIndefinitely",
+            "—", "caffeinateLidClosed", "—", "caffeinateOff",
+        ])
+        let tools = MenuLayout.actionIDs(in: submenu("Tools", in: visible) ?? [])
+        #expect(!tools.contains(.caffeinateIndefinitely))
+
+        // Turn Off only shows while a session runs; no separator is left trailing.
+        let idle = MenuLayout.visible(MenuLayout.standard) { $0 != .caffeinateOff }
+        #expect(titles(submenu("Caffeinate", in: idle) ?? []).last == "caffeinateLidClosed")
     }
 
     @Test func filesSubmenuGroupsEveryToolUnderHeaders() {
@@ -382,14 +400,18 @@ struct MenuLayoutTests {
     }
 
     @Test func nestedSubmenusCollapseIntoTheirParent() {
-        // Only Keep Awake is on: Tools holds just the Keep Awake submenu, which takes its place.
-        let keepAwake: Set<ActionID> = [.keepAwakeIndefinitely, .keepAwakeUntil]
-        let visible = MenuLayout.visible(MenuLayout.standard) { keepAwake.contains($0) || $0 == .quit }
-        #expect(titles(visible) == ["Keep Awake▸", "—", "quit"])
+        // Only Terminal Trace is on: Tools holds just the Terminal Trace submenu, which takes its place.
+        let trace: Set<ActionID> = [.terminalTrace, .terminalTraceScope(.lastResponse)]
+        let visible = MenuLayout.visible(MenuLayout.standard) { trace.contains($0) || $0 == .quit }
+        #expect(titles(visible) == ["Terminal Trace▸", "—", "quit"])
 
-        // With one keep-awake option left, it shows under Tools with its full title.
-        let one = MenuLayout.visible(MenuLayout.standard) { $0 == .keepAwakeIndefinitely || $0 == .showClipboardQR }
-        #expect(titles(submenu("Tools", in: one) ?? []) == ["showClipboardQR", "keepAwakeIndefinitely!"])
+        // With one Terminal Trace option left, it shows under Tools with its full title.
+        let one = MenuLayout.visible(MenuLayout.standard) { $0 == .terminalTrace || $0 == .showClipboardQR }
+        #expect(titles(submenu("Tools", in: one) ?? []) == ["showClipboardQR", "terminalTrace!"])
+
+        // One keep-awake option left: Caffeinate becomes that item, with its full title.
+        let awake = MenuLayout.visible(MenuLayout.standard) { $0 == .caffeinateIndefinitely || $0 == .quit }
+        #expect(titles(awake) == ["caffeinateIndefinitely!", "—", "quit"])
     }
 
     @Test func separatorsAndHeadersNeverDangle() {

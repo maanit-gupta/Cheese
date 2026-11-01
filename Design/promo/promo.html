@@ -75,9 +75,10 @@
   .hud { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); display: flex; gap: 8px; padding: 12px 16px; border-radius: 18px; background: rgba(20,18,26,.82); backdrop-filter: blur(18px); box-shadow: 0 12px 40px rgba(0,0,0,.4); z-index: 80; opacity: 0; }
   .hud .key { min-width: 54px; height: 54px; font-size: 26px; border-radius: 12px; }
 
-  .toast { position: absolute; left: 50%; bottom: 44px; display: flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 16px; background: rgba(28,26,34,.9); backdrop-filter: blur(16px); color: #fff; font-size: 19px; font-weight: 600; box-shadow: 0 14px 40px rgba(0,0,0,.4); z-index: 70; opacity: 0; white-space: nowrap; }
-  .toast .ic { width: 30px; height: 30px; border-radius: 8px; background: var(--cheese); color: #2a1d00; display: flex; align-items: center; justify-content: center; font-size: 17px; }
-  .toast .btn { margin-left: 8px; padding: 5px 14px; background: rgba(255,255,255,.16); border-radius: 8px; font-size: 16px; }
+  /* The HUD capsule (CheeseToast): a floating pill above every app, on every Space. */
+  .toast { position: absolute; left: 50%; bottom: 44px; display: flex; align-items: center; gap: 12px; padding: 10px 24px 10px 10px; border-radius: 999px; background: rgba(28,26,34,.88); backdrop-filter: blur(20px) saturate(1.4); color: #fff; font-size: 19px; font-weight: 600; box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 18px 44px rgba(0,0,0,.45); z-index: 70; opacity: 0; white-space: nowrap; }
+  .toast .ic { width: 34px; height: 34px; border-radius: 50%; background: var(--cheese); color: #2a1d00; display: flex; align-items: center; justify-content: center; font-size: 17px; flex: none; }
+  .toast .btn { margin-left: 8px; padding: 5px 14px; background: rgba(255,255,255,.16); border-radius: 999px; font-size: 16px; }
 
   .dim { position: absolute; inset: 0; background: rgba(0,0,0,.38); opacity: 0; z-index: 60; }
   .sel { position: absolute; border: 2px solid #fff; box-shadow: 0 0 0 9999px rgba(0,0,0,.38); z-index: 61; opacity: 0; }
@@ -250,6 +251,62 @@
   .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 12px; }
   .photos div { height: 92px; border-radius: 6px; }
   .photos .pick { box-shadow: 0 0 0 3px #0a64d8; }
+  .panel .new { display: inline-block; margin-left: 12px; padding: 3px 10px; border-radius: 999px; background: var(--cheese); color: #2a1d00; font: 700 16px -apple-system, sans-serif; letter-spacing: .5px; vertical-align: 3px; }
+
+  /* batch paste */
+  .row.b { background: rgba(10,100,216,.16); box-shadow: inset 3px 0 0 #0a64d8; }
+  .row .th2 { width: 26px; height: 26px; border-radius: 6px; flex: none; box-shadow: 0 0 0 1px rgba(0,0,0,.12); }
+  .pfoot { height: 34px; border-top: 1px solid #e3e1dc; display: flex; align-items: center; gap: 14px; padding: 0 16px; font-size: 12.5px; color: #8a8a8e; }
+  .pfoot b { color: #0a64d8; }
+  .shotimg { border-radius: 8px; box-shadow: 0 0 0 1px rgba(0,0,0,.12), 0 6px 14px rgba(0,0,0,.18); position: relative; overflow: hidden; }
+  .shotimg::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 18%; background: rgba(255,255,255,.55); }
+  .shotimg::after { content: ''; position: absolute; left: 12%; right: 30%; top: 38%; height: 10%; border-radius: 4px; background: rgba(255,255,255,.7); box-shadow: 0 260% 0 rgba(255,255,255,.45); }
+  .chat .msg { display: flex; gap: 10px; margin-bottom: 16px; font-size: 15px; line-height: 1.45; }
+  .chat .av { width: 34px; height: 34px; border-radius: 9px; flex: none; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .chat .who { font-weight: 700; font-size: 14px; } .chat .who span { font-weight: 400; color: #9a9a9e; font-size: 12px; margin-left: 6px; }
+  .composer { position: absolute; left: 16px; right: 16px; bottom: 16px; min-height: 52px; border-radius: 12px; border: 1px solid #d8d5ce; background: #fff; padding: 10px 14px; font-size: 15px; color: #9a9a9e; }
+  .atts { display: flex; gap: 10px; }
+
+  /* terminal trace */
+  .term-win { background: #17151c; color: #e6e3ea; }
+  .term-win .tb { background: #26232d; border-bottom-color: #0d0c11; color: #b8b4c0; }
+  .tlines { position: absolute; left: 0; right: 0; top: 38px; bottom: 0; padding: 12px 16px; font: 13px/18px "SF Mono", Menlo, monospace; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; white-space: pre; }
+  .tlines .pr { color: var(--cheese); } .tlines .er { color: #ff6b6b; } .tlines .wn { color: #f5c26b; } .tlines .dm { color: #8a8692; }
+  .tlines .hl { background: rgba(255,200,61,.0); }
+  .mdcard { border-radius: 12px; background: #fff; box-shadow: 0 0 0 1px #e3e1dc; padding: 12px 14px; font-size: 13.5px; }
+  .mdcard h4 { font-size: 14px; margin: 0 0 8px; } .mdcard h5 { font-size: 13px; margin: 10px 0 6px; color: #c0392b; }
+  .mdcode { border-radius: 8px; background: #17151c; color: #e6e3ea; font: 11.5px/16px "SF Mono", Menlo, monospace; padding: 8px 10px; white-space: pre; overflow: hidden; }
+  .mdcode.fade { max-height: 100px; -webkit-mask-image: linear-gradient(#000 55%, transparent); }
+  .mdcode .er { color: #ff6b6b; }
+
+  /* fill to screen + Stage Manager */
+  .smstrip { position: absolute; left: 22px; top: 120px; width: 150px; display: flex; flex-direction: column; gap: 26px; z-index: 1; }
+  .smtile { height: 96px; border-radius: 8px; background: var(--paper); box-shadow: 0 10px 24px rgba(0,0,0,.35); transform: perspective(500px) rotateY(18deg); transform-origin: 0 50%; overflow: hidden; }
+  .smtile .tb2 { height: 14px; background: #ecebe8; }
+  .gutter { position: absolute; left: 0; top: 30px; width: 200px; bottom: 0; border-right: 2px dashed rgba(255,255,255,.75); background: rgba(229,53,43,.18); z-index: 8; opacity: 0; }
+  .gutter span { position: absolute; left: 50%; top: 26px; transform: translateX(-50%); background: #e5352b; color: #fff; font: 700 14px -apple-system, sans-serif; padding: 6px 10px; border-radius: 999px; white-space: nowrap; }
+
+  /* caffeinate */
+  .submenu { left: 430px; top: 230px; width: 268px; }
+  .mi .ck { display: inline-block; width: 16px; color: #0a64d8; font-weight: 700; } .mi.on .ck { color: #fff; }
+  .scrim { position: absolute; left: 0; right: 0; top: 30px; bottom: 0; background: radial-gradient(600px 400px at 50% 55%, #1f1c27, #0b0a0e); z-index: 76; opacity: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
+  .scrim .stat { display: flex; gap: 12px; }
+  .scrim .sp2 { padding: 10px 20px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); font-size: 19px; font-weight: 600; color: #e9e6ee; opacity: 0; }
+  .scrim .sp2.g { background: rgba(48,209,88,.16); border-color: rgba(48,209,88,.4); color: #9ff0b4; }
+  .mac3d { position: relative; width: 640px; height: 470px; perspective: 1700px; perspective-origin: 50% -30%; }
+  .rig { position: absolute; inset: 0; transform-style: preserve-3d; }
+  .lid3d { position: absolute; left: 80px; top: 0; width: 480px; height: 300px; transform-origin: 50% 100%; transform-style: preserve-3d; }
+  .lid3d .face { position: absolute; inset: 0; border-radius: 18px 18px 4px 4px; backface-visibility: hidden; }
+  .lid3d .front { background: #0d0c10; box-shadow: 0 0 0 3px #b9b6bf; padding: 14px 14px 20px; }
+  .lid3d .scr3d { width: 100%; height: 100%; border-radius: 6px; overflow: hidden; background: linear-gradient(135deg, #3b2a6b 0%, #8a3d6b 55%, #e08a3a 100%); display: flex; align-items: center; justify-content: center; }
+  .lid3d .back { background: linear-gradient(160deg, #e2e0e6, #a7a4ae); transform: rotateX(180deg); display: flex; align-items: center; justify-content: center; }
+  .lid3d .back img { width: 84px; height: 84px; opacity: .5; filter: grayscale(1) brightness(1.2); }
+  .deck { position: absolute; left: 70px; top: 300px; width: 500px; height: 310px; transform-origin: 50% 0; transform: rotateX(90deg); transform-style: preserve-3d; border-radius: 4px 4px 18px 18px; background: linear-gradient(#d9d7de, #bdbac3); }
+  .deck .kb { position: absolute; left: 40px; right: 40px; top: 26px; height: 140px; border-radius: 6px; background: #2a282f; background-image: repeating-linear-gradient(90deg, transparent 0 30px, #45424c 30px 32px), repeating-linear-gradient(0deg, transparent 0 26px, #45424c 26px 28px); }
+  .deck .tp { position: absolute; left: 150px; right: 150px; top: 184px; height: 100px; border-radius: 10px; background: #cbc8d0; box-shadow: inset 0 0 0 1px #aaa7b0; }
+  .deck .lip { position: absolute; left: 0; right: 0; top: 100%; height: 14px; transform-origin: 50% 0; transform: rotateX(-90deg); border-radius: 0 0 10px 10px; background: linear-gradient(#bdbac3, #8d8a94); }
+  .mini { width: 300px; border-radius: 10px; background: var(--paper); color: var(--ink); padding: 14px 16px; font-size: 14px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+  .mini .bar { height: 8px; border-radius: 4px; background: #e6e3dc; margin-top: 10px; overflow: hidden; } .mini .bar i { display: block; height: 100%; background: #0a64d8; }
 </style>
 </head>
 <body>
@@ -312,6 +369,8 @@ const lerp = (a, b, p) => a + (b - a) * p;
 const win = (t, a, b, f = .35) => Math.min(prog(t, a, a + f), 1 - prog(t, b - f, b));
 const $ = id => document.getElementById(id);
 const keyHTML = keys => keys.map(k => `<div class="key">${k}</div>`).join('');
+// Menu rows: 'Title|Shortcut', '-' for a separator, '#Header' for a section header.
+const menuHTML = items => items.map(m => m === '-' ? '<div class="msep"></div>' : m[0] === '#' ? `<div class="mh">${m.slice(1)}</div>` : `<div class="mi" data-k="${m.split('|')[0]}"><span>${m.split('|')[0]}</span><span>${m.split('|')[1] || ''}</span></div>`).join('');
 
 const CURSOR_ARROW = '<path d="M3 2 L3 21 L8 16.5 L11.5 24 L14.5 22.6 L11 15.4 L18 15.4 Z" fill="#000" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>';
 const CURSOR_CROSS = '<path d="M13 1 V25 M1 13 H25" stroke="#fff" stroke-width="3"/><path d="M13 1 V25 M1 13 H25" stroke="#000" stroke-width="1.2"/>';
@@ -369,10 +428,16 @@ function popIn(el, lt, a, b, f = .3) {
 // ---------- scenes ----------
 const scenes = [];
 const scenesEl = $('scenes'), panelsEl = $('panels');
+// Scenes play back to back, each overlapping the one before by OVERLAP seconds; `len` is a scene's length.
+const FIRST_START = 5.0, OVERLAP = .4;
 function scene(def) {
+  const prev = scenes[scenes.length - 1];
+  def.start = prev ? prev.end - OVERLAP : FIRST_START;
+  def.end = def.start + def.len;
+  const num = def.tag ? `${String(scenes.length + 1).padStart(2, '0')} — ${def.tag}` : def.num;
   const layer = document.createElement('div'); layer.className = 'layer'; layer.innerHTML = def.html; scenesEl.appendChild(layer);
   const panel = document.createElement('div'); panel.className = 'panel';
-  panel.innerHTML = `<div class="num">${def.num}</div><h2>${def.title}</h2><p>${def.desc}</p><div class="keys">${def.keys.map(k => `<div class="key">${k}</div>`).join('')}</div>`;
+  panel.innerHTML = `<div class="num">${num}${def.fresh ? '<span class="new">NEW</span>' : ''}</div><h2>${def.title}</h2><p>${def.desc}</p><div class="keys">${def.keys.map(k => `<div class="key">${k}</div>`).join('')}</div>`;
   panelsEl.appendChild(panel);
   def.layer = layer; def.panel = panel; def.q = s => layer.querySelector(s);
   if (def.init) def.init(def);
@@ -389,7 +454,7 @@ const CLIPS = [
   { i: '¶', t: 'Road trip packing list', full: 'Road trip packing list<br>• Chargers • Snacks • Playlist', meta: 'Text · copied yesterday' },
 ];
 scene({
-  id: 'clip', start: 5.0, end: 13.2, num: '01 — CLIPBOARD', title: 'Clipboard history', keys: ['⌃', '⌥', 'V'],
+  id: 'clip', len: 8.2, tag: 'CLIPBOARD', title: 'Clipboard history', keys: ['⌃', '⌥', 'V'],
   desc: 'Everything you copy — text, rich text, images and files — searchable and one keystroke from pasting.',
   html: `
     <div class="win" style="left:60px;top:90px;width:560px;height:440px">
@@ -429,12 +494,143 @@ scene({
   }
 });
 
+// Batch paste: ⇧↓ picks several, ↩ pastes them all with one ⌘V -------------------
+const SHOT_G = ['linear-gradient(160deg,#ff8a65,#e5352b)', 'linear-gradient(160deg,#5a4bb5,#3a7bd5)', 'linear-gradient(160deg,#2f9e74,#9fd18b)'];
+const BCLIPS = [
+  { g: SHOT_G[0], t: 'Screenshot — Checkout error', meta: 'Image · 1440 × 900' },
+  { g: SHOT_G[1], t: 'Screenshot — Console', meta: 'Image · 1280 × 760' },
+  { g: SHOT_G[2], t: 'Screenshot — Network tab', meta: 'Image · 1280 × 760' },
+  { i: '¶', t: 'Steps: add two items, apply code…', meta: 'Text · 64 characters' },
+  { i: '🔗', t: 'https://github.com/maanit-gupta/Cheese', meta: 'Link' },
+];
+const shot = (g, w, h, extra = '') => `<div class="shotimg" style="width:${w}px;height:${h}px;background:${g};${extra}"></div>`;
+scene({
+  id: 'batch', len: 7.4, tag: 'BATCH PASTE', fresh: true, title: 'Paste a whole batch', keys: ['⇧', '↓', '↩'],
+  desc: 'Hold ⇧ with the arrows to pick several screenshots or snippets. One ↩ pastes them all with a single ⌘V, in the order you picked.',
+  html: `
+    <div class="win chat" style="left:60px;top:80px;width:600px;height:590px">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div># checkout-bugs</div>
+      <div class="body">
+        <div class="msg"><div class="av" style="background:#8a3d6b">A</div><div><div class="who">Ana<span>11:24</span></div>Checkout breaks on Safari again. Can you send what you're seeing?</div></div>
+        <div class="msg" id="sent" style="opacity:0"><div class="av" style="background:#0a64d8">M</div><div><div class="who">You<span>11:30</span></div><div class="atts" style="margin-top:6px">${SHOT_G.map(g => shot(g, 132, 86)).join('')}</div></div></div>
+      </div>
+      <div class="composer" id="comp"><div class="atts" id="atts">${SHOT_G.map((g, i) => `<div id="att${i}" style="opacity:0">${shot(g, 92, 60)}</div>`).join('')}</div><div id="compText">Message #checkout-bugs</div></div>
+    </div>
+    <div class="chip" id="bchip" style="left:250px;top:470px">One ⌘V<span>3 screenshots, in order</span></div>
+    <div class="pop" id="bpop">
+      <div class="search"><span style="color:#888">⌕</span><span id="bq"></span></div>
+      <div class="cols"><div class="list" id="blist"></div><div class="preview" id="bprev"></div></div>
+      <div class="pfoot" id="bfoot"></div>
+    </div>`,
+  update(lt, s) {
+    setHud(lt, [[.2, 1.0, ['⌃', '⌥', 'V']], [1.3, 1.85, ['⇧', '↓']], [1.95, 2.5, ['⇧', '↓']], [3.0, 3.6, ['↩']]]);
+    const pop = s.q('#bpop');
+    const open = prog(lt, .5, .85), close = prog(lt, 3.25, 3.55);
+    pop.style.opacity = open * (1 - close);
+    pop.style.transform = `scale(${lerp(.92, 1, back(open)) - close * .04})`;
+    $('mbCheese').classList.toggle('on', lt > .45 && lt < 3.45);
+    s.q('#bq').innerHTML = '<span class="ph">Search history</span>' + (lt % 1 < .55 ? '<span class="caret"></span>' : '');
+
+    const n = lt < 1.5 ? 1 : lt < 2.15 ? 2 : 3;
+    const listHTML = BCLIPS.map((c, i) => {
+      const lead = c.g ? `<div class="th2" style="background:${c.g}"></div>` : `<div class="ri">${c.i}</div>`;
+      return `<div class="row ${i < n ? 'b' : ''}" style="${i === n - 1 ? 'font-weight:600' : ''}">${lead}<div class="t">${c.t}</div><div class="n">⌘${i + 1}</div></div>`;
+    }).join('');
+    const list = s.q('#blist'); if (list.dataset.h !== listHTML) { list.innerHTML = listHTML; list.dataset.h = listHTML; }
+    const fan = SHOT_G.slice(0, n).map((g, i) => shot(g, 250, 160, `position:absolute;left:${i * 22}px;top:${i * 18}px;transform:rotate(${(i - (n - 1) / 2) * 3}deg)`)).join('');
+    const prevHTML = `<div style="position:relative;height:210px">${fan}</div><div class="meta">${n > 1 ? `${n} items selected` : BCLIPS[0].meta}</div>`;
+    const prev = s.q('#bprev'); if (prev.dataset.h !== prevHTML) { prev.innerHTML = prevHTML; prev.dataset.h = prevHTML; }
+    const footHTML = n > 1 ? `<b>${n} selected</b><span>↩ Paste All</span><span>⌥↩ One by One</span><span>⌘C Copy</span>` : '<span>↩ Paste</span><span>⌥↩ Plain</span><span>⌘P Pin</span><span>⌘⌫ Delete</span>';
+    const foot = s.q('#bfoot'); if (foot.dataset.h !== footHTML) { foot.innerHTML = footHTML; foot.dataset.h = footHTML; }
+
+    // All three land in the composer at once, then go out as one message.
+    const landed = prog(lt, 3.6, 3.85), sentP = prog(lt, 5.4, 5.7);
+    for (let i = 0; i < 3; i++) {
+      const el = s.q('#att' + i);
+      el.style.opacity = landed * (1 - sentP);
+      el.style.transform = `scale(${lerp(.6, 1, back(landed))})`;
+    }
+    s.q('#atts').style.display = sentP < 1 && landed > 0 ? 'flex' : 'none';
+    s.q('#compText').style.display = landed > 0 && sentP < 1 ? 'none' : 'block';
+    const sent = s.q('#sent');
+    sent.style.opacity = sentP; sent.style.transform = `translateY(${(1 - eo(sentP)) * 20}px)`;
+    const chip = s.q('#bchip'), cv = win(lt, 3.9, 5.4, .25);
+    chip.style.opacity = cv; chip.style.transform = `translateY(${(1 - eo(prog(lt, 3.9, 4.2))) * 12}px)`;
+    setCursor(0, 0, 0);
+  }
+});
+
+// Terminal Trace: the last command and its output, as Markdown, errors pulled out ------
+const TT_OUT = (() => {
+  const files = ['AppDelegate', 'ActionRegistry', 'MenuLayout', 'ClipStore', 'HistoryView', 'HistorySelection', 'Paster', 'CaptureService', 'OverlayWindow', 'AnnotationEditor', 'TextRecognizer', 'OCRService', 'Stitcher', 'StitchWorker', 'AutoScroller', 'WindowManager', 'SnapLayout', 'BatchWindowFiller', 'DockLayout', 'CanvasView', 'StrokeBuilder', 'ShapeRecognizer', 'QRGenerator', 'CaffeinateController', 'PDFCompressor', 'OfficeRenderer', 'TableDetector', 'ShelfStore', 'ShareServer', 'Discovery', 'SendSession', 'TLSIdentity', 'AppSweeper', 'PaletteRanker', 'HotkeySuggester', 'TerminalTraceParser', 'SettingsView'];
+  const out = [['dm', 'Building for debugging...']];
+  files.forEach((f, i) => {
+    out.push(['', `[${i + 1}/44] Compiling Cheese ${f}.swift`]);
+    if (f === 'Stitcher') out.push(['er', `Sources/Stitcher.swift:88:17: error: cannot find 'rowHash' in scope`], ['', '        let hash = rowHash(row)'], ['er', '                   ^~~~~~~']);
+    if (f === 'StitchWorker') out.push(['er', `Sources/StitchWorker.swift:41:22: error: missing argument for parameter 'offset' in call`]);
+    if (f === 'SnapLayout') out.push(['wn', `Sources/SnapLayout.swift:12:9: warning: variable 'gap' was never mutated`]);
+  });
+  out.push(['er', 'error: fatalError']);
+  return out;
+})();
+const TT_PROMPT = '<span class="pr">~/Cheese ❯</span> ';
+scene({
+  id: 'trace', len: 8.0, tag: 'TERMINAL TRACE', fresh: true, title: 'Terminal Trace', keys: ['⌃', '⌥', '⇧', 'T'],
+  desc: 'One shortcut copies the last command and everything it printed, as Markdown ready for a chat or an LLM, with the errors pulled into their own block.',
+  html: `
+    <div class="win term-win" style="left:36px;top:52px;width:610px;height:630px">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div>Terminal — zsh — 92×34</div>
+      <div class="tlines" id="tlines"></div>
+      <div id="thl" style="position:absolute;left:8px;right:8px;bottom:26px;top:48px;border-radius:8px;background:rgba(255,200,61,.22);box-shadow:inset 0 0 0 2px rgba(255,200,61,.8);opacity:0"></div>
+    </div>
+    <div class="win chat" style="left:668px;top:52px;width:400px;height:630px">
+      <div class="tb"><div class="dots"><i></i><i></i><i></i></div>Chat</div>
+      <div class="body" style="padding:16px">
+        <div class="msg"><div class="av" style="background:#2f9e74">✳︎</div><div>What went wrong? Paste the output and I'll take a look.</div></div>
+        <div id="ttmsg" style="opacity:0">
+          <div class="mdcard">
+            <h4>### Terminal Trace (Terminal — 1 Nov 2026, 11:30)</h4>
+            <div class="mdcode fade">~/Cheese ❯ swift build
+Building for debugging...
+[1/44] Compiling Cheese AppDelegate.swift
+[2/44] Compiling Cheese ActionRegistry.swift
+[3/44] Compiling Cheese ClipStore.swift</div>
+            <div style="text-align:center;color:#9a9a9e;font-size:12px;margin:2px 0">⋯ 40 more lines ⋯</div>
+            <h5>#### Errors</h5>
+            <div class="mdcode"><span class="er">Stitcher.swift:88:17: error: cannot find 'rowHash'…</span>
+<span class="er">StitchWorker.swift:41:22: error: missing argument…</span>
+<span class="er">error: fatalError</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="composer" id="ttcomp">Message</div>
+    </div>
+    <div class="toast" id="tttoast"><div class="ic">›_</div>Copied last response from Terminal (45 lines)</div>`,
+  update(lt, s) {
+    setHud(lt, [[2.55, 3.4, ['⌃', '⌥', '⇧', 'T']], [4.5, 5.1, ['⌘', 'V']]]);
+    const typed = 'swift build'.slice(0, Math.floor(clamp((lt - .1) / .045, 0, 11)));
+    const shown = Math.floor(clamp((lt - .75) / .032, 0, TT_OUT.length));
+    const done = shown === TT_OUT.length && lt > 2.3;
+    const lines = [TT_PROMPT + 'git pull', 'Already up to date.', TT_PROMPT + typed + (shown === 0 && lt % 1 < .55 ? '█' : '')];
+    for (const [k, txt] of TT_OUT.slice(0, shown)) lines.push(k ? `<span class="${k}">${txt}</span>` : txt);
+    if (done) lines.push(TT_PROMPT + (lt % 1 < .55 ? '█' : ''));
+    const html = lines.slice(-31).map(l => `<div>${l || ' '}</div>`).join('');
+    const tl = s.q('#tlines'); if (tl.dataset.h !== html) { tl.innerHTML = html; tl.dataset.h = html; }
+    // What it takes: everything from the last command down, not the waiting prompt.
+    s.q('#thl').style.opacity = win(lt, 2.9, 4.2, .25);
+    toast(s.q('#tttoast'), lt, 3.0, 4.6);
+    const m = s.q('#ttmsg'), mp = prog(lt, 4.8, 5.15);
+    m.style.opacity = mp; m.style.transform = `translateY(${(1 - eo(mp)) * 24}px)`;
+    setCursor(0, 0, 0);
+  }
+});
+
 // 2. Screenshots --------------------------------------------------------------
 const BAR_COLORS = ['#ffc83d', '#f29e1f', '#e0702f', '#8a3d6b', '#5a4bb5', '#3a7bd5'];
 const BAR_H = [45, 70, 55, 92, 66, 80];
 const barsHTML = (h = 230) => `<div class="bars" style="height:${h}px">${BAR_H.map((v, i) => `<div style="height:${v}%;background:${BAR_COLORS[i]}"></div>`).join('')}</div>`;
 scene({
-  id: 'shot', start: 12.8, end: 20.6, num: '02 — SCREENSHOTS', title: 'Screenshots', keys: ['⌃', '⌥', '4'],
+  id: 'shot', len: 7.8, tag: 'SCREENSHOTS', title: 'Screenshots', keys: ['⌃', '⌥', '4'],
   desc: 'Region, window or full screen, straight to your clipboard. Hold ⇧ as you finish to annotate.',
   html: `
     <div class="win" style="left:70px;top:70px;width:960px;height:600px">
@@ -502,7 +698,7 @@ function qrHTML() {
   return `<div style="position:relative;width:168px;height:168px">${h}</div>`;
 }
 scene({
-  id: 'ocr', start: 20.2, end: 27.4, num: '03 — OCR', title: 'Copy text from anything', keys: ['⌃', '⌥', 'T'],
+  id: 'ocr', len: 7.2, tag: 'OCR', title: 'Copy text from anything', keys: ['⌃', '⌥', 'T'],
   desc: 'Drag over any part of the screen to copy the words in it. English and Hindi. QR codes and barcodes too.',
   html: `
     <div class="win" style="left:70px;top:70px;width:960px;height:600px">
@@ -552,7 +748,7 @@ const pageHTML = () => `<div class="navbar"><div class="logo"></div>cheese.dev<s
   CARD_COLORS.map((c, i) => `<div class="card" style="background:${c};height:${120 + (i % 3) * 30}px">Section ${i + 1}<div class="l" style="width:${60 + (i * 13) % 30}%"></div><div class="l" style="width:${40 + (i * 7) % 30}%"></div></div>`).join('');
 const VIEW_H = 520, SCROLL_MAX = 1260;
 scene({
-  id: 'scroll', start: 27.0, end: 34.4, num: '04 — SCROLLING CAPTURE', title: 'Scrolling capture', keys: ['⌃', '⌥', 'S'],
+  id: 'scroll', len: 7.4, tag: 'SCROLLING CAPTURE', title: 'Scrolling capture', keys: ['⌃', '⌥', 'S'],
   desc: 'Cheese scrolls the page for you and stitches one tall image. Sticky headers are kept once, not repeated.',
   html: `
     <div class="win" style="left:60px;top:70px;width:560px;height:600px">
@@ -593,7 +789,7 @@ scene({
 // 5. Window snapping ---------------------------------------------------------
 const FULL = [0, 30, 1100, 690];
 scene({
-  id: 'snap', start: 34.0, end: 41.0, num: '05 — WINDOWS', title: 'Window snapping', keys: ['⌃', '⌥', '← → ↑ ↓'],
+  id: 'snap', len: 6.6, tag: 'WINDOWS', title: 'Window snapping', keys: ['⌃', '⌥', '← → ↑ ↓'],
   desc: 'Halves and maximize from the keyboard. Press again to hop to the next display. ⌃⌥⌫ puts it back.',
   html: `
     <div class="win" id="wa" style="z-index:2"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Notes</div>
@@ -616,11 +812,44 @@ scene({
   }
 });
 
+// Fill to Screen: every window edge to edge, no Stage Manager gutter ---------------
+const SM_TILES = ['linear-gradient(135deg,#5a4bb5,#3a7bd5)', 'linear-gradient(135deg,#ffc83d,#f29e1f)', 'linear-gradient(135deg,#2f9e74,#9fd18b)'];
+scene({
+  id: 'fill', len: 7.2, tag: 'FILL TO SCREEN', fresh: true, title: 'Edge to edge, even with Stage Manager', keys: ['⌃', '⌥', 'M'],
+  desc: 'Every open window fills its display in one press: no gap down the side for the Stage Manager strip, never native full screen. Restore All Windows puts them back.',
+  html: `
+    <div class="smstrip" id="strip">${SM_TILES.map(g => `<div class="smtile"><div class="tb2"></div><div style="margin:8px;height:52px;border-radius:5px;background:${g}"></div></div>`).join('')}</div>
+    <div class="win" id="fa" style="z-index:2"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Notes</div>
+      <div class="body"><b style="font-size:20px">Sprint notes</b><div class="line" style="width:80%"></div><div class="line" style="width:60%"></div><div class="line" style="width:70%"></div></div></div>
+    <div class="win" id="fb" style="z-index:3"><div class="tb"><div class="dots"><i></i><i></i><i></i></div><div style="flex:1;margin:0 90px;height:24px;border-radius:7px;background:#dddbd6;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px;color:#777">github.com/maanit-gupta/Cheese</div></div>
+      <div class="body"><div style="height:180px;border-radius:10px;background:linear-gradient(135deg,#8a3d6b,#e0702f)"></div><div class="line" style="width:90%"></div><div class="line" style="width:75%"></div><div class="line" style="width:82%"></div></div></div>
+    <div class="gutter" id="gut"><span>Stage Manager gap</span></div>
+    <div class="toast" id="ftoast"><div class="ic">⤢</div>Filled 4 windows across 3 apps</div>`,
+  update(lt, s) {
+    setHud(lt, [[2.0, 2.9, ['⌃', '⌥', 'M']]]);
+    const mix = (a, b, p) => a.map((v, i) => lerp(v, b[i], p));
+    // Before: the old behaviour, a window parked to the right of the strip.
+    const B0 = [200, 30, 900, 690], A0 = [320, 110, 600, 470];
+    const p = eo(prog(lt, 2.3, 2.75)), pa = eo(prog(lt, 2.4, 2.85));
+    const place = (el, r) => Object.assign(el.style, { left: r[0] + 'px', top: r[1] + 'px', width: r[2] + 'px', height: r[3] + 'px', borderRadius: r[0] <= 0.5 && r[2] >= 1099 ? '0' : '12px' });
+    place(s.q('#fb'), mix(B0, FULL, p)); place(s.q('#fa'), mix(A0, FULL, pa));
+    s.q('#gut').style.opacity = win(lt, .7, 2.4, .3);
+    // The strip tucks away under the filled windows, then slides back in at the edge.
+    const strip = s.q('#strip'), back2 = eo(prog(lt, 4.9, 5.4));
+    strip.style.zIndex = lt > 4.8 ? 6 : 1;
+    strip.style.transform = `translateX(${lt > 4.8 ? lerp(-190, 0, back2) : 0}px)`;
+    strip.style.opacity = lt > 2.3 && lt <= 4.8 ? 0 : 1;
+    toast(s.q('#ftoast'), lt, 2.9, 4.6);
+    if (lt > 4.5 && lt < 6.8) { const [cx, cy] = path(lt, [[4.5, 560, 420], [4.9, 6, 300], [5.6, 90, 255]]); setCursor(cx, cy, win(lt, 4.5, 6.8, .2)); }
+    else setCursor(0, 0, 0);
+  }
+});
+
 // 6. Draw on screen ----------------------------------------------------------
 const RAIL = ['↖', '☝︎', '|', '✎', '▍', '⌫', '|', '▢', '◯', '╱', '↗', '|', 'T', '▤', '|', '✦', '◐', '⌕', '|', '▣', '|', '↶', '↷'];
 const laserAt = p => [230 + 470 * p, 420 - 70 * Math.sin(p * Math.PI * 3)];
 scene({
-  id: 'draw', start: 40.6, end: 48.6, num: '06 — DRAW ON SCREEN', title: 'Draw on screen', keys: ['⌃', '⌥', 'D'],
+  id: 'draw', len: 8.0, tag: 'DRAW ON SCREEN', title: 'Draw on screen', keys: ['⌃', '⌥', 'D'],
   desc: 'Pens, shapes, arrows and sticky notes over any app. Laser pointer, spotlight and zoom for presenting.',
   html: `
     <div class="win" style="left:110px;top:60px;width:920px;height:610px">
@@ -679,44 +908,111 @@ scene({
   }
 });
 
+// Caffeinate: awake for an hour, even with the lid closed --------------------------
+const MAIN_MENU = ['Clipboard History|⌃⌥V', 'Capture|▸', 'Draw on Screen|⌃⌥D', 'Files|▸', 'Share…|', 'Shelf|⌃⌥F', 'Windows|▸', 'Tools|▸', 'Caffeinate|▸', '-', 'Clear History|', 'Settings…|⌘,', 'Quit Cheese|⌘Q'];
+const CAFF_MENU = ['For 30 Minutes', 'For 1 Hour', 'For 2 Hours', 'Until…', 'Indefinitely', '-', '✓Keep Awake With Lid Closed'];
+const caffMenuHTML = items => items.map(m => m === '-' ? '<div class="msep"></div>'
+  : `<div class="mi" data-k="${m.replace('✓', '')}"><span><span class="ck">${m[0] === '✓' ? '✓' : ''}</span>${m.replace('✓', '')}</span><span></span></div>`).join('');
+const laptopHTML = `<div class="mac3d"><div id="awakeGlow" style="position:absolute;left:20px;right:20px;top:250px;height:260px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,200,61,.55),transparent);filter:blur(10px);opacity:0"></div><div class="rig">
+  <div class="deck"><div class="kb"></div><div class="tp"></div><div class="lip"></div></div>
+  <div class="lid3d" id="lid3d">
+    <div class="face front"><div class="scr3d"><div class="mini">Exporting 4K master…<div class="bar"><i id="mbar" style="width:46%"></i></div></div></div></div>
+    <div class="face back"><img src="../../docs/media/icon.png"></div>
+  </div></div></div>`;
+scene({
+  id: 'caff', len: 7.6, tag: 'CAFFEINATE', fresh: true, title: 'Awake, even with the lid closed', keys: ['Caffeinate', 'For 1 Hour'],
+  desc: 'Keep your Mac awake for an hour, until a time or indefinitely, with the lid shut. Sleep comes back by itself when the session ends, or if Cheese quits or crashes.',
+  html: `
+    <div class="win" style="left:80px;top:110px;width:560px;height:330px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Export — Launch Film.mov</div>
+      <div class="body"><div style="font-size:20px;font-weight:700">Exporting 4K master…</div>
+        <div style="height:12px;border-radius:6px;background:#e6e3dc;margin-top:22px;overflow:hidden"><div id="cbar" style="height:100%;width:38%;background:#0a64d8;border-radius:6px"></div></div>
+        <div style="color:#888;margin-top:10px;font-size:15px" id="ctime">About 52 minutes left</div></div></div>
+    <div class="menu" id="cmenu" style="padding:5px">${menuHTML(MAIN_MENU)}</div>
+    <div class="menu submenu" id="csub" style="padding:5px">${caffMenuHTML(CAFF_MENU)}</div>
+    <div class="toast" id="ctoast"><div class="ic">💻</div>Caffeinating for 1 hour, even with the lid closed</div>
+    <div class="scrim" id="cscrim">
+      ${laptopHTML}
+      <div class="stat"><div class="sp2" id="cs1">Lid closed</div><div class="sp2 g" id="cs2">Still awake · Lid 59m</div><div class="sp2" id="cs3">Sleeps again when time's up</div></div>
+    </div>`,
+  update(lt, s) {
+    const icon = at($('mbCheese').querySelector('svg'));
+    const m = s.q('#cmenu'), sub = s.q('#csub');
+    m.style.left = Math.min(icon[0] - 14, 1100 - 282) + 'px';
+    const mo = prog(lt, .45, .6) * (1 - prog(lt, 2.15, 2.3));
+    m.style.opacity = mo;
+    const caffRow = m.querySelector('[data-k="Caffeinate"]');
+    caffRow.classList.toggle('on', lt > 1.05 && lt < 2.2);
+    const r = at(caffRow);
+    sub.style.left = (parseFloat(m.style.left) - 268) + 'px';
+    sub.style.top = (r[1] - 16) + 'px';
+    sub.style.opacity = prog(lt, 1.15, 1.3) * (1 - prog(lt, 2.15, 2.3));
+    const hour = sub.querySelector('[data-k="For 1 Hour"]');
+    hour.classList.toggle('on', lt > 1.65 && lt < 2.2);
+    hour.style.filter = lt > 1.95 && lt < 2.1 ? 'brightness(.8)' : 'none';
+    $('mbCheese').classList.toggle('on', lt > .4 && lt < 2.25);
+    setIndicator(lt > 2.3 ? (lt > 6.0 ? 'Lid 59m' : 'Lid 1h') : '');
+    toast(s.q('#ctoast'), lt, 2.4, 3.9);
+    s.q('#cbar').style.width = (38 + prog(lt, 0, 7.6) * 10).toFixed(1) + '%';
+
+    // Shut the lid: the Mac keeps going.
+    const sc = s.q('#cscrim'); sc.style.opacity = win(lt, 3.9, 7.6, .35);
+    const close = eio(prog(lt, 4.4, 5.2));
+    s.q('#lid3d').style.transform = `rotateX(${lerp(8, -89, close)}deg)`;
+    s.q('#mbar').style.width = (46 + prog(lt, 3.9, 4.6) * 3).toFixed(1) + '%';
+    s.q('#awakeGlow').style.opacity = prog(lt, 5.0, 5.4) * (.55 + .45 * Math.sin((lt - 5.0) * Math.PI * 1.4));
+    s.q('#cs1').style.opacity = prog(lt, 5.1, 5.35);
+    s.q('#cs2').style.opacity = prog(lt, 5.5, 5.75);
+    s.q('#cs3').style.opacity = prog(lt, 5.9, 6.15);
+
+    let c = null;
+    const hr = at(hour, .3);
+    if (lt < 2.2) c = path(lt, [[0, 600, 420], [.4, icon[0], icon[1]], [.6, icon[0], icon[1]], [1.0, r[0] + 60, r[1]], [1.2, r[0] - 40, r[1]], [1.6, hr[0], hr[1]]]);
+    if (c) setCursor(c[0], c[1], win(lt, 0, 2.3, .15)); else setCursor(0, 0, 0);
+  }
+});
+
 // 7. Command palette ---------------------------------------------------------
 const PALETTE = [
+  ['›_', 'Copy: Terminal Trace', 'Terminal Trace', '⌃⌥⇧T'],
+  ['⤢', 'Fill All to Screen', 'Window Snapping', '⌃⌥M'],
+  ['☕', 'Caffeinate: For 1 Hour', 'Caffeinate', ''],
   ['📷', 'Capture Region', 'Screenshots', '⌃⌥4'],
-  ['◧', 'Snap Left Half', 'Window Snapping', '⌃⌥←'],
   ['✎', 'Draw on Screen', 'Draw', '⌃⌥D'],
-  ['▦', 'Show Clipboard as QR', 'QR', ''],
+  ['⏻', 'Control: Kill All Open Apps Now', 'Auto-Kill', '⌃⌥⇧Q'],
+  ['⏻', 'Control: Auto-Kill Open Apps…', 'Auto-Kill', '⌃⌥Q'],
+  ['⏻', 'Control: Kill Background Apps (Keep Frontmost)', 'Auto-Kill', ''],
   ['📄', 'Files: Merge PDFs…', 'Files', ''],
-  ['⚙︎', 'Settings: App Hotkeys', 'Settings', ''],
-  ['☕', 'Keep Awake: Indefinitely', 'Keep Awake', ''],
-  ['☕', 'Keep Awake: Until…', 'Keep Awake', ''],
 ];
 scene({
-  id: 'palette', start: 48.2, end: 55.2, num: '07 — COMMAND PALETTE', title: 'Command palette', keys: ['⌃', '⌥', '↩'],
-  desc: 'Every Cheese action, one search away, with its shortcut beside it. Here it turns on Keep Awake, and the countdown sits by the icon.',
+  id: 'palette', len: 7.0, tag: 'COMMAND PALETTE', title: 'Command palette', keys: ['⌃', '⌥', '↩'],
+  desc: 'Every Cheese action, one search away, with its shortcut beside it. Here it quits every open app in one go, sparing Finder and anything you shield.',
   html: `
-    <div class="win" style="left:70px;top:80px;width:520px;height:440px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Notes</div>
+    <div class="win" id="pw1" style="left:70px;top:80px;width:520px;height:440px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Notes</div>
       <div class="body"><b style="font-size:22px">Launch week</b><div class="line" style="width:80%"></div><div class="line" style="width:60%"></div><div class="line" style="width:72%"></div><div class="line" style="width:50%"></div></div></div>
-    <div class="win" style="left:500px;top:150px;width:540px;height:460px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Safari</div>
+    <div class="win" id="pw2" style="left:500px;top:150px;width:540px;height:460px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Safari</div>
       <div class="body"><div style="height:150px;border-radius:10px;background:linear-gradient(135deg,#5a4bb5,#3a7bd5)"></div><div class="line" style="width:90%"></div><div class="line" style="width:75%"></div><div class="line" style="width:82%"></div></div></div>
     <div class="palette" id="pal">
       <div class="pq"><span style="color:#888">⌕</span><span id="pq"></span></div>
       <div id="prows"></div>
     </div>
-    <div class="toast" id="toast"><div class="ic">☕</div>Keeping your Mac awake</div>`,
+    <div class="toast" id="toast"><div class="ic">⏻</div>Swept 6 apps · 1 protected</div>`,
   update(lt, s) {
     setHud(lt, [[.3, 1.1, ['⌃', '⌥', '↩']], [2.75, 3.3, ['↩']]]);
     popIn(s.q('#pal'), lt, .6, 3.3, .25);
-    const query = 'awake'.slice(0, Math.floor(clamp((lt - 1.5) / .2, 0, 5)));
+    const query = 'kill'.slice(0, Math.floor(clamp((lt - 1.5) / .22, 0, 4)));
     s.q('#pq').innerHTML = (query || '<span class="ph">Search Cheese actions</span>') + (lt % 1 < .55 ? '<span class="caret"></span>' : '');
     const rows = (query ? PALETTE.filter(r => r[1].toLowerCase().includes(query)) : PALETTE).slice(0, 6);
     const html = rows.map((r, i) => {
-      const t = query ? r[1].replace(new RegExp(query, 'i'), m => `<b>${m}</b>`) : r[1];
+      const t = query ? r[1].replace(new RegExp(query, 'i'), m => `<strong>${m}</strong>`) : r[1];
       return `<div class="prow ${i === 0 ? 'on' : ''}"><span class="pi">${r[0]}</span><span>${t}</span><span class="pm">${r[2]}</span><span class="pk">${r[3]}</span></div>`;
     }).join('');
     const el = s.q('#prows'); if (el.dataset.h !== html) { el.innerHTML = html; el.dataset.h = html; }
-    if (lt > 3.3) setIndicator('∞');
-    $('mbCheese').classList.toggle('on', lt > 3.3 && lt < 3.9);
-    toast(s.q('#toast'), lt, 3.5, 5.6);
+    setIndicator('Lid 59m');
+    for (const [i, id] of ['#pw1', '#pw2'].entries()) {
+      const q = eo(prog(lt, 3.45 + i * .15, 3.85 + i * .15));
+      s.q(id).style.opacity = 1 - q; s.q(id).style.transform = `scale(${1 - q * .06})`;
+    }
+    toast(s.q('#toast'), lt, 3.7, 5.6);
     setCursor(0, 0, 0);
   }
 });
@@ -740,9 +1036,8 @@ const hubHTML = (id, thumb, summary, rows) => `<div class="hub" id="${id}">
   <div class="hpill"><span class="th">${thumb}</span><span>${summary}</span><span class="x">✕</span></div>
   <div class="hcards"><div class="hcard" data-k="share">${svg(ICON.share)}<b>Share Link / QR</b><span>Phone or nearby device</span></div><div class="hcard">${svg(ICON.tray)}<b>Add to Shelf</b><span>Keep it handy</span></div></div>
   ${rows.length ? '<div class="hsep"></div>' + menuHTML(rows) : ''}</div>`;
-const menuHTML = items => items.map(m => m === '-' ? '<div class="msep"></div>' : m[0] === '#' ? `<div class="mh">${m.slice(1)}</div>` : `<div class="mi" data-k="${m.split('|')[0]}"><span>${m.split('|')[0]}</span><span>${m.split('|')[1] || ''}</span></div>`).join('');
 scene({
-  id: 'files', start: 54.8, end: 63.6, num: '08 — FILES', title: 'PDF &amp; file tools', keys: ['Finder', 'Drop on 🧀', 'Palette'],
+  id: 'files', len: 8.8, tag: 'FILES', title: 'PDF &amp; file tools', keys: ['Finder', 'Drop on 🧀', 'Palette'],
   desc: 'Merge, split, compress, watermark and convert PDFs, Office files and images. Fully offline: nothing is uploaded.',
   html: `
     <div class="win" style="left:70px;top:110px;width:660px;height:420px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Documents</div>
@@ -764,7 +1059,7 @@ scene({
     <div class="notif" id="notif" style="width:420px"><img class="app" src="../../docs/media/icon.png"><div><b>Merged 2 PDFs</b><br><span style="color:#666">Q3 Report (merged).pdf</span></div><div class="ebtn" style="margin-left:auto;white-space:nowrap">Show in Finder</div></div>`,
   update(lt, s) {
     setHud(lt, [[1.0, 1.5, ['⌘', 'click']], [5.0, 5.5, ['Run']]]);
-    setIndicator(lt < 5.7 || lt > 6.6 ? '∞' : lt < 6.15 ? '∞ · 1/2' : '∞ · 2/2');
+    setIndicator(lt < 5.7 || lt > 6.6 ? 'Lid 58m' : lt < 6.15 ? 'Lid 58m · 1/2' : 'Lid 58m · 2/2');
     const merged = lt > 6.6;
     s.q('#f0').classList.toggle('pick', lt > .7 && !merged);
     s.q('#f1').classList.toggle('pick', lt > 1.25 && !merged);
@@ -804,7 +1099,7 @@ scene({
 // 9. Share: drop on the 🧀 → link and QR → the phone's page, both ways -------------
 const PHOTOS = ['linear-gradient(160deg,#7cc4f2,#f2c46b 70%,#e0a24a)', 'linear-gradient(160deg,#2f6f4f,#9fd18b)', 'linear-gradient(160deg,#f7a072,#8a3d6b)', 'linear-gradient(160deg,#3a7bd5,#00d2ff)', 'linear-gradient(160deg,#ffc83d,#f29e1f)', 'linear-gradient(160deg,#5a4bb5,#e0702f)'];
 scene({
-  id: 'share', start: 63.2, end: 71.2, num: '09 — SHARE', title: 'Drop it on the 🧀, scan, done', keys: ['Drop on 🧀', 'Share Link / QR'],
+  id: 'share', len: 8.0, tag: 'SHARE', title: 'Drop it on the 🧀, scan, done', keys: ['Drop on 🧀', 'Share Link / QR'],
   desc: 'Drop anything on the menu bar icon to share it as a link and QR code, park it on the Shelf, or open the file tools that fit. Phones get a clean page to download from, and what they send back lands right in the panel.',
   html: `
     <div class="win" style="left:70px;top:90px;width:470px;height:330px"><div class="tb"><div class="dots"><i></i><i></i><i></i></div>Photos</div>
@@ -835,7 +1130,7 @@ scene({
     <div class="toast" id="toast"><div class="ic">${svg(ICON.download)}</div>Received IMG_2041.heic from your phone</div>`,
   update(lt, s) {
     setHud(lt, [[.75, 1.6, ['Drag to 🧀']], [2.25, 2.6, ['Share Link / QR']], [3.7, 4.2, ['Copy Link']]]);
-    setIndicator(lt > 2.8 ? 'Share' : '');
+    setIndicator(lt > 2.8 ? 'Lid 57m · Share' : 'Lid 57m');
     const icon = at($('mbCheese').querySelector('svg'));
     const photo = at(s.q('#ph0'));
     s.q('#ph0').classList.toggle('pick', lt > .65 && lt < 1.65);
@@ -901,17 +1196,17 @@ scene({
 });
 
 // 10. Shortcuts --------------------------------------------------------------
-const SHORTCUT_ROWS = [['Open clipboard history', '⌃⌥V'], ['Capture region', '⌃⌥4'], ['Capture full screen', '⌃⌥3'], ['Capture window', '⌃⌥5'], ['Copy text from region (OCR)', '⌃⌥T'], ['Scrolling capture', '⌃⌥S']];
+const SHORTCUT_ROWS = [['Open clipboard history', '⌃⌥V'], ['Terminal Trace', '⌃⌥⇧T'], ['Capture region', '⌃⌥4'], ['Capture window', '⌃⌥5'], ['Copy text from region (OCR)', '⌃⌥T'], ['Scrolling capture', '⌃⌥S']];
 scene({
-  id: 'keys', start: 70.8, end: 76.8, num: 'YOUR KEYS', title: 'Every shortcut is yours', keys: ['Settings…', 'Shortcuts'],
+  id: 'keys', len: 6.0, num: 'YOUR KEYS', title: 'Every shortcut is yours', keys: ['Settings…', 'Shortcuts'],
   desc: 'Every tool is one click away in the menu bar, grouped by what you do. Don\'t like a default? Open Settings → Shortcuts, click one and press new keys.',
   html: `
     <div class="menu" id="menu" style="padding:5px">
-      ${menuHTML(['Clipboard History|⌃⌥V', 'Capture|▸', 'Draw on Screen|⌃⌥D', 'Files|▸', 'Share…|', 'Shelf|⌃⌥F', 'Windows|▸', 'Tools|▸', '-', 'Clear History|', 'Settings…|⌘,', 'Quit Cheese|⌘Q'])}
+      ${menuHTML(MAIN_MENU)}
     </div>
     <div class="win" id="settings" style="left:180px;top:70px;width:720px;height:590px;opacity:0">
       <div class="tb" style="justify-content:center;position:relative"><div class="dots" style="position:absolute;left:14px"><i></i><i></i><i></i></div>Cheese Settings</div>
-      <div class="tabs">${[['⚙︎', 'General'], ['⌨︎', 'Shortcuts'], ['📋', 'Clipboard'], ['▦', 'Windows'], ['🚀', 'Hotkeys'], ['📄', 'Files'], ['⇪', 'Share'], ['🔒', 'Permissions']].map(([g, n]) => `<div class="tab ${n === 'Shortcuts' ? 'on' : ''}" style="width:82px"><span class="g">${g}</span>${n}</div>`).join('')}</div>
+      <div class="tabs">${[['⚙︎', 'General'], ['⌨︎', 'Shortcuts'], ['📋', 'Clipboard'], ['▦', 'Windows'], ['🚀', 'Hotkeys'], ['📄', 'Files'], ['⇪', 'Share'], ['☕', 'Caffeinate']].map(([g, n]) => `<div class="tab ${n === 'Shortcuts' ? 'on' : ''}" style="width:82px"><span class="g">${g}</span>${n}</div>`).join('')}</div>
       <div style="font-size:13px;color:#888;margin:14px 26px 0">Click a shortcut and press the keys you want instead.</div>
       <div class="gtitle">Clipboard &amp; Capture</div>
       <div class="group">${SHORTCUT_ROWS.map((r, i) => `<div class="srow"><span>${r[0]}</span><div class="rec" id="rec${i}">${r[1]}</div></div>`).join('')}</div>
@@ -939,7 +1234,8 @@ scene({
 });
 
 // ---------- master timeline ----------
-const DURATION = 81;
+const SCENES_END = scenes[scenes.length - 1].end;
+const DURATION = Math.ceil(SCENES_END + 4.2);
 const screen = $('screen');
 window.DURATION = DURATION;
 window.seek = function (t) {
@@ -957,7 +1253,7 @@ window.seek = function (t) {
   });
 
   // screen
-  const sv = win(t, 4.9, 76.8, .5);
+  const sv = win(t, 4.9, SCENES_END, .5);
   screen.style.opacity = sv;
   screen.style.transform = `translateY(${(1 - eo(prog(t, 4.9, 5.6))) * 60}px) scale(${lerp(.97, 1, eo(prog(t, 4.9, 5.6)))})`;
   // Shared menu bar state; the scene that owns t sets it again below.
@@ -979,9 +1275,9 @@ window.seek = function (t) {
   if (!owner || owner.id !== 'shot') flash.style.opacity = 0;
 
   // outro
-  const ov = prog(t, 76.4, 77.2);
+  const ov = prog(t, SCENES_END - .4, SCENES_END + .4);
   $('outro').style.opacity = ov;
-  $('outroIcon').style.transform = `scale(${lerp(.7, 1, back(prog(t, 76.5, 77.4)))})`;
+  $('outroIcon').style.transform = `scale(${lerp(.7, 1, back(prog(t, SCENES_END - .3, SCENES_END + .6)))})`;
 };
 window.seek(0);
 </script>

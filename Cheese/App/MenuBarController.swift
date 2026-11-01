@@ -3,7 +3,7 @@ import KeyboardShortcuts
 
 /// Who's showing status text beside the menu bar icon. Listed in the order they're shown.
 enum IndicatorSource: CaseIterable {
-    case keepAwake
+    case caffeinate
     case files
     case share
 

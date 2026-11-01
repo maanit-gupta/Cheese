@@ -51,6 +51,8 @@ enum PermissionPlan {
         case .drawOnScreen: [.screenRecording]
         case .files: [.notifications, .finderExtension]
         case .share: [.localNetwork, .notifications]
+        // Terminals without AppleScript (Ghostty, VS Code…) are read through Accessibility.
+        case .terminalTrace: [.accessibility]
         // Quitting other apps needs no permission.
         case .qr, .keepAwake, .appHotkeys, .commandPalette, .shelf, .appSweep: []
         }

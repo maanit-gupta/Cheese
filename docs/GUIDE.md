@@ -2,7 +2,7 @@
 
 Everything Cheese does, tool by tool. The [README](../README.md) has the short version.
 
-- [Capture](#capture) · [Copy](#copy) · [Share](#share) ([drop hub](#drop-anything-on-the-menu-bar-icon)) · [Control: windows and apps](#control-windows-and-apps) · [Draw on screen](#draw-on-screen) · [Convert](#convert-offline-pdf-document-and-image-tools) · [Control: keep awake](#control-keep-awake)
+- [Capture](#capture) · [Copy](#copy) · [Share](#share) ([drop hub](#drop-anything-on-the-menu-bar-icon)) · [Control: windows and apps](#control-windows-and-apps) · [Draw on screen](#draw-on-screen) · [Convert](#convert-offline-pdf-document-and-image-tools) · [Control: Caffeinate](#control-caffeinate)
 - [The menu bar menu](#the-menu-bar-menu) · [Welcome and permissions](#welcome-and-permissions) · [Keyboard shortcuts](#keyboard-shortcuts) · [Settings](#settings) · [Troubleshooting](#troubleshooting) · [Uninstall](#uninstall)
 
 ## Capture
@@ -33,6 +33,22 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - **Drag any item out** of the history (a row, or the image or file in the preview) and drop it into Messages, Slack, Discord, a browser chat, Mail or Finder. The history fades while you're over another window so you can see where it lands, and closes after the drop. Images go as both a PNG file and image data, so web chats and native apps both take them.
 - **Edit text in place**: click the ✏️ in the bottom-right corner of a text preview, or press <kbd>⌘</kbd><kbd>E</kbd>. <kbd>⌘</kbd><kbd>↩</kbd> saves and pastes, <kbd>Esc</kbd> saves and goes back to the list, and the drag handle saves and drags the edited text straight into a chat. The edit replaces the item (and the clipboard) instead of adding a copy; edited rich text becomes plain text.
 - Skips anything a password manager marks as concealed or transient.
+
+### Paste several items at once
+- **Select a run** with <kbd>⇧</kbd><kbd>↑</kbd> / <kbd>⇧</kbd><kbd>↓</kbd> (moving back toward where you started shrinks it) or <kbd>⇧</kbd>-click. **Pick items one by one** with <kbd>⌘</kbd>-click. <kbd>⌘</kbd><kbd>A</kbd> selects everything your search shows. The footer then reads *3 selected* with the keys below.
+- <kbd>↩</kbd> **pastes them all with one <kbd>⌘</kbd><kbd>V</kbd>**, in the order you picked them. All-text selections become one text, separated by blank lines. Screenshots, images and files go on the clipboard together (each image as both a PNG file and image data), so a batch of screenshots drops into Slack, Discord, Finder, Notes or a browser chat in one go.
+- <kbd>⌥</kbd><kbd>↩</kbd> pastes them **one by one**, a moment apart, for apps that only take one image per paste.
+- <kbd>⌘</kbd><kbd>C</kbd> puts the whole batch on the clipboard without pasting.
+- Right-click any selected item for **Paste Selected Items**, **Paste One by One**, **Copy Selected Items**, **Pin or Unpin Selected** and **Delete Selected**.
+- A plain <kbd>↑</kbd> / <kbd>↓</kbd> or click goes back to a single selection.
+
+### Terminal Trace
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>T</kbd> (or **Tools ▸ Terminal Trace ▸ Copy Now**) copies the **last command you ran and everything it printed** from your terminal, so you don't have to scroll up and select a failed build by hand. A toast says how many lines were copied.
+- It reads the terminal you were just in, or, if you weren't in one, the first open one of: Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm, VS Code, Cursor.
+- The result is a Markdown block ready for a chat, an issue or an AI assistant: a `### Terminal Trace (App — time)` heading and the command with its output in a code block. Output longer than 120 lines keeps the newest lines (and says how many were left out); when the output is long, lines that look like errors (`error:`, `Traceback`, `FAILED`, `npm ERR!`, `fatal:`, `panic:`, exit codes…) are repeated in an **Errors** block. Colors and escape codes are stripped.
+- **Tools ▸ Terminal Trace ▸ Last Response / Everything** chooses what gets copied. *Everything* is the whole terminal, uncut. Picking one copies with it straight away and makes it what the shortcut copies from then on. Both are also in the command palette.
+- Terminal and iTerm2 are read over AppleScript, so macOS asks once to let Cheese control them (**Automation**). Other terminals are read through **Accessibility**.
+- The trace also lands in your clipboard history.
 
 ### Show clipboard as QR
 - Pick **Show Clipboard as QR** from the menu or the command palette. A QR code appears in the middle of the screen, under a pill showing what's being shared.
@@ -75,10 +91,11 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌫</kbd> puts the window back where it was.
 
 ### Fill to Screen (Stage Manager aware)
-- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>M</kbd> resizes **every window of every open app** to fill its display. Windows are resized, never put into native full screen, so they stay on your desktop and Stage Manager's strip of recent apps stays visible: click any tile and its window comes up filling the screen.
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>M</kbd> resizes **every window of every open app** to fill its display **edge to edge**. Windows are resized, never put into native full screen, so they stay on your desktop and in Stage Manager: click any tile and its window comes up filling the screen, with no gap down the side where the strip sits (the strip tucks away and comes back when you move to that edge).
+- The menu bar and the Dock are respected, measured fresh each time, so hiding, resizing or moving the Dock never leaves a gap or slides windows under it.
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>M</kbd> does the same for just the window you're in (<kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌫</kbd> puts it back).
 - **Restore All Windows** (in **Windows ▸** and the palette) puts every window back where it was before the fill, even if you filled twice.
-- While Stage Manager shows its strip, windows leave room for it (196 pt on the left, or the right when the Dock is on the left). **Settings → Windows** changes the width (140–260 pt) or fills the whole screen regardless. With Stage Manager off, or its strip hidden, windows fill the whole visible screen.
+- Rather keep Stage Manager's strip in view? **Settings → Windows → Leave room for Stage Manager** reserves space for it while the strip is showing (196 pt on the left, or the right when the Dock is on the left; adjustable from 140 to 260 pt). With Stage Manager off, or its strip set to hide, windows always fill the whole visible screen.
 - Panels, dialogs, minimized windows and windows already in full screen are left alone, and so are apps on other Spaces.
 
 ### App hotkeys
@@ -93,7 +110,7 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - **Settings → Auto-Kill** lists the protected apps, and can make every sweep force-quit apps still open after 3 seconds.
 
 ### Command palette
-- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, QR, keep awake, Files tools, history and each Settings tab. (Draw mode stays out of it, and the palette doesn't open while you're drawing.)
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, QR, Caffeinate, Files tools, history and each Settings tab. (Draw mode stays out of it, and the palette doesn't open while you're drawing.)
 - Each row shows the action's shortcut, so you learn them as you go. Recently used actions come first.
 
 ## Draw on screen
@@ -152,10 +169,18 @@ Watermarks and page numbers keep your PDF's text selectable. Compression only re
 
 If **Microsoft Office or LibreOffice** is installed, **Settings → Files** offers to use it for Office → PDF instead (off by default). macOS asks once per app to let Cheese control it, and the app may open while it works. If it fails, Cheese falls back to its built-in renderer and says so.
 
-## Control: keep awake
-- **Keep Awake ▸ Indefinitely / Until… / Turn Off** stops your Mac and display from going to sleep while idle.
-- While it's on, the time left shows next to the menu bar icon (`1h 12m`, `42m`, or `∞`).
-- Keeping the Mac awake **with the lid closed isn't supported**: that needs a privileged helper, which Cheese doesn't install.
+## Control: Caffeinate
+- **Caffeinate ▸ For 30 Minutes / For 1 Hour / For 2 Hours / Until… / Indefinitely** keeps your Mac and display from going to sleep. Pick another length while it's on to change it; **Turn Off** ends it early. The active length is checked in the menu.
+- **Keep Awake With Lid Closed** (on by default) makes the same session survive closing a MacBook's lid, on battery too. Untick it and closing the lid sleeps the Mac as usual, while Caffeinate still stops idle sleep with the lid open.
+- The time left shows next to the menu bar icon: `1h 12m`, `42m`, `∞`, or `Lid 42m` / `Lid ∞` while a closed lid is covered.
+- **When the time runs out with the lid shut, the Mac goes to sleep** (unless it's closed on an external display, where it would stay awake anyway).
+- **On battery, Caffeinate stops at 10 %** so a closed laptop doesn't run flat; change it (or turn it off) in **Settings → Caffeinate**. It won't start below that either.
+- A closed MacBook still gets warm while awake; don't leave it running in a bag.
+
+### The lid-closed helper (one password, once)
+Keeping a Mac awake with the lid closed needs administrator rights (`pmset -a disablesleep 1`). The first session that needs it asks for your password **once** to install a small helper: a shell script that launchd runs as root, in `/Library/PrivilegedHelperTools` with its job in `/Library/LaunchDaemons`. macOS shows **Background Items Added** and lists it under **System Settings → General → Login Items & Extensions** for Cheese. After that, no session asks again.
+
+The helper only switches lid-close sleep off while Cheese asks, and always switches it back on: when you turn Caffeinate off, when the time runs out or the battery hits the floor, when Cheese quits or crashes, and at startup if the Mac restarted mid-session. It does nothing while idle; launchd only starts it when Cheese changes its request. **Settings → Caffeinate** shows its status, and **Remove…** uninstalls it.
 
 ## Turning tools off
 Don't need a tool? Switch it off in **Settings → General → Modules** (or in the welcome screen's tool picker). A module that's off has no shortcuts, runs nothing in the background and disappears from the menu and the palette.
@@ -173,14 +198,17 @@ Click the 🧀 in the menu bar for every tool, so shortcuts are optional:
  Shelf                            ⌃⌥F
  Windows                            ▸   Fill All to Screen ⌃⌥M · Fill Current Window ⌃⌥⇧M · Restore All Windows
                                         Left Half · Right Half · Maximize · Bottom Half · Restore Previous Size
- Tools                              ▸   Auto-Kill Apps… · Kill All Open Apps Now · Show Clipboard as QR · Keep Awake ▸
+ Tools                              ▸   Auto-Kill Apps… · Kill All Open Apps Now · Show Clipboard as QR
+                                        Terminal Trace ▸ (Copy Now ⌃⌥⇧T · Last Response · Everything)
+ Caffeinate                         ▸   For 30 Minutes · For 1 Hour · For 2 Hours · Until… · Indefinitely
+                                        Keep Awake With Lid Closed ✓ · Turn Off
  ───────────────────────────────────
  Clear History                          (hold ⌥ for Clear All…)
  Settings…                         ⌘,
  Quit Cheese                       ⌘Q
 ```
 
-Tools you've turned off disappear, and a submenu left with one item becomes a plain item. The shortcuts shown are your current ones. Keep Awake's countdown, Files progress (`3/10`) and **Share** (while Cheese Share is listening) show next to the icon, separated by `·`.
+Tools you've turned off disappear, and a submenu left with one item becomes a plain item. The shortcuts shown are your current ones. Caffeinate's countdown (`42m`, or `Lid 42m` with the lid covered), Files progress (`3/10`) and **Share** (while Cheese Share is listening) show next to the icon, separated by `·`.
 
 ## Welcome and permissions
 
@@ -189,12 +217,12 @@ The first time Cheese runs it shows a short welcome: what Cheese is, a **tool pi
 | Permission | Needed for |
 |---|---|
 | **Screen Recording** | Screenshots, OCR, scrolling capture, draw-mode snapshots and zoom |
-| **Accessibility** | Pasting from history, window snapping and Fill to Screen, auto-scrolling |
+| **Accessibility** | Pasting from history, window snapping and Fill to Screen, auto-scrolling, Terminal Trace in terminals other than Terminal and iTerm2 |
 | **Notifications** | Finished Files jobs, files received by Cheese Share |
 | **Local Network** | Cheese Share finding LocalSend devices |
 | **Finder extension** | The Cheese ▸ submenu in Finder |
 
-Files tools also ask once for **Automation → Finder**, only when you run one from the palette with Finder in front.
+Files tools also ask once for **Automation → Finder**, only when you run one from the palette with Finder in front. Terminal Trace asks once for **Automation → Terminal** (or **iTerm2**) the first time it reads one. **Caffeinate** asks for your administrator password once, the first time a session covers a closed lid.
 
 ## Keyboard shortcuts
 
@@ -205,6 +233,7 @@ Files tools also ask once for **Automation → Finder**, only when you run one f
 | Capture full screen | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>3</kbd> |
 | Capture window | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>5</kbd> |
 | Copy text from region (OCR) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> |
+| Terminal Trace (last response or everything) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>T</kbd> |
 | Scrolling capture | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd> |
 | Snap left / right half | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>←</kbd> / <kbd>→</kbd> |
 | Maximize | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↑</kbd> |
@@ -220,7 +249,7 @@ Files tools also ask once for **Automation → Finder**, only when you run one f
 | Cheese Share | none (assign one in Settings) |
 | Your app hotkeys | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + a letter or digit |
 
-Show Clipboard as QR, Keep Awake and Cheese Share have no shortcut by default; use the menu or the command palette.
+Show Clipboard as QR, Caffeinate and Cheese Share have no shortcut by default; use the menu or the command palette.
 
 ### Changing shortcuts
 
@@ -238,8 +267,12 @@ Cheese warns you if a combination is already taken by macOS or the menu. The men
 |---|---|
 | Type | Filter (fuzzy search) |
 | <kbd>↑</kbd> / <kbd>↓</kbd> | Move selection |
-| <kbd>↩</kbd> | Paste into the previous app |
-| <kbd>⌥</kbd><kbd>↩</kbd> | Paste as plain text |
+| <kbd>⇧</kbd><kbd>↑</kbd> / <kbd>⇧</kbd><kbd>↓</kbd>, <kbd>⇧</kbd>-click | Select a run of items |
+| <kbd>⌘</kbd>-click | Add an item to the selection, or take it out |
+| <kbd>⌘</kbd><kbd>A</kbd> | Select every visible item |
+| <kbd>↩</kbd> | Paste into the previous app (several selected: all at once, one <kbd>⌘</kbd><kbd>V</kbd>) |
+| <kbd>⌥</kbd><kbd>↩</kbd> | Paste as plain text (several selected: one by one) |
+| <kbd>⌘</kbd><kbd>C</kbd> | Several selected: copy them without pasting |
 | <kbd>⌘</kbd><kbd>1</kbd> … <kbd>⌘</kbd><kbd>9</kbd> | Paste the Nth item |
 | <kbd>⌘</kbd><kbd>P</kbd> | Pin / unpin |
 | <kbd>⌘</kbd><kbd>⌫</kbd> | Delete item |
@@ -256,11 +289,12 @@ Cheese warns you if a combination is already taken by macOS or the menu. The men
 | **Shortcuts** | Rebind every global shortcut |
 | **Clipboard** | History size (default 200 unpinned items) |
 | **OCR** | Languages (English, Hindi) and line-break handling |
-| **Windows** | Fill to Screen: leave room for Stage Manager's strip (and how much), or fill the whole screen |
+| **Windows** | Fill to Screen: fill the whole visible screen (default), or leave room for Stage Manager's strip (and how much) |
 | **App Hotkeys** | Apps with their own <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> shortcut, with key suggestions |
 | **Files** | Finder extension status, and Microsoft Office / LibreOffice for Office → PDF (when installed) |
 | **Share** | This Mac's name, where received files go, the largest transfer accepted (default 10 GB), trusted devices |
 | **Auto-Kill** | Protected apps, and force-quitting apps still open 3 s after a sweep (off by default) |
+| **Caffeinate** | Keep awake with the lid closed (on by default), the battery level to stop at (default 10 %), the lid-closed helper's status with Install / Remove, and the session that's running |
 | **Permissions** | Live status of Screen Recording and Accessibility, with shortcuts to System Settings |
 | **About** | Version, license, acknowledgements and the GitHub link (also **About Cheese** in the palette) |
 
@@ -307,9 +341,21 @@ Both have to be on the same network, the other device needs LocalSend open, and 
 </details>
 
 <details>
-<summary><b>Keep Awake doesn't work with the lid closed</b></summary>
+<summary><b>My Mac still sleeps when I close the lid</b></summary>
 
-That's expected. Keeping a Mac awake with the lid closed needs a privileged helper, which Cheese doesn't install. With the lid open (or an external display, keyboard and power connected), Keep Awake works as usual.
+Check that **Caffeinate ▸ Keep Awake With Lid Closed** is ticked and the menu bar shows `Lid` before the countdown. If you cancelled the password prompt, the session only covers an open lid; start it again. If Cheese says macOS isn't letting its helper run, turn Cheese on under **System Settings → General → Login Items & Extensions → Allow in the Background**. While a session covers the lid, `pmset -g | grep SleepDisabled` in Terminal shows `1`.
+</details>
+
+<details>
+<summary><b>My Mac won't sleep with the lid closed any more</b></summary>
+
+The helper restores lid-close sleep whenever a session ends, Cheese quits or crashes, and at startup. If it's still stuck (for example, the helper was deleted mid-session), run `sudo pmset -a disablesleep 0` in Terminal.
+</details>
+
+<details>
+<summary><b>Terminal Trace copies nothing, or the wrong thing</b></summary>
+
+For Terminal and iTerm2, allow Cheese under **System Settings → Privacy & Security → Automation** (the toast offers a button). For other terminals, Cheese needs **Accessibility**. Trace reads the terminal you were just in; if you ran it from somewhere else, it picks the first open terminal. If the last command didn't print a recognisable prompt, switch to **Tools ▸ Terminal Trace ▸ Everything** to copy the whole terminal.
 </details>
 
 <details>

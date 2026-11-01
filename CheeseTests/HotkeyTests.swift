@@ -26,9 +26,10 @@ struct HotkeyTests {
             .killAllApps: .q,
             .fillAllWindows: .m,
             .fillCurrentWindow: .m,
+            .terminalTrace: .t,
         ]
         // These are a sibling's shortcut plus Shift.
-        let withShift: Set<Hotkey> = [.killAllApps, .fillCurrentWindow]
+        let withShift: Set<Hotkey> = [.killAllApps, .fillCurrentWindow, .terminalTrace]
         // Share has no default shortcut; the user can assign one.
         let unbound: Set<Hotkey> = [.showShare]
         #expect(unbound.allSatisfy { $0.name.initialShortcut == nil })

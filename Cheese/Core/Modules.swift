@@ -8,6 +8,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
     case windowSnapping
     case drawOnScreen
     case qr
+    /// Caffeinate. The raw value predates the name and is kept so the on/off setting carries over.
     case keepAwake
     case appHotkeys
     case commandPalette
@@ -15,6 +16,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
     case shelf
     case share
     case appSweep
+    case terminalTrace
 
     var id: Self { self }
 
@@ -27,20 +29,21 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .windowSnapping: "Window Snapping"
         case .drawOnScreen: "Draw on Screen"
         case .qr: "QR"
-        case .keepAwake: "Keep Awake"
+        case .keepAwake: "Caffeinate"
         case .appHotkeys: "App Hotkeys"
         case .commandPalette: "Command Palette"
         case .files: "Files"
         case .shelf: "Shelf"
         case .share: "Cheese Share"
         case .appSweep: "Auto-Kill"
+        case .terminalTrace: "Terminal Trace"
         }
     }
 
     /// The verb this tool sits under in the welcome picker and the README.
     var verb: Verb {
         switch self {
-        case .clipboard, .qr: .copy
+        case .clipboard, .qr, .terminalTrace: .copy
         case .screenshots, .ocr, .scrollingCapture: .capture
         case .drawOnScreen: .draw
         case .files: .convert
@@ -65,6 +68,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .shelf: "tray"
         case .share: "dot.radiowaves.left.and.right"
         case .appSweep: "xmark.app"
+        case .terminalTrace: "terminal"
         }
     }
 
@@ -78,13 +82,14 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .windowSnapping: "Halves, maximize and display-to-display moves from the keyboard."
         case .drawOnScreen: "Smooth ink, magic shapes and a laser pointer over everything."
         case .qr: "Show what you copied as a QR code for your phone."
-        case .keepAwake: "Keep the Mac awake, indefinitely or until a set time."
+        case .keepAwake: "Keep your Mac awake for a while or until you stop, even with the lid closed."
         case .appHotkeys: "Open or switch to any app with its own shortcut."
         case .commandPalette: "Search every Cheese action from the keyboard."
         case .files: "Merge, split, compress and convert PDFs, Office files and images, offline."
         case .shelf: "A floating shelf to park files, images and text while you drag."
         case .share: "Send files and text to phones and computers nearby, LocalSend-compatible."
         case .appSweep: "Quit every open app in one go, keeping the ones you shield."
+        case .terminalTrace: "Copy the terminal's last response, or everything in it, without scrolling."
         }
     }
 
@@ -100,6 +105,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .commandPalette: .commandPalette
         case .shelf: .toggleShelf
         case .appSweep: .autoKill
+        case .terminalTrace: .terminalTrace
         case .qr, .keepAwake, .appHotkeys, .files, .share: nil
         }
     }

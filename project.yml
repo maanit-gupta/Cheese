@@ -19,8 +19,8 @@ settings:
     # warns "Metadata extraction skipped, no AppIntents.framework dependency found".
     LM_SKIP_METADATA_EXTRACTION: YES
     # One version for the app and its Finder extension, which must match.
-    MARKETING_VERSION: "2.2.1"
-    CURRENT_PROJECT_VERSION: 11
+    MARKETING_VERSION: "2.3"
+    CURRENT_PROJECT_VERSION: 12
     # Stable signing keeps Screen Recording / Accessibility grants across rebuilds.
     # The author's personal team: the OU of the Apple Development certificate (not the ID in its name).
     DEVELOPMENT_TEAM: 8H5274FWRC
@@ -75,7 +75,7 @@ targets:
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 Maanit Gupta. MIT License."
         # Asked once, when the command palette uses the current Finder selection for a Files tool.
-        INFOPLIST_KEY_NSAppleEventsUsageDescription: "Cheese reads the files selected in Finder so Files tools can work on them. Office apps are asked to save as PDF only if you turn that on in Settings."
+        INFOPLIST_KEY_NSAppleEventsUsageDescription: "Cheese reads the files selected in Finder so Files tools can work on them. Office apps are asked to save as PDF only if you turn that on in Settings. Terminal Trace reads the front tab of Terminal or iTerm2 when you ask it to."
         # Asked the first time Cheese Share looks for nearby devices.
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Cheese Share finds phones and computers on your network running LocalSend, and lets them send files and text to this Mac."
         # Not sandboxed: Accessibility and posted CGEvents don't work inside the sandbox.

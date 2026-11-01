@@ -13,17 +13,23 @@ struct HistoryView: View {
     var body: some View {
         let items = model.visibleItems
         let selected = model.selection(in: items)
+        let highlighted = model.highlightedIDs(in: items)
 
         HStack(spacing: 0) {
             VStack(spacing: 0) {
                 searchField
-                list(items, selectedID: selected?.id)
+                list(items, selectedID: selected?.id, highlighted: highlighted)
             }
             .frame(width: Self.listWidth)
             CheeseDivider(axis: .vertical)
             Group {
                 if let selected {
-                    HistoryPreview(model: model, item: selected, imageURL: model.imageURL(for: selected))
+                    HistoryPreview(
+                        model: model,
+                        item: selected,
+                        imageURL: model.imageURL(for: selected),
+                        batchCount: highlighted.count
+                    )
                 } else {
                     emptyState
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -55,7 +61,7 @@ struct HistoryView: View {
         .padding(DesignTokens.Spacing.medium)
     }
 
-    private func list(_ items: [ClipItem], selectedID: UUID?) -> some View {
+    private func list(_ items: [ClipItem], selectedID: UUID?, highlighted: Set<UUID>) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: DesignTokens.Spacing.xxSmall) {
@@ -63,18 +69,19 @@ struct HistoryView: View {
                         HistoryRow(
                             item: item,
                             number: index < 9 ? index + 1 : nil,
-                            isSelected: item.id == selectedID,
+                            isSelected: highlighted.contains(item.id),
                             imageURL: model.imageURL(for: item)
                         )
                         .id(item.id)
-                        // Click to select, double-click to paste, drag into any app, right-click for more.
+                        // Click to select (⌘-click adds, ⇧-click extends), double-click to paste,
+                        // drag into any app, right-click for more.
                         .overlay {
                             ClipDragHandle(
                                 model: model,
                                 itemID: item.id,
                                 onClick: { [model] clickCount in
-                                    model.selectedID = item.id
-                                    if clickCount == 2 {
+                                    model.click(item.id, modifiers: NSEvent.modifierFlags)
+                                    if clickCount == 2, !model.isBatchSelected {
                                         model.perform(.paste(plainText: false))
                                     }
                                 },
@@ -113,13 +120,24 @@ struct HistoryView: View {
 enum HistoryItemMenu {
     static func make(for item: ClipItem, model: HistoryViewModel) -> NSMenu {
         let id = item.id
+        // Right-clicking one of several selected items acts on all of them.
+        let isBatch = model.isBatchSelected && model.highlightedIDs(in: model.visibleItems).contains(id)
         func run(_ command: HistoryCommand) -> @MainActor @Sendable () -> Void {
             { [model] in
-                model.selectedID = id
+                if !isBatch { model.selectedID = id }
                 model.perform(command)
             }
         }
         let menu = NSMenu()
+        if isBatch {
+            menu.addItem(ClosureMenuItem(title: "Paste Selected Items", handler: run(.paste(plainText: false))))
+            menu.addItem(ClosureMenuItem(title: "Paste One by One", handler: run(.paste(plainText: true))))
+            menu.addItem(ClosureMenuItem(title: "Copy Selected Items", handler: run(.copySelection)))
+            menu.addItem(.separator())
+            menu.addItem(ClosureMenuItem(title: "Pin or Unpin Selected", handler: run(.togglePin)))
+            menu.addItem(ClosureMenuItem(title: "Delete Selected", handler: run(.delete)))
+            return menu
+        }
         menu.addItem(ClosureMenuItem(title: "Paste", handler: run(.paste(plainText: false))))
         menu.addItem(ClosureMenuItem(title: "Paste as Plain Text", handler: run(.paste(plainText: true))))
         if item.kind == .text || item.kind == .richText {

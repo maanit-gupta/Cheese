@@ -51,6 +51,20 @@ final class Paster {
         return pasteboard.changeCount
     }
 
+    /// Puts several items on the pasteboard at once: all-text batches as one text joined with blank
+    /// lines, anything else as one pasteboard item per piece (each image with its PNG bytes and its
+    /// file URL), so one Cmd+V drops them all. Returns the new change count, or nil if nothing was written.
+    func writeBatch(_ items: [ClipItem]) -> Int? {
+        let inputs = items.map { item in
+            ClipDragInput(item: item, imageURL: item.imageFileName.map(images.url(for:)))
+        }
+        let payload = ClipBatch.pasteboardItems(for: inputs)
+        guard !payload.isEmpty else { return nil }
+        pasteboard.clearContents()
+        pasteboard.writeObjects(payload.map(ClipDragSourceView.pasteboardItem(for:)))
+        return pasteboard.changeCount
+    }
+
     /// Activates `app`, waits for it to come to the front, then posts Cmd+V. Needs Accessibility.
     func paste(into app: NSRunningApplication) async {
         app.activate()

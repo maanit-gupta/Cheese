@@ -5,6 +5,14 @@ import Carbon.HIToolbox
 enum HistoryCommand: Equatable, Sendable {
     case moveUp
     case moveDown
+    /// Shift+↑ / Shift+↓: grow or shrink the multi-selection from its anchor.
+    case extendUp
+    case extendDown
+    /// Cmd+A: select every visible item.
+    case selectAll
+    /// Cmd+C with several items selected: put them all on the clipboard without pasting.
+    case copySelection
+    /// Paste the selection. With several items selected, `plainText` (Opt+Return) pastes them one by one.
     case paste(plainText: Bool)
     /// Paste the Nth visible item (1-based) immediately.
     case pasteItem(number: Int)
@@ -26,7 +34,15 @@ enum HistoryCommand: Equatable, Sendable {
     /// Maps a key-down to a command. Nil leaves the key to the search field, or, while a text item is
     /// being edited, to the editor: there only ⌘E, ⌘Return and Esc are commands.
     /// Digits use key codes so Cmd+1…9 work on layouts that need Shift for digits.
-    init?(keyCode: Int, modifiers: NSEvent.ModifierFlags, charactersIgnoringModifiers: String?, isEditing: Bool = false) {
+    /// Cmd+C is a command only while several items are selected (`isBatch`); otherwise it copies
+    /// from the search field as usual.
+    init?(
+        keyCode: Int,
+        modifiers: NSEvent.ModifierFlags,
+        charactersIgnoringModifiers: String?,
+        isEditing: Bool = false,
+        isBatch: Bool = false
+    ) {
         let modifiers = modifiers.intersection([.command, .option, .control, .shift])
         let isLetterE = charactersIgnoringModifiers?.lowercased() == "e"
 
@@ -45,10 +61,14 @@ enum HistoryCommand: Equatable, Sendable {
         }
 
         switch (keyCode, modifiers) {
-        case (kVK_UpArrow, []), (kVK_UpArrow, .shift):
+        case (kVK_UpArrow, []):
             self = .moveUp
-        case (kVK_DownArrow, []), (kVK_DownArrow, .shift):
+        case (kVK_DownArrow, []):
             self = .moveDown
+        case (kVK_UpArrow, .shift):
+            self = .extendUp
+        case (kVK_DownArrow, .shift):
+            self = .extendDown
         case (kVK_Return, []), (kVK_ANSI_KeypadEnter, []):
             self = .paste(plainText: false)
         case (kVK_Return, .option), (kVK_ANSI_KeypadEnter, .option):
@@ -64,6 +84,10 @@ enum HistoryCommand: Equatable, Sendable {
                 self = .togglePin
             } else if isLetterE {
                 self = .toggleEdit
+            } else if charactersIgnoringModifiers?.lowercased() == "a" {
+                self = .selectAll
+            } else if isBatch, charactersIgnoringModifiers?.lowercased() == "c" {
+                self = .copySelection
             } else {
                 return nil
             }

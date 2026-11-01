@@ -22,6 +22,7 @@ enum Hotkey: CaseIterable, Sendable {
     case killAllApps
     case fillAllWindows
     case fillCurrentWindow
+    case terminalTrace
 
     var name: KeyboardShortcuts.Name {
         switch self {
@@ -44,6 +45,7 @@ enum Hotkey: CaseIterable, Sendable {
         case .killAllApps: .killAllApps
         case .fillAllWindows: .fillAllWindows
         case .fillCurrentWindow: .fillCurrentWindow
+        case .terminalTrace: .terminalTrace
         }
     }
 
@@ -68,6 +70,7 @@ enum Hotkey: CaseIterable, Sendable {
         case .killAllApps: "Auto-Kill: quit all open apps now"
         case .fillAllWindows: "Fill all windows to the screen"
         case .fillCurrentWindow: "Fill the current window to the screen"
+        case .terminalTrace: "Terminal Trace: copy the last response or the whole terminal"
         }
     }
 }
@@ -96,6 +99,8 @@ extension KeyboardShortcuts.Name {
     static let killAllApps = Self("killAllApps", initial: .init(.q, modifiers: modifiers.union(.shift)))
     static let fillAllWindows = Self("fillAllWindows", initial: .init(.m, modifiers: modifiers))
     static let fillCurrentWindow = Self("fillCurrentWindow", initial: .init(.m, modifiers: modifiers.union(.shift)))
+    /// OCR's shortcut plus Shift: both copy text off the screen.
+    static let terminalTrace = Self("terminalTrace", initial: .init(.t, modifiers: modifiers.union(.shift)))
 }
 
 extension KeyboardShortcuts.Name {

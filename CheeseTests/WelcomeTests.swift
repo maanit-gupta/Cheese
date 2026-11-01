@@ -33,7 +33,7 @@ struct VerbTests {
     }
 
     @Test func verbsMatchTheBrandTable() {
-        #expect(Verb.copy.modules == [.clipboard, .qr])
+        #expect(Verb.copy.modules == [.clipboard, .qr, .terminalTrace])
         #expect(Verb.capture.modules == [.screenshots, .ocr, .scrollingCapture])
         #expect(Verb.draw.modules == [.drawOnScreen])
         #expect(Verb.convert.modules == [.files])

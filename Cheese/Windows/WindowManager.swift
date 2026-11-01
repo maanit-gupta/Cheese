@@ -52,6 +52,12 @@ final class WindowManager: WindowControlling {
             if isSettable(kAXSizeAttribute, of: window.element) {
                 setSize(frame.size, of: window.element)
             }
+            // Stage Manager nudges a window that lands on its strip back out to the right as it
+            // resizes. Putting the origin back once more keeps the window edge to edge.
+            if let origin = pointAttribute(kAXPositionAttribute, of: window.element),
+               abs(origin.x - frame.minX) > 1 || abs(origin.y - frame.minY) > 1 {
+                setPosition(frame.origin, of: window.element)
+            }
         }
         return self.frame(of: window)
     }

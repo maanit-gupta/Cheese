@@ -25,7 +25,10 @@ enum PreferenceKey {
     static let shareMaxGigabytes = "shareMaxGigabytes"
     static let autoKillForcesStragglers = "autoKillForcesStragglers"
     static let windowFillMode = "windowFillMode"
+    static let terminalTraceScope = "terminalTraceScope"
     static let stageManagerStripInset = "stageManagerStripInset"
+    static let caffeinateLidClosed = "caffeinateLidClosed"
+    static let caffeinateBatteryFloor = "caffeinateBatteryFloor"
 
     /// Last-used options of a Files tool, as JSON.
     static func fileToolOptions(_ tool: ToolID) -> String {
@@ -153,7 +156,16 @@ struct Preferences {
         defaults.bool(forKey: PreferenceKey.autoKillForcesStragglers)
     }
 
-    static let defaultWindowFillMode = WindowFillMode.stageManagerSafe
+    /// Edge to edge by default: windows that overlap Stage Manager's strip just tuck it away, and
+    /// reserving room for it left a gutter beside every filled window.
+    static let defaultWindowFillMode = WindowFillMode.fullVisibleFrame
+    static let defaultTerminalTraceScope = TerminalTraceScope.lastResponse
+
+    /// What Terminal Trace copies: the last command's output, or the whole terminal.
+    var terminalTraceScope: TerminalTraceScope {
+        defaults.string(forKey: PreferenceKey.terminalTraceScope).flatMap(TerminalTraceScope.init(rawValue:))
+            ?? Self.defaultTerminalTraceScope
+    }
 
     /// How Fill to Screen sizes windows.
     var windowFillMode: WindowFillMode {
@@ -165,6 +177,22 @@ struct Preferences {
         let stored = defaults.object(forKey: PreferenceKey.stageManagerStripInset) as? Double ?? Double(StageManagerLayout.defaultStripInset)
         let range = StageManagerLayout.stripInsetRange
         return min(max(CGFloat(stored), range.lowerBound), range.upperBound)
+    }
+
+    static let defaultCaffeinateLidClosed = true
+    static let defaultCaffeinateBatteryFloor = 10
+    /// The battery floors Settings offers; 0 means never stop for the battery.
+    static let caffeinateBatteryFloors = [0, 5, 10, 15, 20, 25, 30]
+
+    /// Whether Caffeinate sessions keep the Mac awake with the lid closed too.
+    var caffeinateLidClosed: Bool {
+        defaults.object(forKey: PreferenceKey.caffeinateLidClosed) as? Bool ?? Self.defaultCaffeinateLidClosed
+    }
+
+    /// On battery, Caffeinate ends once the charge is at or below this percentage (0: never).
+    var caffeinateBatteryFloor: Int {
+        let stored = defaults.object(forKey: PreferenceKey.caffeinateBatteryFloor) as? Int ?? Self.defaultCaffeinateBatteryFloor
+        return min(max(stored, 0), 50)
     }
 
     func isModuleEnabled(_ module: ModuleID) -> Bool {
