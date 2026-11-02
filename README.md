@@ -18,10 +18,10 @@
 
 <p align="center">
   <a href="https://github.com/maanit-gupta/Cheese/raw/main/docs/media/cheese-promo.mp4">
-    <img src="docs/demo.gif" width="880" alt="Cheese in action: batch-pasting screenshots into a chat, copying a failed build with Terminal Trace, capturing, filling windows edge to edge with Stage Manager, drawing, keeping a closed MacBook awake, converting files and sharing to a phone, all from the menu bar">
+    <img src="docs/demo.gif" width="880" alt="Cheese in action: searching clipboard history and batch-pasting screenshots, copying a failed test run with Terminal Trace, capturing and annotating, reading text off the screen, a scrolling capture, drawing over a slide, converting Word files from the menu bar, sharing to a phone, the Shelf, filling windows, keeping a closed MacBook awake, Auto-Kill, the command palette and a self-update">
   </a>
   <br>
-  <sub>▶︎ <a href="https://github.com/maanit-gupta/Cheese/raw/main/docs/media/cheese-promo.mp4">Watch the full video</a> (MP4, 1440p, 110 s)</sub>
+  <sub>▶︎ <a href="https://github.com/maanit-gupta/Cheese/raw/main/docs/media/cheese-promo.mp4">Watch the full video</a> (MP4, 1440p, 106 s)</sub>
 </p>
 
 Cheese lives in your menu bar and stays out of the way until you press a shortcut. Every tool is also one click away in its menu, any tool you don't need can be switched off, and every shortcut can be changed. It all runs on your Mac: no account, no cloud, no telemetry.
