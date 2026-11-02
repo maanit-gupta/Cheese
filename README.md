@@ -18,10 +18,10 @@
 
 <p align="center">
   <a href="https://github.com/maanit-gupta/Cheese/raw/main/docs/media/cheese-promo.mp4">
-    <img src="docs/demo.gif" width="880" alt="Cheese in action: searching clipboard history and batch-pasting screenshots, copying a failed test run with Terminal Trace, capturing and annotating, reading text off the screen, a scrolling capture, drawing over a slide, converting Word files from the menu bar, sharing to a phone, the Shelf, filling windows, keeping a closed MacBook awake, Auto-Kill, the command palette and a self-update">
+    <img src="docs/demo.gif" width="880" alt="Cheese in action: searching clipboard history and batch-pasting screenshots, copying a failed test run with Terminal Trace, capturing and annotating, reading text off the screen, a scrolling capture, drawing over a slide, converting Word files from the menu bar, sharing to a phone, the Shelf, filling windows, Auto-Kill, the command palette, keeping a closed MacBook awake and a self-update">
   </a>
   <br>
-  <sub>▶︎ <a href="https://github.com/maanit-gupta/Cheese/raw/main/docs/media/cheese-promo.mp4">Watch the full video</a> (MP4, 1440p, 106 s)</sub>
+  <sub>▶︎ <a href="https://github.com/maanit-gupta/Cheese/raw/main/docs/media/cheese-promo.mp4">Watch the full video</a> (MP4, 1440p, 108 s)</sub>
 </p>
 
 Cheese lives in your menu bar and stays out of the way until you press a shortcut. Every tool is also one click away in its menu, any tool you don't need can be switched off, and every shortcut can be changed. It all runs on your Mac: no account, no cloud, no telemetry.
@@ -34,7 +34,8 @@ Cheese lives in your menu bar and stays out of the way until you press a shortcu
 | **[Draw](#draw)** | Ink over any app, even full screen · magic-pen shapes · laser, spotlight and zoom · whiteboard and blackboard |
 | **[Convert](#convert)** | Offline PDF merge, split, compress, watermark and page numbers · Word, Excel, PowerPoint, images and Markdown to PDF · PDF to Word, Excel and images · image convert, resize, compress and background removal |
 | **[Share](#share)** | Drop anything on the menu bar icon · links and QR codes for your phone · LocalSend to phones and PCs · a floating Shelf |
-| **[Control](#control)** | Window snapping · **edge-to-edge Fill to Screen** · **Caffeinate, even with the lid closed** · Auto-Kill · app hotkeys · command palette |
+| **[Control](#control)** | Window snapping · **edge-to-edge Fill to Screen** · Auto-Kill · app hotkeys · command palette |
+| **[Caffeinate](#caffeinate)** | Keep your Mac awake for an hour, until a time or indefinitely, **even with the lid closed**, and let it sleep again on its own when time's up |
 
 [New in 2.4](#new-in-24) · [New in 2.3](#new-in-23) · [Shortcuts](#keyboard-shortcuts) · [Permissions](#permissions) · [Install](#install) · [Privacy](#privacy) · [Under the hood](#under-the-hood) · [Build from source](#build-from-source)
 
@@ -52,7 +53,7 @@ Cheese lives in your menu bar and stays out of the way until you press a shortcu
 Build failed? One shortcut copies **the last command and everything it printed** from the terminal you're in, as a Markdown block ready to paste into a chat, an issue or an LLM. No scrolling, no selecting. Long output keeps the newest 120 lines, and the error lines (`error:`, `Traceback`, `npm ERR!`, `fatal:`, `panic:`…) get a block of their own. Works with Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm and the terminals in VS Code and Cursor. [More](#terminal-trace)
 
 **Caffeinate, even with the lid closed** (menu bar → **Caffeinate**)
-Keep your Mac awake for 30 minutes, 1 or 2 hours, until a time or indefinitely, **with the lid shut**, with a countdown next to the icon (`Lid 42m`). Sleep comes back by itself: when the time runs out (a closed Mac then goes to sleep), at 10 % battery (adjustable), and if Cheese quits, crashes or the Mac restarts. Covering the lid takes your administrator password **once**, to install a small helper. [More](#control)
+Keep your Mac awake for 30 minutes, 1 or 2 hours, until a time or indefinitely, **with the lid shut**, with a countdown next to the icon (`Lid 42m`). Sleep comes back by itself: when the time runs out (a closed Mac then goes to sleep), at 10 % battery (adjustable), and if Cheese quits, crashes or the Mac restarts. Covering the lid takes your administrator password **once**, to install a small helper. [More](#caffeinate)
 
 **Batch paste** in clipboard history
 Hold <kbd>⇧</kbd> with <kbd>↑</kbd> <kbd>↓</kbd> (or <kbd>⇧</kbd>-click, <kbd>⌘</kbd>-click, <kbd>⌘</kbd><kbd>A</kbd>) to pick several items, then <kbd>↩</kbd> pastes them all with **a single <kbd>⌘</kbd><kbd>V</kbd>**, in the order you picked them. Three screenshots land in Slack, Notes, Finder or a chat box at once; snippets are joined with blank lines. <kbd>⌥</kbd><kbd>↩</kbd> pastes one by one for apps that take one image per paste. [More](#copy)
@@ -172,8 +173,16 @@ Windows, apps and your Mac, on your terms.
 - **Fill to Screen** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>M</kbd>: resizes **every open window** to fill its display **edge to edge**, without entering native full screen, so it works with **Stage Manager**: no gap down the side where the strip of recent apps sits, and any tile you click comes up properly maximized. The menu bar and the Dock (wherever it is right now, hidden or not) are respected. <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>M</kbd> does just the current window; **Restore All Windows** undoes it. Prefer to keep the strip in view? **Settings → Windows** can leave room for it.
 - **Auto-Kill** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>Q</kbd>: one big **Kill All** button for every open app, with a 🔒 shield for the ones that should stay. Hold <kbd>⌥</kbd> to force-kill. <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>Q</kbd> sweeps without asking. Cheese and Finder are always spared.
 - **App hotkeys** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + a letter: give any app its own shortcut to open or bring it forward. Cheese suggests a free, memorable key.
-- **Caffeinate** (menu bar → **Caffeinate**, or the palette): keep your Mac awake for 30 minutes, 1 or 2 hours, until a time or indefinitely, **even with the lid closed** (on by default, one tick to turn off), with a countdown next to the icon. It stops at 10 % battery (adjustable), and a closed Mac goes to sleep when the time runs out. Sleep is restored even if Cheese quits or crashes, or the Mac restarts.
 - **Command palette** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd>: search and run any Cheese action. It shows each one's shortcut, so you learn them as you go.
+
+## Caffeinate
+
+Rendering, downloading or presenting on a closed MacBook? Menu bar → **Caffeinate** (or the command palette).
+
+- Keep your Mac awake for **30 minutes, 1 or 2 hours, until a time or indefinitely**, with a countdown next to the icon (`Lid 42m`). Pick another length while it's on to change it; **Turn Off** ends it early.
+- **Even with the lid closed**, on battery too. **Keep Awake With Lid Closed** is on by default; untick it and closing the lid sleeps the Mac as usual.
+- **Sleep comes back on its own:** when the time runs out (a closed Mac then goes to sleep), at 10 % battery (adjustable in **Settings → Caffeinate**), and even if Cheese quits or crashes, or the Mac restarts.
+- Covering the lid takes your administrator password **once**, to install a small helper. [Why](#install)
 
 ---
 

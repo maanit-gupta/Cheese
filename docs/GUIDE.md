@@ -2,7 +2,7 @@
 
 Everything Cheese does, tool by tool. The [README](../README.md) has the short version.
 
-- [Capture](#capture) · [Copy](#copy) · [Share](#share) ([drop hub](#drop-anything-on-the-menu-bar-icon)) · [Control: windows and apps](#control-windows-and-apps) · [Draw on screen](#draw-on-screen) · [Convert](#convert-offline-pdf-document-and-image-tools) · [Control: Caffeinate](#control-caffeinate)
+- [Capture](#capture) · [Copy](#copy) · [Share](#share) ([drop hub](#drop-anything-on-the-menu-bar-icon)) · [Control: windows and apps](#control-windows-and-apps) · [Draw on screen](#draw-on-screen) · [Convert](#convert-offline-pdf-document-and-image-tools) · [Caffeinate](#caffeinate)
 - [The menu bar menu](#the-menu-bar-menu) · [Welcome and permissions](#welcome-and-permissions) · [Keyboard shortcuts](#keyboard-shortcuts) · [Settings](#settings) · [Troubleshooting](#troubleshooting) · [Uninstall](#uninstall)
 
 ## Capture
@@ -174,7 +174,7 @@ Watermarks and page numbers keep your PDF's text selectable. Compression only re
 
 If **Microsoft Office or LibreOffice** is installed, **Settings → Files** offers to use it for Office → PDF instead (off by default). macOS asks once per app to let Cheese control it, and the app may open while it works. If it fails, Cheese falls back to its built-in renderer and says so.
 
-## Control: Caffeinate
+## Caffeinate
 - **Caffeinate ▸ For 30 Minutes / For 1 Hour / For 2 Hours / Until… / Indefinitely** keeps your Mac and display from going to sleep. Pick another length while it's on to change it; **Turn Off** ends it early. The active length is checked in the menu.
 - **Keep Awake With Lid Closed** (on by default) makes the same session survive closing a MacBook's lid, on battery too. Untick it and closing the lid sleeps the Mac as usual, while Caffeinate still stops idle sleep with the lid open.
 - The time left shows next to the menu bar icon: `1h 12m`, `42m`, `∞`, or `Lid 42m` / `Lid ∞` while a closed lid is covered.
