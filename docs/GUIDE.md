@@ -13,9 +13,21 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - **Hold <kbd>⇧</kbd> as you finish** to open the annotation editor: arrows, boxes, text, highlighter, blur, crop, and undo/redo. Save as PNG or copy.
 
 ### Scrolling capture
-- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd>, then select the scrollable area. Cheese scrolls for you and stitches one tall image.
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd>, then select the scrollable area. A bar appears under it: **scroll the page yourself**, at any speed, and every new part is stitched on. A small thumbnail shows the image growing, with its height in pixels.
+- Scrolling back up is fine: Cheese ignores it until the page passes the furthest point again. Scroll so fast that the page jumps past what Cheese last saw, and the bar says *Lost the page — scroll back up a little*; scroll back and it carries on.
+- Switch on **Auto-scroll** (remembered for next time) and Cheese scrolls for you; at the end of the page it waits for you instead of stopping.
 - Sticky headers and footers are detected and kept once, not repeated.
-- Stops by itself at the end of the page, or when you press <kbd>Esc</kbd>. The result is copied and/or saved as set under **After Capture**, then a preview opens where you can also copy, save, annotate or OCR it.
+- Click **Done**, press <kbd>↩</kbd> or <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd> again to finish; **Cancel** or <kbd>Esc</kbd> throws it away. Images stop at 30,000 pixels tall. The result is copied and/or saved as set under **After Capture**, then a preview opens where you can also copy, save, annotate or OCR it.
+
+### Screen recording
+- <kbd>⌃</kbd><kbd>⌥</kbd><kbd>R</kbd> records a region you drag, <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>R</kbd> the display under the pointer (also **Capture ▸ Record Region / Record Full Screen**).
+- First, a bar under the area sets up the recording: **Microphone** (its ⌄ picks the device), **System Audio**, **Camera**, **Cursor highlight**, and **MP4** or **GIF** (GIFs have no sound). Click **Record** or press <kbd>↩</kbd>; <kbd>Esc</kbd> cancels. The bar remembers your choices. macOS asks for the camera and microphone the first time you switch them on.
+- The **webcam** appears as a mirrored circle in the bottom-right corner of the area. Drag it anywhere inside (Cheese remembers where) and right-click it for **Small**, **Medium** or **Large**.
+- The **cursor highlight** is a soft circle around the pointer that ripples each time you click.
+- After a **3-2-1** countdown, recording runs at up to 60 frames a second at full Retina resolution. A thin red outline marks the area, a small floating bar shows the time with **Pause / Resume**, **Restart**, **Discard** and **Stop**, and the timer (`● 0:42`) sits next to the menu bar icon: click it to stop, or press the shortcut again. Ink from **Draw on Screen** is recorded; the bar, the outline, toasts and menus never are.
+- The recording is saved to your screenshot folder as `Cheese Recording 2026-11-08 at 14.05.09.mp4` (H.264, with your voice and system audio on separate tracks, so a video editor can mute either) or `.gif`, and a preview opens: play it, **Trim** it, **Copy** it (paste the file into Slack, Mail or Finder), **Show in Finder**, **Export as GIF** or **Delete** it.
+- **Settings → Recording** sets the GIF frame rate (10, 15 or 24 fps; default 15) and largest width (640, 960, 1280 px or full size; default 960), and the webcam size.
+- Quitting Cheese while recording saves the recording first.
 
 ### Copy text from anything (OCR)
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd>, then drag over any part of the screen: videos, images, locked PDFs or slides.
@@ -89,6 +101,7 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>←</kbd> / <kbd>→</kbd> snaps to the left or right half, <kbd>↑</kbd> maximizes and <kbd>↓</kbd> snaps to the bottom half.
 - Press <kbd>→</kbd> again on the right half to jump to the next display, Windows-style.
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌫</kbd> puts the window back where it was.
+- **Drag to snap:** drag a window by its title bar to the left or right edge of the screen for a half, the top edge to maximize, the bottom edge for the bottom half, or a corner for a quarter. A see-through preview shows where it'll go and follows you between zones; let go to snap. An edge that continues onto another display isn't a snap edge, so windows still move between displays. Selecting text, dragging sliders or drawing never snaps anything. **Settings → Windows** turns it off.
 
 ### Fill to Screen (Stage Manager aware)
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>M</kbd> resizes **every window of every open app** to fill its display **edge to edge**. Windows are resized, never put into native full screen, so they stay on your desktop and in Stage Manager: click any tile and its window comes up filling the screen, with no gap down the side where the strip sits (the strip tucks away and comes back when you move to that edge).
@@ -108,6 +121,24 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - Hold <kbd>⌥</kbd> and the button turns red: **Force Kill All** gives apps 3 seconds to quit, then force-quits the rest. Unsaved changes in those are lost.
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>Q</kbd> sweeps straight away, without the list (shields still apply). The palette also has **Kill Background Apps (Keep Frontmost)** and **Force Kill All Open Apps**.
 - **Settings → Auto-Kill** lists the protected apps, and can make every sweep force-quit apps still open after 3 seconds.
+
+### Hush: no notifications while you share
+- Hush has **its own menu bar icon**, a bell (crossed out while notifications are hushed).
+- **Automatically while sharing** (on by default): notifications stay off the screen whenever it's shared: Zoom, Microsoft Teams, Webex, Slack, Discord or FaceTime sharing your screen, Google Meet or any site sharing from Chrome, Edge, Brave, Arc, Firefox and friends, a mirrored display or AirPlay, someone viewing your Mac through Screen Sharing, and Cheese's own screen recordings. Notifications come back **30 seconds after sharing ends**, so a quick stop and restart doesn't let one through. Spotting meeting apps needs **Screen Recording**.
+- **By hand:** For 30 Minutes, 1 Hour, 2 Hours, Until… (a time) or Indefinitely, with the time left next to the icon. **Turn Off** brings notifications back, and also sits out the share that's on. You can give "Hush: Indefinitely" a shortcut in **Settings → Shortcuts**; pressed again, it turns Hush off.
+- **Setting it up (once).** macOS doesn't let apps switch Focus themselves, so Hush runs two shortcuts you make in the Shortcuts app:
+  1. **Cheese Hush On**: a **Set Focus** action set to *Turn Do Not Disturb On*. Optionally put **Get Current Focus** before it and **Stop and Output** (Current Focus) after it, so a Focus you'd already turned on is left on afterwards.
+  2. **Cheese Hush Off**: **Set Focus** set to *Turn Do Not Disturb Off*.
+
+  **Settings → Hush** has these steps with **Open Shortcuts** and **Test**. If Do Not Disturb shares across your devices, your iPhone is hushed too.
+- Quitting Cheese, or switching Hush off, turns Focus back off; if Cheese ever crashes while hushed, it turns Focus off the next time it starts. Hush never shows a toast while it's hushing for a share, since it would be on the shared screen.
+
+### Sweep: clean the screen
+- **Tools ▸ Mode ▸ Sweep** (or "Sweep" in the command palette) locks the keyboard and trackpad so you can wipe the screen and keys.
+- A capsule at the top of the screen counts down 3, 2, 1, then shows the time left. Until then every key press, click, movement, scroll and swipe is ignored, including brightness, volume and Mission Control keys. The display stays on.
+- It lasts 30 seconds; **Settings → Sweep** offers 15, 30, 60, 90 or 120 seconds. A chime plays when the keyboard and trackpad work again.
+- To stop early, **hold <kbd>Esc</kbd> for three seconds** (a quick brush of the key doesn't count). The power button and Touch ID can't be locked by any app. If Cheese were to quit, input would come back at once.
+- Needs **Accessibility**.
 
 ### Command palette
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> opens a Spotlight-style search over every Cheese action: captures, snapping, QR, Caffeinate, Files tools, history and each Settings tab. It opens while you're drawing too: it sits above the canvas, and when it closes you're straight back to drawing. (Draw mode's own tools stay out of it.)
@@ -200,6 +231,7 @@ Click the 🧀 in the menu bar for every tool, so shortcuts are optional:
 ```
  Clipboard History                ⌃⌥V
  Capture                            ▸   Region · Window · Screen · OCR · Scrolling
+                                        Record Region ⌃⌥R · Record Full Screen ⌃⌥⇧R · Stop Recording (while recording)
  Draw on Screen                   ⌃⌥D
  Files                              ▸   every Files tool
  Share…
@@ -208,18 +240,21 @@ Click the 🧀 in the menu bar for every tool, so shortcuts are optional:
                                         Left Half · Right Half · Maximize · Bottom Half · Restore Previous Size
  Tools                              ▸   Auto-Kill Apps… · Kill All Open Apps Now · Show Clipboard as QR
                                         Terminal Trace ▸ (Copy Now ⌃⌥⇧T · Last Response · Everything)
+                                        Mode ▸ Sweep
  Caffeinate                         ▸   For 30 Minutes · For 1 Hour · For 2 Hours · Until… · Indefinitely
                                         Keep Awake With Lid Closed ✓ · Turn Off
  ───────────────────────────────────
  Clear History                          (hold ⌥ for Clear All…)
  ───────────────────────────────────
- Cheese 2.4
- Check for Updates…                     (Update Available (2.5)… once there is one)
+ Cheese 2.5
+ Check for Updates…                     (Update Available (2.6)… once there is one)
  Settings…                         ⌘,
  Quit Cheese                       ⌘Q
 ```
 
-Tools you've turned off disappear, and a submenu left with one item becomes a plain item. The shortcuts shown are your current ones. Caffeinate's countdown (`42m`, or `Lid 42m` with the lid covered), Files progress (`3/10`) and **Share** (while Cheese Share is listening) show next to the icon, separated by `·`.
+Tools you've turned off disappear, and a submenu left with one item becomes a plain item (except **Mode**, which stays a submenu). The shortcuts shown are your current ones. A recording's timer (`● 0:42`, click it to stop), Caffeinate's countdown (`42m`, or `Lid 42m` with the lid covered), Files progress (`3/10`) and **Share** (while Cheese Share is listening) show next to the icon, separated by `·`.
+
+Hush has a menu of its own under its bell icon: what it's doing now, **Hush Automatically While Sharing**, For 30 Minutes · For 1 Hour · For 2 Hours · Until… · Indefinitely, **Turn Off** (while hushed) and **Hush Settings…**.
 
 ## Welcome and permissions
 
@@ -227,8 +262,9 @@ The first time Cheese runs it shows a short welcome: what Cheese is, a **tool pi
 
 | Permission | Needed for |
 |---|---|
-| **Screen Recording** | Screenshots, OCR, scrolling capture, draw-mode snapshots and zoom |
-| **Accessibility** | Pasting from history, window snapping and Fill to Screen, auto-scrolling, Terminal Trace in terminals other than Terminal and iTerm2 |
+| **Screen Recording** | Screenshots, OCR, scrolling capture, screen recordings, draw-mode snapshots and zoom, Hush spotting meeting apps |
+| **Accessibility** | Pasting from history, window snapping (keys and dragging) and Fill to Screen, auto-scrolling, Terminal Trace in terminals other than Terminal and iTerm2, Sweep |
+| **Camera** · **Microphone** (optional) | The webcam and your voice in screen recordings, asked the first time you switch them on |
 | **Notifications** | Finished Files jobs, files received by Cheese Share |
 | **Local Network** | Cheese Share finding LocalSend devices |
 | **Finder extension** | The Cheese ▸ submenu in Finder |
@@ -246,6 +282,8 @@ Files tools also ask once for **Automation → Finder**, only when you run one f
 | Copy text from region (OCR) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> |
 | Terminal Trace (last response or everything) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>T</kbd> |
 | Scrolling capture | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd> |
+| Record a region (again to stop) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>R</kbd> |
+| Record the full screen (again to stop) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>R</kbd> |
 | Snap left / right half | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>←</kbd> / <kbd>→</kbd> |
 | Maximize | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↑</kbd> |
 | Snap bottom half | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↓</kbd> |
@@ -258,9 +296,10 @@ Files tools also ask once for **Automation → Finder**, only when you run one f
 | Auto-Kill: open the app list | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>Q</kbd> |
 | Auto-Kill: quit all open apps now | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>Q</kbd> |
 | Cheese Share | none (assign one in Settings) |
+| Hush: indefinitely (again to turn off) | none (assign one in Settings) |
 | Your app hotkeys | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + a letter or digit |
 
-Show Clipboard as QR, Caffeinate and Cheese Share have no shortcut by default; use the menu or the command palette.
+Show Clipboard as QR, Caffeinate, Cheese Share, Hush and Sweep have no shortcut by default; use the menu or the command palette.
 
 ### Changing shortcuts
 
@@ -298,15 +337,18 @@ Cheese warns you if a combination is already taken by macOS or the menu. The men
 |---|---|
 | **General** | Launch at login, screenshot save folder (default: Desktop), single-letter draw keys, updates (check automatically, on by default; version and Check Now), tool on/off switches, Show Welcome… |
 | **Shortcuts** | Rebind every global shortcut |
-| **Clipboard** | History size (default 200 unpinned items) |
+| **Clipboard** | History size (default 200 unpinned items), copy clean links automatically (off by default) |
 | **OCR** | Languages (English, Hindi) and line-break handling |
-| **Windows** | Fill to Screen: fill the whole visible screen (default), or leave room for Stage Manager's strip (and how much) |
+| **Recording** | GIF frame rate (default 15 fps) and largest width (default 960 px), webcam size |
+| **Windows** | Drag-to-edge snapping (on by default); Fill to Screen: fill the whole visible screen (default), or leave room for Stage Manager's strip (and how much) |
 | **App Hotkeys** | Apps with their own <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> shortcut, with key suggestions |
 | **Files** | Finder extension status, and Microsoft Office / LibreOffice for Office → PDF (when installed) |
 | **Share** | This Mac's name, where received files go, the largest transfer accepted (default 10 GB), trusted devices |
 | **Auto-Kill** | Protected apps, and force-quitting apps still open 3 s after a sweep (off by default) |
 | **Caffeinate** | Keep awake with the lid closed (on by default), the battery level to stop at (default 10 %), the lid-closed helper's status with Install / Remove, and the session that's running |
-| **Permissions** | Live status of Screen Recording and Accessibility, with shortcuts to System Settings |
+| **Hush** | The two shortcuts' setup with Open Shortcuts and Test, hushing automatically while sharing (on by default), and what Hush is doing now |
+| **Sweep** | How long the keyboard and trackpad stay locked (default 30 s) |
+| **Permissions** | Live status of every permission (Screen Recording, Accessibility, Notifications, Local Network, Finder extension, Camera, Microphone), with shortcuts to System Settings |
 | **About** | Version, license, acknowledgements and the GitHub link (also **About Cheese** in the palette) |
 
 ## Troubleshooting

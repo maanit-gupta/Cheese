@@ -121,18 +121,20 @@ Everything is skippable. Reopen it later from **Settings → General → Show We
 
 Cheese asks for these only because the tools can't work without them. Nothing leaves your Mac.
 
-**Screen Recording**, used for screenshots, OCR, scrolling capture and draw-mode snapshots:
+**Screen Recording**, used for screenshots, OCR, scrolling capture, screen recordings, draw-mode snapshots and Hush spotting meeting apps:
 
 1. In the welcome screen (or **Settings → Permissions**), click **Grant…** next to Screen Recording.
 2. Turn on **Cheese** in the list.
 3. If macOS offers **Quit & Reopen**, click it. Otherwise click the menu bar icon → **Quit Cheese**, then open Cheese again.
 
-**Accessibility**, used for pasting from history, window snapping, Fill to Screen, auto-scrolling, and Terminal Trace in terminals other than Terminal and iTerm2:
+**Accessibility**, used for pasting from history, window snapping (keys and dragging), Fill to Screen, auto-scrolling, Terminal Trace in terminals other than Terminal and iTerm2, and Sweep:
 
 1. Click **Grant…** next to Accessibility.
 2. Turn on **Cheese**. No restart is needed.
 
-**Notifications** (finished Files jobs, files received by Cheese Share), **Local Network** (Cheese Share finding nearby devices) and the **Finder extension** are asked for the same way, if you kept the tools that use them. macOS asks for Local Network itself the first time you open the Share panel.
+**Notifications** (finished Files jobs, files received by Cheese Share), **Local Network** (Cheese Share finding nearby devices) and the **Finder extension** are asked for the same way, if you kept the tools that use them. macOS asks for Local Network itself the first time you open the Share panel, and for the **Camera** and **Microphone** the first time you switch them on in a screen recording.
+
+**Hush** needs two small shortcuts in the Shortcuts app ("Cheese Hush On" and "Cheese Hush Off") to switch Focus; **Settings → Hush** shows the steps and tests them.
 
 The welcome screen and Settings show a green ✓ as soon as each permission is granted. You can skip all of them for now: when you use a tool that needs a missing permission, Cheese explains why and links to the right page.
 
@@ -145,18 +147,20 @@ Look for the cheese wedge near the clock.
 | Menu item | What it does |
 |---|---|
 | **Clipboard History** | Opens your history under the icon |
-| **Capture ▸** Region, Window, Screen, OCR, Scrolling | Screenshots and text from the screen (hold <kbd>⇧</kbd> as you finish to annotate) |
+| **Capture ▸** Region, Window, Screen, OCR, Scrolling, Record Region, Record Full Screen | Screenshots, text from the screen and screen recordings (hold <kbd>⇧</kbd> as you finish a screenshot to annotate) |
 | **Draw on Screen** | Ink over everything |
 | **Files ▸** | Every Files tool; pick one, then the files |
 | **Share…** | Cheese Share: send to phones and computers nearby |
 | **Shelf** | The floating drop shelf |
 | **Windows ▸** | Fill every window to the screen edge to edge (Stage Manager aware), fill or restore one, and snap to halves |
-| **Tools ▸** | Auto-Kill Apps…, Kill All Open Apps Now, Show Clipboard as QR, Terminal Trace ▸ (copy your terminal's last response) |
+| **Tools ▸** | Auto-Kill Apps…, Kill All Open Apps Now, Show Clipboard as QR, Terminal Trace ▸ (copy your terminal's last response), Mode ▸ Sweep (lock the keyboard and trackpad while you clean) |
 | **Caffeinate ▸** | Keep the Mac awake for 30 minutes, 1 or 2 hours, until a time or indefinitely; **Keep Awake With Lid Closed** makes it survive closing the lid |
 | **Clear History** | Empties history (hold <kbd>⌥</kbd> for **Clear All…**, which also removes pins) |
 | **Settings… / Quit Cheese** | |
 
 Each item shows its current shortcut on the right. Tools you switched off aren't listed.
+
+With **Hush** on, a second icon (a bell) sits next to Cheese's: its menu hushes notifications for a while, or automatically while you share your screen.
 
 ### 4. Make the shortcuts yours (optional)
 
@@ -207,6 +211,8 @@ Permissions usually carry over because every release is signed with the same cer
    tccutil reset ScreenCapture com.maanitgupta.cheese
    tccutil reset Accessibility com.maanitgupta.cheese
    tccutil reset AppleEvents com.maanitgupta.cheese
+   tccutil reset Camera com.maanitgupta.cheese
+   tccutil reset Microphone com.maanitgupta.cheese
    rm -rf "$HOME/Library/Group Containers/8H5274FWRC.com.maanitgupta.cheese"
    ```
 

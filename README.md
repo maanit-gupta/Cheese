@@ -28,18 +28,34 @@ Cheese lives in your menu bar and stays out of the way until you press a shortcu
 
 | | |
 |---|---|
-| **[Copy](#copy)** | Clipboard history that searches the text inside screenshots · **batch paste** · drag to chat · edit before pasting · clipboard as QR |
+| **[Copy](#copy)** | Clipboard history that searches the text inside screenshots · **batch paste** · drag to chat · edit before pasting · **links without tracking** · clipboard as QR |
 | **[Terminal Trace](#terminal-trace)** | One shortcut copies your last command and everything it printed, errors pulled out, as Markdown for a chat, an issue or an AI assistant |
-| **[Capture](#capture)** | Region, window and full-screen screenshots · annotation editor · copy text and QR codes from anything on screen · scrolling capture |
+| **[Capture](#capture)** | Region, window and full-screen screenshots · annotation editor · **screen recording** with your voice, system audio and webcam, to MP4 or GIF · copy text and QR codes from anything on screen · scrolling capture you scroll yourself |
 | **[Draw](#draw)** | Ink over any app, even full screen · magic-pen shapes · laser, spotlight and zoom · whiteboard and blackboard |
 | **[Convert](#convert)** | Offline PDF merge, split, compress, watermark and page numbers · Word, Excel, PowerPoint, images and Markdown to PDF · PDF to Word, Excel and images · image convert, resize, compress and background removal |
 | **[Share](#share)** | Drop anything on the menu bar icon · links and QR codes for your phone · LocalSend to phones and PCs · a floating Shelf |
-| **[Control](#control)** | Window snapping · **edge-to-edge Fill to Screen** · Auto-Kill · app hotkeys · command palette |
+| **[Control](#control)** | Window snapping from the keyboard or **by dragging to an edge** · **edge-to-edge Fill to Screen** · **Hush** notifications while you share your screen · **Sweep** to wipe the screen with the keyboard locked · Auto-Kill · app hotkeys · command palette |
 | **[Caffeinate](#caffeinate)** | Keep your Mac awake for an hour, until a time or indefinitely, **even with the lid closed**, and let it sleep again on its own when time's up |
 
-[New in 2.4](#new-in-24) · [New in 2.3](#new-in-23) · [Shortcuts](#keyboard-shortcuts) · [Permissions](#permissions) · [Install](#install) · [Privacy](#privacy) · [Under the hood](#under-the-hood) · [Build from source](#build-from-source)
+[New in 2.5](#new-in-25) · [New in 2.4](#new-in-24) · [New in 2.3](#new-in-23) · [Shortcuts](#keyboard-shortcuts) · [Permissions](#permissions) · [Install](#install) · [Privacy](#privacy) · [Under the hood](#under-the-hood) · [Build from source](#build-from-source)
 
 ---
+
+## New in 2.5
+
+**Screen recording** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>R</kbd> · <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>R</kbd>
+Record a region or the whole screen at up to 60 fps. Before it starts, a small bar switches on **your voice**, **system audio**, a **webcam bubble** you can drag anywhere, and a **cursor highlight** that pulses on every click, and picks **MP4 or GIF**. Pause, restart or discard from the floating controls; stop from them, from the timer next to the menu bar icon (`● 0:42`) or with the shortcut again. The recording lands in your screenshot folder and opens in a preview where you can trim it, copy it into a chat or turn it into a GIF. [More](#capture)
+
+**Hush** (its own menu bar icon)
+Start sharing your screen in Zoom, Teams, Meet, Slack or Discord, mirror to a projector, or record with Cheese, and notifications stay off the screen until 30 seconds after you stop. Or hush them yourself for 30 minutes, an hour, until a time or indefinitely. Hush switches Focus through two shortcuts you make once in the Shortcuts app, guided step by step in **Settings → Hush**. [More](#control)
+
+**Sweep** (**Tools ▸ Mode ▸ Sweep**)
+Wipe your screen and keyboard without typing gibberish or clicking things: after a three-second countdown, the keyboard (brightness and volume keys too) and the trackpad are locked for 30 seconds (or 15 s to 2 min in **Settings → Sweep**), the display stays on, and a chime says when you're done. Hold <kbd>Esc</kbd> for three seconds to stop early. [More](#control)
+
+**Scrolling capture, at your pace** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd>
+Pick the area, then scroll it yourself, as far as you need and as fast or slow as you like, with a live thumbnail of the growing image; click **Done** when you have it. Scrolling back up is fine. Flip on **Auto-scroll** to have Cheese do the scrolling. [More](#capture)
+
+**And:** drag a window to a screen edge or corner to snap it there, with a preview of where it lands · links copied from terminals are captured whole, even when they wrapped · **Copy clean link automatically** strips tracking (`utm_`, `fbclid`, `si`, Amazon's `ref`…) from every link you copy · Terminal Trace reads Hyper, Windsurf and Zed too · a new menu bar icon.
 
 ## New in 2.4
 
@@ -82,6 +98,10 @@ Keep everything you copy, find it in a keystroke, and get it where it needs to g
 - **Drag any item straight out of the history** (a row, or the image or file in the preview) into Messages, Slack, Discord, WhatsApp, a browser chat, Mail or Finder. The history fades while you aim, then closes after the drop. Images travel as both a file and image data, so web chats and native apps both accept them.
 - **Fix text before you send it:** click the small ✏️ in the bottom-right corner of a text preview (or press <kbd>⌘</kbd><kbd>E</kbd>), edit in place, then <kbd>⌘</kbd><kbd>↩</kbd> to paste or grab the drag handle to drop the edited text into a chat. The edit replaces the item rather than adding a copy.
 
+**Clean links**
+- Links copied from a terminal are captured whole, even ones that wrapped across lines.
+- **Copy clean link automatically** (right under Clipboard History while a link is on the clipboard, or in **Settings → Clipboard**) strips tracking parameters from every link you copy, on the Mac, offline: `utm_*`, `fbclid`, `gclid`, YouTube's `si`, Amazon's `ref`, and more. Useful parts like YouTube's `v` and `t` stay.
+
 **Show Clipboard as QR** (menu bar → **Tools**, or the palette)
 - Short text and links go straight into a QR code for your phone's camera.
 - Anything bigger (long text, images, files, folders) becomes a **10-minute local Wi-Fi link** with **Copy Link**, a live countdown and **Stop**. Scanning it opens the same clean page as [Cheese Share](#share).
@@ -104,9 +124,17 @@ Screenshots go straight to the clipboard at full Retina resolution, or into a fo
 | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>5</kbd> | Click a window, shadow and all |
 | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>3</kbd> | The display under the pointer |
 | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> | **Copy text** from any region: videos, images, locked PDFs, slides. English and Hindi. QR codes and barcodes too, and links get an *Open* button |
-| <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd> | **Scrolling capture:** pick an area and Cheese scrolls and stitches one tall image, keeping sticky headers once. It's copied or saved like any capture, and a preview lets you copy, save, annotate or read its text |
+| <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd> | **Scrolling capture:** pick an area, scroll it yourself (or switch on **Auto-scroll**), and click **Done**: Cheese stitches one tall image, keeping sticky headers once. It's copied or saved like any capture, and a preview lets you copy, save, annotate or read its text |
+| <kbd>⌃</kbd><kbd>⌥</kbd><kbd>R</kbd> | **Record a region** (press again to stop) |
+| <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>R</kbd> | **Record the display under the pointer** (press again to stop) |
 
 **Hold <kbd>⇧</kbd> as you finish** any capture to open the annotation editor instead: arrows, boxes, text, highlighter, blur, crop and undo, then **Copy** or **Save** as PNG.
+
+**Screen recording**
+- Before recording starts, a bar under the area switches on your **microphone** (pick which one), **system audio**, the **webcam** and the **cursor highlight**, and chooses **MP4** or **GIF**. Your choices are kept for next time.
+- The webcam shows in a mirrored circle in the corner of the recording; drag it anywhere, and right-click it for Small, Medium or Large. The cursor highlight is a soft circle that ripples on every click. Ink from **Draw on Screen** is recorded too; the controls, toasts and menus never are.
+- After a 3-2-1 countdown, a small floating bar shows the time with **Pause**, **Restart**, **Discard** and **Stop**, and the timer sits next to the menu bar icon (click it to stop).
+- Recordings are saved in your screenshot folder as `Cheese Recording … .mp4` (voice and system audio on separate tracks) or `.gif` (15 fps, up to 960 px wide; change it in **Settings → Recording**), then open in a preview with **Trim**, **Copy**, **Show in Finder**, **Export as GIF** and **Delete**.
 
 ## Draw
 
@@ -170,10 +198,13 @@ Drag files, a picture from a browser, a link or a text selection onto the 🧀. 
 Windows, apps and your Mac, on your terms.
 
 - **Snap windows** <kbd>⌃</kbd><kbd>⌥</kbd> + <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd>: halves, maximize and bottom half, Windows-style. Press again to hop to the next display. <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌫</kbd> puts the window back.
+- **Drag to snap:** drag a window by its title bar to the left or right edge for a half, the top to maximize, the bottom for the bottom half, or a corner for a quarter. A see-through preview shows where it'll land. Turn it off in **Settings → Windows**.
 - **Fill to Screen** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>M</kbd>: resizes **every open window** to fill its display **edge to edge**, without entering native full screen, so it works with **Stage Manager**: no gap down the side where the strip of recent apps sits, and any tile you click comes up properly maximized. The menu bar and the Dock (wherever it is right now, hidden or not) are respected. <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>M</kbd> does just the current window; **Restore All Windows** undoes it. Prefer to keep the strip in view? **Settings → Windows** can leave room for it.
 - **Auto-Kill** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>Q</kbd>: one big **Kill All** button for every open app, with a 🔒 shield for the ones that should stay. Hold <kbd>⌥</kbd> to force-kill. <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>Q</kbd> sweeps without asking. Cheese and Finder are always spared.
 - **App hotkeys** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + a letter: give any app its own shortcut to open or bring it forward. Cheese suggests a free, memorable key.
 - **Command palette** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd>: search and run any Cheese action. It shows each one's shortcut, so you learn them as you go.
+- **Hush**, from its own 🔔 menu bar icon: keeps notifications off the screen **while you share it** (Zoom, Teams, Webex, Slack, Discord, FaceTime, Google Meet or any site sharing from a browser, a mirrored or AirPlay display, someone viewing your Mac with Screen Sharing, and Cheese's own recordings), until 30 seconds after you stop. Or hush them **for 30 minutes, 1 or 2 hours, until a time or indefinitely**, with the time left next to the icon. macOS doesn't let apps switch Focus directly, so Hush runs two tiny shortcuts you make once in the Shortcuts app; **Settings → Hush** walks you through it and tests them. A Focus you'd already turned on is left on.
+- **Sweep** (**Tools ▸ Mode ▸ Sweep**): locks the keyboard and trackpad so you can wipe the screen and keys. A three-second countdown, then nothing you press, click, scroll or swipe does anything (brightness, volume and Mission Control keys included) for 30 seconds, or 15 s to 2 min in **Settings → Sweep**. The display stays on and a chime plays at the end; hold <kbd>Esc</kbd> for three seconds to stop early.
 
 ## Caffeinate
 
@@ -197,6 +228,7 @@ Every shortcut can be changed or turned off in **Settings → Shortcuts**, and t
 | Copy text from screen (OCR) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> |
 | Terminal Trace | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>T</kbd> |
 | Scrolling capture | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd> |
+| Record region · full screen (again to stop) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>R</kbd> · <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>R</kbd> |
 | Draw on screen (tap to toggle, hold for quick ink) | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>D</kbd> |
 | Shelf | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>F</kbd> |
 | Snap left / right half | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>←</kbd> / <kbd>→</kbd> |
@@ -206,7 +238,7 @@ Every shortcut can be changed or turned off in **Settings → Shortcuts**, and t
 | Auto-Kill panel · kill all now | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>Q</kbd> · <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>Q</kbd> |
 | Command palette | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>↩</kbd> |
 | Your app hotkeys | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd> + a letter or digit |
-| Cheese Share | none by default (assign one in Settings) |
+| Cheese Share · Hush | none by default (assign one in Settings) |
 
 Inside the clipboard history: type to search · <kbd>↑</kbd> <kbd>↓</kbd> to move · <kbd>⇧</kbd><kbd>↑</kbd> <kbd>⇧</kbd><kbd>↓</kbd>, <kbd>⇧</kbd>-click or <kbd>⌘</kbd>-click to select several · <kbd>⌘</kbd><kbd>A</kbd> select all · <kbd>↩</kbd> paste (several: all at once, <kbd>⌥</kbd><kbd>↩</kbd> one by one, <kbd>⌘</kbd><kbd>C</kbd> copy) · <kbd>⌥</kbd><kbd>↩</kbd> plain text · <kbd>⌘</kbd><kbd>1</kbd>…<kbd>9</kbd> quick paste · <kbd>⌘</kbd><kbd>P</kbd> pin · <kbd>⌘</kbd><kbd>⌫</kbd> delete · <kbd>⌘</kbd><kbd>E</kbd> edit text · drag to drop into any app · <kbd>Esc</kbd> close.
 
@@ -218,13 +250,15 @@ On first launch, a short welcome lets you pick your tools and then asks **only f
 
 | Permission | Needed for |
 |---|---|
-| **Screen Recording** | Screenshots, OCR, scrolling capture, and draw mode's snapshot and zoom |
-| **Accessibility** | Pasting from history, window snapping, Fill to Screen, auto-scrolling, Terminal Trace in terminals other than Terminal and iTerm2 |
+| **Screen Recording** | Screenshots, OCR, scrolling capture, screen recordings, draw mode's snapshot and zoom, and Hush spotting meeting apps' share bars |
+| **Accessibility** | Pasting from history, window snapping (keys and dragging), Fill to Screen, auto-scrolling, Terminal Trace in terminals other than Terminal and iTerm2, Sweep |
+| **Microphone** · **Camera** (asked when you switch them on) | Your voice and the webcam bubble in screen recordings |
 | **Notifications** | Finished Files jobs, files received through Cheese Share |
 | **Local Network** | Cheese Share finding nearby LocalSend devices |
 | **Finder extension** | The **Cheese ▸** menu in Finder (turn it on in **Settings → Files**) |
 | **Automation** (asked on first use) | **Finder**, so a Files tool run from the palette can read Finder's selection · **Terminal** or **iTerm2**, so Terminal Trace can read the front tab · Word, Excel or PowerPoint, only if you turn on the Office fallback in **Settings → Files** |
 | **Administrator password** (once) | Installing Caffeinate's lid-closed helper, the first time a session covers a closed lid |
+| **Two shortcuts** you make in the Shortcuts app | Hush switching Focus on and off ("Cheese Hush On" and "Cheese Hush Off"; **Settings → Hush** shows how) |
 
 ## Install
 
@@ -253,7 +287,7 @@ The [install guide](docs/INSTALL.md) covers updating, uninstalling and fixes for
 
 Everything runs on your Mac. No accounts, no telemetry, no cloud.
 
-- Files are converted on your Mac and never uploaded. The Office renderers are bundled and blocked from loading anything remote.
+- Files are converted, and screen recordings saved, on your Mac and never uploaded. The Office renderers are bundled and blocked from loading anything remote.
 - Sharing stays on **your own local network**, and nothing listens unless you ask. Show Clipboard as QR links expire after 10 minutes. Cheese Share listens only while its panel is open and for 10 minutes after, with a fresh random link each time.
 - The one request to the internet is the **update check**: at launch and every 12 hours Cheese asks GitHub's public API for the latest release, sending nothing about you or your Mac. Turn it off in **Settings → General → Updates**.
 - The phone page is entirely self-contained: no outside scripts, fonts or trackers.
@@ -261,7 +295,7 @@ Everything runs on your Mac. No accounts, no telemetry, no cloud.
 
 ## Under the hood
 
-- A native menu bar app in **Swift 6** (strict concurrency) for **macOS 15+ on Apple silicon**, built on Apple frameworks: ScreenCaptureKit, Vision, PDFKit, WebKit, Network and the Accessibility API. The only package is [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts).
+- A native menu bar app in **Swift 6** (strict concurrency) for **macOS 15+ on Apple silicon**, built on Apple frameworks: ScreenCaptureKit, AVFoundation, Vision, PDFKit, WebKit, Network and the Accessibility API. The only package is [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts).
 - **Every tool is a module** you can switch off in **Settings → General**. A tool that's off costs nothing: no shortcuts, timers, listeners or menu entries.
 - **Every action is defined once** and shared by the menu, the shortcuts and the command palette, so they never disagree.
 - The Finder menu and the Share menu entry are small sandboxed extensions that only hand work to the app.
