@@ -55,6 +55,8 @@ enum PermissionPlan {
         case .terminalTrace: [.accessibility]
         // Blocking input takes an event tap, which needs Accessibility.
         case .sweep: [.accessibility]
+        // Meeting apps' share indicators are found by window title, which needs Screen Recording.
+        case .hush: [.screenRecording]
         // Quitting other apps needs no permission.
         case .qr, .keepAwake, .appHotkeys, .commandPalette, .shelf, .appSweep: []
         }

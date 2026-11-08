@@ -12,6 +12,7 @@ enum SettingsTab: Hashable {
     case share
     case autoKill
     case caffeinate
+    case hush
     case sweep
     case permissions
     case about
@@ -65,6 +66,9 @@ struct SettingsView: View {
                 }
                 Tab("Caffeinate", systemImage: "cup.and.saucer", value: SettingsTab.caffeinate) {
                     CaffeinateSettingsView(controller: dependencies.caffeinate)
+                }
+                Tab("Hush", systemImage: "bell.slash", value: SettingsTab.hush) {
+                    HushSettingsView(controller: dependencies.hush)
                 }
                 Tab("Sweep", systemImage: "bubbles.and.sparkles", value: SettingsTab.sweep) {
                     SweepSettingsView()

@@ -31,7 +31,7 @@ struct HotkeyTests {
         // These are a sibling's shortcut plus Shift.
         let withShift: Set<Hotkey> = [.killAllApps, .fillCurrentWindow, .terminalTrace]
         // Share has no default shortcut; the user can assign one.
-        let unbound: Set<Hotkey> = [.showShare]
+        let unbound: Set<Hotkey> = [.showShare, .hush]
         #expect(unbound.allSatisfy { $0.name.initialShortcut == nil })
         #expect(expected.count + unbound.count == Hotkey.allCases.count)
         for hotkey in Hotkey.allCases where !unbound.contains(hotkey) {
@@ -46,7 +46,7 @@ struct HotkeyTests {
 
     @Test func defaultsAreUnique() {
         let shortcuts = Hotkey.allCases.compactMap(\.name.initialShortcut)
-        #expect(shortcuts.count == Hotkey.allCases.count - 1)
+        #expect(shortcuts.count == Hotkey.allCases.count - 2)
         #expect(Set(shortcuts).count == shortcuts.count)
     }
 

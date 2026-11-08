@@ -38,7 +38,7 @@ struct VerbTests {
         #expect(Verb.draw.modules == [.drawOnScreen])
         #expect(Verb.convert.modules == [.files])
         #expect(Verb.share.modules == [.shelf, .share])
-        #expect(Verb.control.modules == [.windowSnapping, .keepAwake, .appHotkeys, .commandPalette, .appSweep, .sweep])
+        #expect(Verb.control.modules == [.windowSnapping, .keepAwake, .appHotkeys, .commandPalette, .appSweep, .hush, .sweep])
     }
 
     @Test func everyToolHasABlurb() {

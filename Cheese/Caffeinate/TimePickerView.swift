@@ -3,13 +3,14 @@ import SwiftUI
 
 /// The "Caffeinate: Until…" picker: hour and minute, shown 12- or 24-hour per the system locale.
 struct TimePickerView: View {
+    let heading: String
     @State var time: Date
     let onStart: (Date) -> Void
     let onCancel: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.large) {
-            Text("Keep your Mac awake until")
+            Text(heading)
                 .font(DesignTokens.Typography.heading)
             DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
                 .datePickerStyle(.stepperField)
@@ -33,13 +34,21 @@ struct TimePickerView: View {
 /// Shows `TimePickerView` in a small window and reports the picked hour and minute.
 @MainActor
 final class TimePickerWindow {
+    private let heading: String
+    private let title: String
     private var window: NSWindow?
+
+    init(heading: String = "Keep your Mac awake until", title: String = "Caffeinate") {
+        self.heading = heading
+        self.title = title
+    }
 
     func show(onPick: @escaping (_ hour: Int, _ minute: Int) -> Void) {
         close()
         // An hour from now, on the minute.
         let initial = Calendar.current.date(bySetting: .second, value: 0, of: .now.addingTimeInterval(3600)) ?? .now
         let view = TimePickerView(
+            heading: heading,
             time: initial,
             onStart: { [weak self] date in
                 let components = Calendar.current.dateComponents([.hour, .minute], from: date)
@@ -49,7 +58,7 @@ final class TimePickerWindow {
             onCancel: { [weak self] in self?.close() }
         )
         let window = NSWindow(contentViewController: NSHostingController(rootView: view))
-        window.title = "Caffeinate"
+        window.title = title
         window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
         window.level = .floating

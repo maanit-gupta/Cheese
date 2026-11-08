@@ -25,4 +25,5 @@ extension Logger {
     static let terminalTrace = Logger(subsystem: subsystem, category: "TerminalTrace")
     static let update = Logger(subsystem: subsystem, category: "Update")
     static let sweep = Logger(subsystem: subsystem, category: "Sweep")
+    static let hush = Logger(subsystem: subsystem, category: "Hush")
 }

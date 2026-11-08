@@ -17,6 +17,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
     case share
     case appSweep
     case terminalTrace
+    case hush
     case sweep
 
     var id: Self { self }
@@ -38,6 +39,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .share: "Cheese Share"
         case .appSweep: "Auto-Kill"
         case .terminalTrace: "Terminal Trace"
+        case .hush: "Hush"
         case .sweep: "Sweep"
         }
     }
@@ -50,7 +52,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .drawOnScreen: .draw
         case .files: .convert
         case .share, .shelf: .share
-        case .windowSnapping, .appHotkeys, .keepAwake, .commandPalette, .appSweep, .sweep: .control
+        case .windowSnapping, .appHotkeys, .keepAwake, .commandPalette, .appSweep, .hush, .sweep: .control
         }
     }
 
@@ -71,6 +73,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .share: "dot.radiowaves.left.and.right"
         case .appSweep: "xmark.app"
         case .terminalTrace: "terminal"
+        case .hush: "bell.slash"
         case .sweep: "bubbles.and.sparkles"
         }
     }
@@ -93,6 +96,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .share: "Send files and text to phones and computers nearby, LocalSend-compatible."
         case .appSweep: "Quit every open app in one go, keeping the ones you shield."
         case .terminalTrace: "Copy the terminal's last response, or everything in it, without scrolling."
+        case .hush: "Keep notifications off the screen while you share it, or for as long as you like."
         case .sweep: "Lock the keyboard and trackpad for a moment while you clean the screen."
         }
     }
@@ -110,7 +114,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .shelf: .toggleShelf
         case .appSweep: .autoKill
         case .terminalTrace: .terminalTrace
-        case .qr, .keepAwake, .appHotkeys, .files, .share, .sweep: nil
+        case .qr, .keepAwake, .appHotkeys, .files, .share, .hush, .sweep: nil
         }
     }
 }

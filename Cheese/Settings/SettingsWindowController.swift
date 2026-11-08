@@ -10,6 +10,7 @@ struct SettingsDependencies {
     var appHotkeys: AppHotkeysSettingsModel
     var files: FilesSettingsModel
     var caffeinate: CaffeinateController
+    var hush: HushController
     var updates: UpdateService
 }
 

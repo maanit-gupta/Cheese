@@ -10,9 +10,11 @@ final class StatusMenu: NSObject {
     private let registry: ActionRegistry
     /// Items for work in progress, like running Files jobs, shown at the top of the menu.
     private let progressItems: () -> [NSMenuItem]
+    private let layout: [MenuLayout.Node]
 
-    init(registry: ActionRegistry, progressItems: @escaping () -> [NSMenuItem] = { [] }) {
+    init(registry: ActionRegistry, layout: [MenuLayout.Node] = MenuLayout.standard, progressItems: @escaping () -> [NSMenuItem] = { [] }) {
         self.registry = registry
+        self.layout = layout
         self.progressItems = progressItems
         super.init()
         rebuild()
@@ -24,7 +26,7 @@ final class StatusMenu: NSObject {
         for item in progress {
             menu.addItem(item)
         }
-        let nodes = MenuLayout.visible(MenuLayout.standard) { registry.isAvailable($0) }
+        let nodes = MenuLayout.visible(layout) { registry.isAvailable($0) }
         if !progress.isEmpty, !nodes.isEmpty {
             menu.addItem(.separator())
         }

@@ -79,6 +79,20 @@ enum MenuLayout {
         .action(.quit, keyEquivalent: "q"),
     ]
 
+    /// The Hush icon's menu: what's happening, the automatic toggle, the lengths, Turn Off.
+    static let hush: [Node] = [
+        .action(.hushStatus),
+        .separator,
+        .action(.hushAutomatically),
+        .separator,
+    ] + CaffeinatePreset.allCases.map { .action(.hush($0)) } + [
+        .action(.hushUntil), .action(.hushIndefinitely),
+        .separator,
+        .action(.hushOff),
+        .separator,
+        .action(.hushSettings),
+    ]
+
     /// Every Files tool under PDF / Convert / Images headers, in the drop menu's order.
     static var filesChildren: [Node] {
         ToolApplicability.grouped(ToolID.allCases).enumerated().flatMap { index, group -> [Node] in

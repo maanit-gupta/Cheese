@@ -23,6 +23,7 @@ enum Hotkey: CaseIterable, Sendable {
     case fillAllWindows
     case fillCurrentWindow
     case terminalTrace
+    case hush
 
     var name: KeyboardShortcuts.Name {
         switch self {
@@ -46,6 +47,7 @@ enum Hotkey: CaseIterable, Sendable {
         case .fillAllWindows: .fillAllWindows
         case .fillCurrentWindow: .fillCurrentWindow
         case .terminalTrace: .terminalTrace
+        case .hush: .hush
         }
     }
 
@@ -71,6 +73,7 @@ enum Hotkey: CaseIterable, Sendable {
         case .fillAllWindows: "Fill all windows to the screen"
         case .fillCurrentWindow: "Fill the current window to the screen"
         case .terminalTrace: "Terminal Trace: copy the last response or the whole terminal"
+        case .hush: "Hush: turn notifications off or back on"
         }
     }
 }
@@ -101,6 +104,8 @@ extension KeyboardShortcuts.Name {
     static let fillCurrentWindow = Self("fillCurrentWindow", initial: .init(.m, modifiers: modifiers.union(.shift)))
     /// OCR's shortcut plus Shift: both copy text off the screen.
     static let terminalTrace = Self("terminalTrace", initial: .init(.t, modifiers: modifiers.union(.shift)))
+    /// No default: toggles Hush until it's turned off, once the user assigns a shortcut.
+    static let hush = Self("hush")
 }
 
 extension KeyboardShortcuts.Name {

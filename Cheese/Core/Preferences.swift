@@ -35,6 +35,10 @@ enum PreferenceKey {
     static let caffeinateBatteryFloor = "caffeinateBatteryFloor"
     /// How many seconds Sweep locks the keyboard and trackpad (30 unless set).
     static let sweepDuration = "sweepDuration"
+    /// Whether Hush holds notifications back whenever the screen is shared (on unless set false).
+    static let hushAutomatically = "hushAutomatically"
+    /// Hush turned Focus on and hasn't turned it off yet, so a crash is undone at the next launch.
+    static let hushEngagedByCheese = "hushEngagedByCheese"
     /// Whether Cheese checks GitHub for a newer release at launch and every 12 hours (on unless set false).
     static let updaterAutoCheck = "updaterAutoCheck"
     /// A version the user chose "Skip This Version" for; automatic checks stay quiet about it.
@@ -228,6 +232,13 @@ struct Preferences {
     /// How long Sweep keeps the keyboard and trackpad locked.
     var sweepDuration: SweepDuration {
         SweepDuration.stored(defaults.object(forKey: PreferenceKey.sweepDuration) as? Int)
+    }
+
+    static let defaultHushAutomatically = true
+
+    /// Whether Hush holds notifications back whenever the screen is shared.
+    var hushAutomatically: Bool {
+        defaults.object(forKey: PreferenceKey.hushAutomatically) as? Bool ?? Self.defaultHushAutomatically
     }
 
     func isModuleEnabled(_ module: ModuleID) -> Bool {

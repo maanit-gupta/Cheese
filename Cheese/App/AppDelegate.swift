@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let installedApps = InstalledAppIndex()
     private let caffeinate = CaffeinateController()
     private let sweep = SweepController()
+    private lazy var hush = HushController(openSettings: { [weak self] in self?.settingsWindow?.show(tab: .hush) })
     private let updates = UpdateService.shared
     private var defaultsObserver: Task<Void, Never>?
 
@@ -49,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 },
                 files: FilesSettingsModel(),
                 caffeinate: caffeinate,
+                hush: hush,
                 updates: updates
             )
         )
@@ -108,6 +110,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch name {
         case "share": .share
         case "sweep": .sweep
+        case "hush": .hush
         default: .general
         }
     }
@@ -178,6 +181,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             TerminalTraceModule { [permissionPrompter] in
                 permissionPrompter.presentAlert(for: .accessibility, feature: "Terminal Trace")
             },
+            hushModule(),
             SweepModule(controller: sweep),
         ]
         let preferences = Preferences()
@@ -316,6 +320,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return CaffeinateModule(controller: caffeinate)
     }
 
+    /// Hush, with its own menu bar icon whose menu is drawn from the same registry.
+    private func hushModule() -> HushModule {
+        let statusItem = HushStatusItem(controller: hush) { [weak self] in
+            self?.registry.map { StatusMenu(registry: $0, layout: MenuLayout.hush) }
+        }
+        hush.onChange = { [weak statusItem] in statusItem?.update() }
+        return HushModule(controller: hush, statusItem: statusItem) { [weak self] in
+            self?.settingsWindow?.show(tab: .hush)
+        }
+    }
+
     /// "Settings: General" and friends, so the palette can open Settings on any tab.
     private func settingsTabActions() -> [CheeseAction] {
         let tabs: [(ActionID, String, String, SettingsTab)] = [
@@ -329,6 +344,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             (.settingsShare, "Share", "dot.radiowaves.left.and.right", .share),
             (.settingsAutoKill, "Auto-Kill", "xmark.app", .autoKill),
             (.settingsCaffeinate, "Caffeinate", "cup.and.saucer", .caffeinate),
+            (.settingsHush, "Hush", "bell.slash", .hush),
             (.settingsSweep, "Sweep", "bubbles.and.sparkles", .sweep),
             (.settingsPermissions, "Permissions", "lock.shield", .permissions),
             (.settingsAbout, "About", "info.circle", .about),

@@ -1,0 +1,126 @@
+[
+    {
+        "app": "Zoom",
+        "bundleIDs": [
+            "us.zoom.xos"
+        ],
+        "nameContains": [
+            "share toolbar",
+            "share statusbar",
+            "zoom share",
+            "you are screen sharing",
+            "sharing frame"
+        ]
+    },
+    {
+        "app": "Microsoft Teams",
+        "bundleIDs": [
+            "com.microsoft.teams2",
+            "com.microsoft.teams"
+        ],
+        "nameContains": [
+            "sharing control bar",
+            "you're sharing",
+            "you are sharing"
+        ]
+    },
+    {
+        "app": "Webex",
+        "bundleIDs": [
+            "Cisco-Systems.Spark",
+            "com.webex.meetingmanager",
+            "com.cisco.webexmeetingsapp"
+        ],
+        "nameContains": [
+            "you're sharing",
+            "you are sharing",
+            "sharing control",
+            "sharing content"
+        ]
+    },
+    {
+        "app": "Slack",
+        "bundleIDs": [
+            "com.tinyspeck.slackmacgap"
+        ],
+        "nameContains": [
+            "screen share",
+            "you're sharing",
+            "sharing your screen"
+        ]
+    },
+    {
+        "app": "Discord",
+        "bundleIDs": [
+            "com.hnc.Discord"
+        ],
+        "nameContains": [
+            "screen share",
+            "go live",
+            "you're streaming"
+        ]
+    },
+    {
+        "app": "FaceTime",
+        "bundleIDs": [
+            "com.apple.FaceTime"
+        ],
+        "nameContains": [
+            "sharing screen",
+            "screen sharing",
+            "you're sharing"
+        ]
+    },
+    {
+        "app": "Google Meet",
+        "bundleIDs": [
+            "com.google.Chrome",
+            "com.google.Chrome.canary",
+            "com.microsoft.edgemac",
+            "com.brave.Browser",
+            "company.thebrowser.Browser",
+            "com.vivaldi.Vivaldi",
+            "com.operasoftware.Opera"
+        ],
+        "nameContains": [
+            "is sharing your screen",
+            "is sharing a window",
+            "is sharing this tab",
+            "is sharing a tab",
+            "is sharing an application"
+        ],
+        "maxHeight": 140
+    },
+    {
+        "app": "Firefox",
+        "bundleIDs": [
+            "org.mozilla.firefox",
+            "org.mozilla.firefoxdeveloperedition"
+        ],
+        "nameContains": [
+            "sharing indicator"
+        ],
+        "maxHeight": 140
+    },
+    {
+        "app": "Loom",
+        "bundleIDs": [
+            "com.loom.desktop"
+        ],
+        "nameContains": [
+            "recording controls",
+            "loom control"
+        ]
+    },
+    {
+        "app": "Another app",
+        "bundleIDs": [
+            "com.apple.controlcenter"
+        ],
+        "nameContains": [
+            "screen recording",
+            "screen sharing",
+            "sharing screen"
+        ]
+    }
+]

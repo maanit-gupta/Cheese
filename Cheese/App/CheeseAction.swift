@@ -65,10 +65,22 @@ extension ActionID {
     static let installUpdate = Self(rawValue: "installUpdate")
     static let sweep = Self(rawValue: "sweep")
     static let settingsSweep = Self(rawValue: "settingsSweep")
+    static let hushStatus = Self(rawValue: "hushStatus")
+    static let hushAutomatically = Self(rawValue: "hushAutomatically")
+    static let hushUntil = Self(rawValue: "hushUntil")
+    static let hushIndefinitely = Self(rawValue: "hushIndefinitely")
+    static let hushOff = Self(rawValue: "hushOff")
+    static let hushSettings = Self(rawValue: "hushSettings")
+    static let settingsHush = Self(rawValue: "settingsHush")
 
     /// "Caffeinate: For 1 Hour" and the other fixed lengths.
     static func caffeinate(_ preset: CaffeinatePreset) -> Self {
         Self(rawValue: "caffeinate.\(preset.rawValue)")
+    }
+
+    /// "Hush: For 1 Hour" and the other fixed lengths.
+    static func hush(_ preset: CaffeinatePreset) -> Self {
+        Self(rawValue: "hush.\(preset.rawValue)")
     }
 
     /// "Terminal Trace: Last Response" and "Terminal Trace: Everything".
