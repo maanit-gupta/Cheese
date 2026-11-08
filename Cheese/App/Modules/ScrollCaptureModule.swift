@@ -1,7 +1,7 @@
 import os
 
-/// Scrolling capture: select a region, auto-scroll and stitch it, copy and/or save it (After Capture),
-/// then show the preview.
+/// Scrolling capture: select a region, scroll it by hand (or let Auto-scroll do it) until Done,
+/// copy and/or save the stitched image (After Capture), then show the preview.
 @MainActor
 final class ScrollCaptureModule: CheeseModule {
     let id = ModuleID.scrollingCapture
@@ -21,9 +21,9 @@ final class ScrollCaptureModule: CheeseModule {
                 shortcut: .scrollingCapture, requiredPermissions: [.screenRecording, .accessibility]
             ) { [weak self] _ in
                 guard let self else { return }
-                // The hotkey again stops a capture that's running.
+                // The hotkey again is Done for a capture that's running.
                 if let session {
-                    session.stop()
+                    session.finish()
                 } else {
                     Task { await self.scrollingCapture() }
                 }
@@ -35,7 +35,7 @@ final class ScrollCaptureModule: CheeseModule {
 
     /// Ends a capture that's running; it still stitches what it has and shows the preview.
     func stop() {
-        session?.stop()
+        session?.finish()
     }
 
     private func scrollingCapture() async {
@@ -56,6 +56,9 @@ final class ScrollCaptureModule: CheeseModule {
         if let result {
             await CaptureDelivery.deliver(result, noun: "Scrolling capture")
             preview.show(result)
+            if session.reachedLimit {
+                CheeseToast.show("Reached the 30,000 px limit — kept what fit", systemImage: "ruler")
+            }
         }
     }
 }

@@ -84,7 +84,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .clipboard: "Everything you copy, searchable and one keystroke from pasting."
         case .screenshots: "Region, window or screen, straight to the clipboard. Hold Shift to annotate."
         case .ocr: "Copy text, QR codes and barcodes from anything on screen."
-        case .scrollingCapture: "Scrolls the page for you and stitches one tall image."
+        case .scrollingCapture: "Scroll a page by hand, or let it scroll itself, into one tall image."
         case .windowSnapping: "Halves, maximize and display-to-display moves from the keyboard."
         case .drawOnScreen: "Smooth ink, magic shapes and a laser pointer over everything."
         case .qr: "Show what you copied as a QR code for your phone."

@@ -39,6 +39,8 @@ enum PreferenceKey {
     static let hushAutomatically = "hushAutomatically"
     /// Hush turned Focus on and hasn't turned it off yet, so a crash is undone at the next launch.
     static let hushEngagedByCheese = "hushEngagedByCheese"
+    /// Whether scrolling capture scrolls the page by itself (off unless set: the user scrolls).
+    static let scrollCaptureAutoScroll = "scrollCaptureAutoScroll"
     /// Whether Cheese checks GitHub for a newer release at launch and every 12 hours (on unless set false).
     static let updaterAutoCheck = "updaterAutoCheck"
     /// A version the user chose "Skip This Version" for; automatic checks stay quiet about it.
@@ -232,6 +234,13 @@ struct Preferences {
     /// How long Sweep keeps the keyboard and trackpad locked.
     var sweepDuration: SweepDuration {
         SweepDuration.stored(defaults.object(forKey: PreferenceKey.sweepDuration) as? Int)
+    }
+
+    static let defaultScrollCaptureAutoScroll = false
+
+    /// Whether scrolling capture starts with Auto-scroll on.
+    var scrollCaptureAutoScroll: Bool {
+        defaults.object(forKey: PreferenceKey.scrollCaptureAutoScroll) as? Bool ?? Self.defaultScrollCaptureAutoScroll
     }
 
     static let defaultHushAutomatically = true

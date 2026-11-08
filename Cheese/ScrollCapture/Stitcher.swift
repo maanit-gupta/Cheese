@@ -116,6 +116,8 @@ struct StitchProgress: Sendable {
     let frameHeight: Int
     private(set) var reachedLimit = false
     private(set) var framesUsed = 1
+    /// Rows of the last frame that went into the output (all of the first frame's to start with).
+    private(set) var lastAppendedRows: Range<Int>
 
     private var output: [UInt8]
     private(set) var outputHeight: Int
@@ -134,8 +136,12 @@ struct StitchProgress: Sendable {
         let keep = min(first.height - sticky.bottom, self.maxHeight - sticky.bottom)
         output = Array(first.bytes(ofRows: 0..<max(keep, 0)))
         outputHeight = max(keep, 0)
+        lastAppendedRows = 0..<max(keep, 0)
         reachedLimit = keep < first.height - sticky.bottom
     }
+
+    /// The last frame that went into the output, the one new frames are matched against.
+    var lastFrame: ImageBuffer { previous }
 
     /// Height the finished image will have.
     var finishedHeight: Int { outputHeight + sticky.bottom }
@@ -160,6 +166,7 @@ struct StitchProgress: Sendable {
         let start = contentRows.upperBound - offset
         output.append(contentsOf: frame.bytes(ofRows: start ..< start + count))
         outputHeight += count
+        lastAppendedRows = start ..< start + count
         previous = frame
         previousSignatures = signatures
         framesUsed += 1

@@ -17,6 +17,11 @@ private final class SimulatedPage: RegionCapturing, ScrollPerforming {
     var invertsScrolling = false
     private(set) var captures = 0
     private(set) var pointer: CGPoint?
+    /// Where the user has scrolled by each capture, for capturing by hand. Used up in order.
+    var script: [Int] = []
+    /// Called on every capture once the script is used up, with how many captures that's been.
+    var afterScript: ((Int) -> Void)?
+    private var capturesAfterScript = 0
 
     init(startingAt offset: Int = 0) throws {
         page = try Fixtures.image("scroll-page")
@@ -30,6 +35,12 @@ private final class SimulatedPage: RegionCapturing, ScrollPerforming {
 
     func capture() async throws -> CGImage {
         captures += 1
+        if !script.isEmpty {
+            offset = min(max(script.removeFirst(), 0), maxOffset)
+        } else if let afterScript {
+            capturesAfterScript += 1
+            afterScript(capturesAfterScript)
+        }
         var pixels = Array(header)
         pixels.append(contentsOf: page.bytes(ofRows: offset ..< offset + contentHeight))
         pixels.append(contentsOf: footer)
@@ -52,16 +63,93 @@ private final class SimulatedPage: RegionCapturing, ScrollPerforming {
 @MainActor
 struct ScrollCaptureSessionTests {
     private let region = CGRect(x: 100, y: 100, width: 480, height: 700)
+    /// Auto-scroll that finishes at the end of the page, as scrolling capture worked before Done.
     private var settings: ScrollCaptureSession.Settings {
         var settings = ScrollCaptureSession.Settings()
         settings.settleDelay = .zero
+        settings.pollInterval = .zero
+        settings.finishesAtPageEnd = true
         settings.showsHUD = false
         return settings
     }
 
+    private var manualSettings: ScrollCaptureSession.Settings {
+        var settings = settings
+        settings.finishesAtPageEnd = false
+        return settings
+    }
+
+    private func autoSession(_ page: SimulatedPage, settings: ScrollCaptureSession.Settings? = nil) -> ScrollCaptureSession {
+        ScrollCaptureSession(region: region, capturer: page, scroller: page, autoScroll: true, settings: settings ?? self.settings)
+    }
+
+    /// The user scrolls through `offsets`, then clicks Done.
+    private func manualSession(_ page: SimulatedPage, offsets: [Int]) -> ScrollCaptureSession {
+        let session = ScrollCaptureSession(region: region, capturer: page, scroller: page, autoScroll: false, settings: manualSettings)
+        page.script = offsets
+        page.afterScript = { [weak session] _ in session?.finish() }
+        return session
+    }
+
+    @Test func scrollingByHandStitchesTheWholePageAndWaitsForDone() async throws {
+        let page = try SimulatedPage()
+        // Uneven steps, pauses, and a scroll back up that's ignored.
+        let session = manualSession(page, offsets: [0, 0, 0, 150, 150, 420, 400, 300, 300, 700, 1100, 1100, 1500, 1792, 1792, 1792, 1792])
+        let result = try #require(await session.run())
+        let expected = try Fixtures.image("scroll-expected")
+        let stitched = try #require(ImageBuffer(result.image))
+        #expect(stitched.height == expected.height)
+        #expect(stitched.pixels == expected.pixels)
+        // Never scrolled for the user, never moved the pointer.
+        #expect(page.pointer == nil)
+        #expect(session.ending == .done)
+    }
+
+    @Test func aJumpPastTheOverlapIsSkippedUntilTheUserScrollsBack() async throws {
+        let page = try SimulatedPage()
+        let session = manualSession(page, offsets: [0, 0, 1000, 1000, 1000, 1000, 400])
+        let result = try #require(await session.run())
+        #expect(result.image.height == Fixtures.headerHeight + 400 + 608 + Fixtures.footerHeight)
+    }
+
+    @Test func cancelThrowsTheCaptureAway() async throws {
+        let page = try SimulatedPage()
+        let session = ScrollCaptureSession(region: region, capturer: page, scroller: page, autoScroll: false, settings: manualSettings)
+        page.script = [0, 0, 300]
+        page.afterScript = { [weak session] _ in session?.cancel() }
+        #expect(await session.run() == nil)
+        #expect(session.ending == .cancelled)
+    }
+
+    @Test func autoScrollWaitsForDoneAtTheEndOfThePage() async throws {
+        let page = try SimulatedPage()
+        let session = ScrollCaptureSession(region: region, capturer: page, scroller: page, autoScroll: true, settings: manualSettings)
+        page.afterScript = { [weak session, weak page] count in
+            // Still looking a while after the end: only Done finishes it.
+            if let page, page.offset == page.maxOffset, count > 40 { session?.finish() }
+        }
+        let result = try #require(await session.run())
+        let expected = try Fixtures.image("scroll-expected")
+        #expect(result.image.height == expected.height)
+        #expect(page.captures > 40)
+    }
+
+    @Test func turningAutoScrollOnPartWayScrollsTheRest() async throws {
+        let page = try SimulatedPage()
+        let session = ScrollCaptureSession(region: region, capturer: page, scroller: page, autoScroll: false, settings: settings)
+        page.script = [0, 0, 300, 600]
+        page.afterScript = { [weak session] count in
+            if count == 1 { session?.setAutoScroll(true) }
+        }
+        let result = try #require(await session.run())
+        #expect(result.image.height == (try Fixtures.image("scroll-expected")).height)
+        #expect(page.pointer != nil)
+        UserDefaults.standard.removeObject(forKey: PreferenceKey.scrollCaptureAutoScroll)
+    }
+
     @Test func capturesWholePageAndStopsAtTheEnd() async throws {
         let page = try SimulatedPage()
-        let session = ScrollCaptureSession(region: region, capturer: page, scroller: page, settings: settings)
+        let session = autoSession(page, settings: settings)
         let result = try #require(await session.run())
         let expected = try Fixtures.image("scroll-expected")
         let stitched = try #require(ImageBuffer(result.image))
@@ -75,7 +163,7 @@ struct ScrollCaptureSessionTests {
     @Test func handlesInvertedScrollDirection() async throws {
         let page = try SimulatedPage(startingAt: 600)
         page.invertsScrolling = true
-        let session = ScrollCaptureSession(region: region, capturer: page, scroller: page, settings: settings)
+        let session = autoSession(page, settings: settings)
         let result = try #require(await session.run())
         // The first (wrong-way) scroll moved up by 315 rows; the capture restarts there and runs to the end.
         let expectedHeight = Fixtures.headerHeight + (2400 - 285) + Fixtures.footerHeight
@@ -87,7 +175,7 @@ struct ScrollCaptureSessionTests {
         let page = try SimulatedPage()
         var settings = settings
         settings.maxHeight = 1200
-        let session = ScrollCaptureSession(region: region, capturer: page, scroller: page, settings: settings)
+        let session = autoSession(page, settings: settings)
         let result = try #require(await session.run())
         #expect(result.image.height == 1200)
         #expect(page.offset < page.maxOffset)
@@ -95,14 +183,14 @@ struct ScrollCaptureSessionTests {
 
     @Test func pageThatDoesntScrollGivesOneFrame() async throws {
         let page = try SimulatedPage(startingAt: 1792)
-        let session = ScrollCaptureSession(region: region, capturer: page, scroller: page, settings: settings)
+        let session = autoSession(page, settings: settings)
         let result = try #require(await session.run())
         #expect(result.image.height == 700)
     }
 
     @Test func stopEndsEarly() async throws {
         let page = try SimulatedPage()
-        let session = ScrollCaptureSession(region: region, capturer: page, scroller: page, settings: settings)
+        let session = autoSession(page, settings: settings)
         session.stop()
         let result = try #require(await session.run())
         #expect(result.image.height == 700)
@@ -132,6 +220,30 @@ struct StitchWorkerTests {
         #expect(await worker.begin(with: try #require(frames[3].makeCGImage())))
         #expect(await worker.add(try #require(frames[2].makeCGImage())) == .reversed)
         #expect(await worker.height == 700)
+    }
+
+    @Test func scrollingBackUpIsBehindAndThenCarriesOn() async throws {
+        let frames = try Fixtures.frames()
+        let worker = StitchWorker(maxHeight: 30_000)
+        #expect(await worker.begin(with: try #require(frames[0].makeCGImage())))
+        #expect(await worker.add(try #require(frames[1].makeCGImage())) == .stitched(.appended(rows: 400)))
+        #expect(await worker.add(try #require(frames[2].makeCGImage())) == .stitched(.appended(rows: 400)))
+        #expect(await worker.add(try #require(frames[1].makeCGImage())) == .behind)
+        #expect(await worker.add(try #require(frames[0].makeCGImage())) == .stitched(.unmatched))
+        #expect(await worker.add(try #require(frames[3].makeCGImage())) == .stitched(.appended(rows: 400)))
+    }
+
+    @Test func thumbnailGrowsWithTheStitch() async throws {
+        let frames = try Fixtures.frames()
+        let worker = StitchWorker(maxHeight: 30_000, thumbnailWidth: 48)
+        #expect(await worker.begin(with: try #require(frames[0].makeCGImage())))
+        let first = try #require(await worker.thumbnailImage())
+        _ = await worker.add(try #require(frames[1].makeCGImage()))
+        _ = await worker.add(try #require(frames[2].makeCGImage()))
+        let later = try #require(await worker.thumbnailImage())
+        #expect(later.width == first.width)
+        #expect(later.width <= 48)
+        #expect(later.height > first.height)
     }
 
     @Test func settledFramesMatch() throws {
