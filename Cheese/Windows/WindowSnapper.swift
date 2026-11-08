@@ -105,6 +105,14 @@ final class WindowSnapper<Controller: WindowControlling> {
         }
     }
 
+    /// Puts a window that was dragged to a screen edge or corner into that zone's frame, remembering
+    /// the frame it was dropped at for Restore.
+    func snap(_ window: Controller.Window, to hit: SnapZoneHit) {
+        let displays = controller.visibleFrames()
+        guard displays.indices.contains(hit.displayIndex), let frame = controller.frame(of: window) else { return }
+        move(window, key: controller.key(for: window), from: frame, to: SnapTarget(frame: hit.frame, displayIndex: hit.displayIndex), displays: displays)
+    }
+
     private func move(_ window: Controller.Window, key: Controller.Key, from frame: CGRect, to target: SnapTarget, displays: [CGRect]) {
         history.rememberOriginal(frame, for: key)
         let result = controller.place(window, at: target, displays: displays)

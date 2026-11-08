@@ -1,15 +1,25 @@
+import Foundation
 import KeyboardShortcuts
 
 /// Windows-style snapping of the frontmost app's focused window, and Fill to Screen for one window
-/// or all of them, leaving room for Stage Manager.
+/// or all of them, leaving room for Stage Manager. Optionally snaps windows dragged to a screen edge.
 @MainActor
 final class WindowSnappingModule: CheeseModule {
     let id = ModuleID.windowSnapping
     private let snap: (WindowCommand) -> Void
     private let fillAll: () -> (windows: Int, apps: Int)
     private let restoreAll: () -> Int
+    private let dragSnapping: DragSnapController?
+    private let preferences: Preferences
+    private var defaultsObserver: Task<Void, Never>?
 
-    init<Controller: WindowControlling>(snapper: WindowSnapper<Controller>) {
+    init<Controller: WindowControlling>(
+        snapper: WindowSnapper<Controller>,
+        dragSnapping: DragSnapController? = nil,
+        preferences: Preferences = Preferences()
+    ) {
+        self.dragSnapping = dragSnapping
+        self.preferences = preferences
         snap = snapper.perform
         fillAll = {
             let result = snapper.fillAll()
@@ -74,7 +84,32 @@ final class WindowSnappingModule: CheeseModule {
         ]
     }
 
-    // Snapping only runs on demand, so there's nothing to start or stop.
-    func start() {}
-    func stop() {}
+    // Keyboard snapping runs on demand; only drag-to-edge snapping keeps a mouse monitor, and only
+    // while its setting is on.
+    func start() {
+        guard dragSnapping != nil else { return }
+        syncDragSnapping()
+        defaultsObserver = Task { [weak self] in
+            for await _ in NotificationCenter.default.notifications(named: UserDefaults.didChangeNotification) {
+                self?.syncDragSnapping()
+            }
+        }
+    }
+
+    func stop() {
+        defaultsObserver?.cancel()
+        defaultsObserver = nil
+        dragSnapping?.stop()
+    }
+
+    private func syncDragSnapping() {
+        guard let dragSnapping else { return }
+        let enabled = preferences.dragToEdgeSnappingEnabled
+        guard enabled != dragSnapping.isRunning else { return }
+        if enabled {
+            dragSnapping.start()
+        } else {
+            dragSnapping.stop()
+        }
+    }
 }

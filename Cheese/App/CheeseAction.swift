@@ -12,6 +12,7 @@ struct ActionID: RawRepresentable, Hashable, Sendable {
 
 extension ActionID {
     static let openHistory = Self(rawValue: "openHistory")
+    static let copyCleanLink = Self(rawValue: "copyCleanLink")
     static let clearHistory = Self(rawValue: "clearHistory")
     static let clearAll = Self(rawValue: "clearAll")
     static let captureRegion = Self(rawValue: "captureRegion")

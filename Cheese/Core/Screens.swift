@@ -25,6 +25,19 @@ enum Screens {
     static func appKitRect(fromQuartz rect: CGRect) -> CGRect {
         DisplayGeometry.appKitRect(fromQuartz: rect, primaryDisplayHeight: primaryDisplayHeight)
     }
+
+    static func quartzPoint(fromAppKit point: CGPoint) -> CGPoint {
+        DisplayGeometry.quartzPoint(fromAppKit: point, primaryDisplayHeight: primaryDisplayHeight)
+    }
+
+    static func appKitPoint(fromQuartz point: CGPoint) -> CGPoint {
+        DisplayGeometry.appKitPoint(fromQuartz: point, primaryDisplayHeight: primaryDisplayHeight)
+    }
+
+    /// The pointer in Quartz (top-left origin) coordinates, the space AX window frames use.
+    static var mouseLocationQuartz: CGPoint {
+        quartzPoint(fromAppKit: NSEvent.mouseLocation)
+    }
 }
 
 extension NSScreen {

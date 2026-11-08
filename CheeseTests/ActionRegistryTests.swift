@@ -139,7 +139,7 @@ struct ActionCatalogueTests {
         #expect(action(.scrollingCapture)?.requiredPermissions == [.screenRecording, .accessibility])
     }
 
-    @Test(arguments: [ActionID.openHistory, .clearHistory, .clearAll])
+    @Test(arguments: [ActionID.openHistory, .copyCleanLink, .clearHistory, .clearAll])
     func clipboardActionsNeedNothing(_ id: ActionID) {
         // Without Accessibility, history still opens and pasting falls back to copy-only.
         #expect(action(id)?.requiredPermissions == [])
@@ -348,7 +348,7 @@ struct MenuLayoutTests {
     @Test func everythingAvailableShowsTheWholeGroupedMenu() {
         let visible = MenuLayout.visible(MenuLayout.standard) { _ in true }
         #expect(titles(visible) == [
-            "openHistory", "Capture▸", "drawOnScreen", "Files▸", "showShare", "toggleShelf", "Windows▸", "Tools▸",
+            "openHistory", "copyCleanLink", "Capture▸", "drawOnScreen", "Files▸", "showShare", "toggleShelf", "Windows▸", "Tools▸",
             "Caffeinate▸", "—", "clearHistory", "alt:clearAll", "—", version, "checkForUpdates", "installUpdate",
             "openSettings", "quit",
         ])

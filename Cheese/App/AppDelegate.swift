@@ -141,12 +141,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ))
         let qr = QRModule()
         self.qr = qr
+        let windowManager = WindowManager()
+        let snapper = WindowSnapper(controller: windowManager) { FillLayout.current() }
+        let dragSnapping = DragSnapController(monitor: WindowDragMonitor(windows: windowManager)) { hit, window in
+            snapper.snap(window, to: hit)
+        }
         let modules: [any CheeseModule] = [
             clipboard,
             ScreenshotsModule(capture: capture, editor: editor),
             ocr,
             scrollCapture,
-            WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager()) { FillLayout.current() }),
+            WindowSnappingModule(snapper: snapper, dragSnapping: dragSnapping),
             draw,
             qr,
             caffeinateModule(),

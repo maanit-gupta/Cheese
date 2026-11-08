@@ -16,6 +16,8 @@ enum MenuLayout {
     /// The grouped menu: the verbs the user reaches for, one level deep where it can be.
     static let standard: [Node] = [
         .action(.openHistory),
+        // Right under Clipboard History, and only while a link is on the clipboard.
+        .action(.copyCleanLink),
         .submenu(title: "Capture", symbol: "camera.viewfinder", children: [
             .action(.captureRegion),
             .action(.captureWindow),

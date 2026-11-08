@@ -90,10 +90,37 @@ enum ClipReader {
             }
         }
 
-        guard let plain = plainText(of: items),
-              plain.contains(where: { !$0.isWhitespace })
-        else { return nil }
-        return .text(plain: plain, items: items, isRich: isRich)
+        if let plain = plainText(of: items), plain.contains(where: { !$0.isWhitespace }) {
+            return .text(plain: plain, items: items, isRich: isRich)
+        }
+        // No UTF-8 text: a link, legacy or UTF-16 string. Store it with a UTF-8 copy so it pastes back anywhere.
+        guard let plain = fallbackText(of: items), plain.contains(where: { !$0.isWhitespace }) else { return nil }
+        var withPlain = items
+        withPlain[0].representations.insert(
+            PasteboardRepresentation(type: PasteboardTypeID.plainText, data: Data(plain.utf8)),
+            at: 0
+        )
+        return .text(plain: plain, items: withPlain, isRich: isRich)
+    }
+
+    /// Text from the first item offering a fallback text type (`public.url`, `NSStringPboardType`,
+    /// UTF-16), in `PasteboardTypeID.fallbackTextTypes` order.
+    static func fallbackText(of items: [PasteboardItemContent]) -> String? {
+        for type in PasteboardTypeID.fallbackTextTypes {
+            for item in items {
+                guard let data = item.data(forType: type), !data.isEmpty else { continue }
+                if let string = decode(data, as: type) { return string }
+            }
+        }
+        return nil
+    }
+
+    private static func decode(_ data: Data, as type: String) -> String? {
+        if type == PasteboardTypeID.utf16Text {
+            let hasBOM = data.starts(with: [0xFF, 0xFE]) || data.starts(with: [0xFE, 0xFF])
+            return String(data: data, encoding: hasBOM ? .utf16 : .utf16LittleEndian)
+        }
+        return String(data: data, encoding: .utf8) ?? String(data: data, encoding: .utf16)
     }
 
     /// The items' plain text, or text extracted from their RTF/RTFD/HTML when no plain text was offered.

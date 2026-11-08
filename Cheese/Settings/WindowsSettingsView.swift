@@ -1,13 +1,23 @@
 import SwiftUI
 
-/// Settings → Windows: how Fill to Screen sizes windows around Stage Manager.
+/// Settings → Windows: drag-to-edge snapping, and how Fill to Screen sizes windows around Stage Manager.
 struct WindowsSettingsView: View {
+    @AppStorage(PreferenceKey.dragToEdgeSnappingEnabled) private var dragToEdgeSnapping = Preferences.defaultDragToEdgeSnapping
     @AppStorage(PreferenceKey.windowFillMode) private var fillMode = Preferences.defaultWindowFillMode
     @AppStorage(PreferenceKey.stageManagerStripInset) private var stripInset = Double(StageManagerLayout.defaultStripInset)
     @State private var stageManager = StageManagerState.off
 
     var body: some View {
         Form {
+            Section {
+                Toggle("Snap windows dragged to a screen edge or corner", isOn: $dragToEdgeSnapping)
+            } header: {
+                Text("Snapping")
+            } footer: {
+                Text("Drag a window by its title bar to the left or right edge for half the screen, the top edge to maximize, the bottom edge for the bottom half, or a corner for a quarter. A preview shows where it will land. Needs Accessibility.")
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(.secondary)
+            }
             Section {
                 Picker("Fill to Screen", selection: $fillMode) {
                     ForEach(WindowFillMode.allCases) { mode in

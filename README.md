@@ -50,7 +50,7 @@ Cheese lives in your menu bar and stays out of the way until you press a shortcu
 ## New in 2.3
 
 **Terminal Trace** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>T</kbd>
-Build failed? One shortcut copies **the last command and everything it printed** from the terminal you're in, as a Markdown block ready to paste into a chat, an issue or an LLM. No scrolling, no selecting. Long output keeps the newest 120 lines, and the error lines (`error:`, `Traceback`, `npm ERR!`, `fatal:`, `panic:`…) get a block of their own. Works with Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm and the terminals in VS Code and Cursor. [More](#terminal-trace)
+Build failed? One shortcut copies **the last command and everything it printed** from the terminal you're in, as a Markdown block ready to paste into a chat, an issue or an LLM. No scrolling, no selecting. Long output keeps the newest 120 lines, and the error lines (`error:`, `Traceback`, `npm ERR!`, `fatal:`, `panic:`…) get a block of their own. Works with Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm, Hyper and the terminals in VS Code, Cursor, Windsurf and Zed. [More](#terminal-trace)
 
 **Caffeinate, even with the lid closed** (menu bar → **Caffeinate**)
 Keep your Mac awake for 30 minutes, 1 or 2 hours, until a time or indefinitely, **with the lid shut**, with a countdown next to the icon (`Lid 42m`). Sleep comes back by itself: when the time runs out (a closed Mac then goes to sleep), at 10 % battery (adjustable), and if Cheese quits, crashes or the Mac restarts. Covering the lid takes your administrator password **once**, to install a small helper. [More](#caffeinate)
@@ -91,7 +91,7 @@ Keep everything you copy, find it in a keystroke, and get it where it needs to g
 Build failed? Don't scroll up and drag-select it: press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>T</kbd>.
 
 - Copies **the last command and everything it printed** from your terminal, ready to paste into a chat or an issue as a Markdown code block. Long output keeps the newest 120 lines, and error lines (`error:`, `Traceback`, `npm ERR!`, `fatal:`, `panic:`…) get their own block.
-- Works with Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm, and the terminals in VS Code and Cursor.
+- Works with Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm, Hyper, and the terminals in VS Code, Cursor, Windsurf and Zed.
 - **Tools ▸ Terminal Trace** switches between **Last Response** and **Everything** (the whole scrollback, uncut); the shortcut copies with whichever you picked last.
 
 ## Capture

@@ -11,16 +11,31 @@ final class ClipboardController {
     private var monitor: PasteboardMonitor?
     private let canPostEvents: () -> Bool
     private let onMissingAccessibility: () -> Void
+    private let source: ClipSourceProbe
 
     /// The app that was frontmost before the panel opened: where pastes go.
     private var targetApp: NSRunningApplication?
 
+    /// The link on the clipboard right now, nil when it holds anything else. Drives the
+    /// "Copy clean link automatically" item under Clipboard History.
+    private(set) var currentLink: ClipboardLink?
+    var currentClipboardURL: URL? { currentLink?.original }
+    var currentCleanedURL: URL? { currentLink?.cleaned }
+
+    /// Whether copied links are cleaned as soon as they're copied. Read fresh, so Settings and the menu agree.
+    var copyCleanLinkAutomatically: Bool {
+        get { Preferences().copyCleanLinkAutomatically }
+        set { UserDefaults.standard.set(newValue, forKey: PreferenceKey.copyCleanLinkAutomatically) }
+    }
+
     init(
         store: ClipStore,
         canPostEvents: @escaping () -> Bool,
-        onMissingAccessibility: @escaping () -> Void
+        onMissingAccessibility: @escaping () -> Void,
+        source: ClipSourceProbe = .none
     ) {
         self.store = store
+        self.source = source
         self.canPostEvents = canPostEvents
         self.onMissingAccessibility = onMissingAccessibility
         paster = Paster(images: store.images)
@@ -45,9 +60,8 @@ final class ClipboardController {
 
     func start() {
         guard monitor == nil else { return }
-        let monitor = PasteboardMonitor(pasteboard: SystemPasteboard()) { [weak self] clip in
-            guard let self else { return }
-            Task { await self.store.add(clip) }
+        let monitor = PasteboardMonitor(pasteboard: SystemPasteboard(), source: source) { [weak self] clip in
+            self?.record(clip)
         }
         self.monitor = monitor
         monitor.start()
@@ -60,6 +74,62 @@ final class ClipboardController {
         monitor?.stop()
         monitor = nil
         popover.close()
+    }
+
+    /// Adds a new copy to history. With "Copy clean link automatically" on, a link with trackers is
+    /// cleaned on the clipboard first and only the clean link is recorded.
+    private func record(_ clip: CapturedClip) {
+        var clip = clip
+        var link = ClipboardLink(clip: clip)
+        if let found = link, found.hasTrackers, copyCleanLinkAutomatically, writeLink(found.cleaned) {
+            clip = found.cleanedClip
+            link = found.afterCleaning
+        }
+        currentLink = link
+        Task { await store.add(clip) }
+    }
+
+    /// Re-reads the link on the clipboard, for when it changed without a new copy (Cheese pasted from
+    /// history, or the module was off). Concealed items (password managers) never count.
+    func refreshCurrentLink() {
+        let pasteboard = NSPasteboard.general
+        let types = (pasteboard.types ?? []).map(\.rawValue)
+        guard !ClipClassifier.isPrivate([types]), let text = pasteboard.string(forType: .string) else {
+            currentLink = nil
+            return
+        }
+        currentLink = ClipboardLink(text: text)
+    }
+
+    /// Replaces the link on the clipboard with its cleaned form and updates its history item in place.
+    /// - Returns: false when there's no link on the clipboard or nothing to clean.
+    @discardableResult
+    func cleanCurrentLink() -> Bool {
+        refreshCurrentLink()
+        guard let link = currentLink, link.hasTrackers else { return false }
+        let copied = NSPasteboard.general.string(forType: .string)
+        guard writeLink(link.cleaned) else { return false }
+        currentLink = link.afterCleaning
+
+        // The history item holds the copied text, or the link rebuilt from it (a terminal-wrapped link).
+        let cleanedText = link.cleaned.absoluteString
+        let hashes = Set([copied, link.original.absoluteString].compactMap { $0 }.map { ClipHasher.hash(text: $0) })
+        if let item = store.items.first(where: { hashes.contains($0.contentHash) }) {
+            store.updateText(for: item.id, newText: cleanedText)
+        } else {
+            let clip = link.cleanedClip
+            Task { await store.add(clip) }
+        }
+        return true
+    }
+
+    /// Puts `url` on the clipboard as plain text. The monitor skips the write, so it isn't recorded twice.
+    private func writeLink(_ url: URL) -> Bool {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        guard pasteboard.setString(url.absoluteString, forType: .string) else { return false }
+        monitor?.ignoreChange(pasteboard.changeCount)
+        return true
     }
 
     /// Opens or closes the history panel. `target` is the app pastes go to.

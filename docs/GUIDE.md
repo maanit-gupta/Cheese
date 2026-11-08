@@ -44,7 +44,7 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 
 ### Terminal Trace
 - <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⇧</kbd><kbd>T</kbd> (or **Tools ▸ Terminal Trace ▸ Copy Now**) copies the **last command you ran and everything it printed** from your terminal, so you don't have to scroll up and select a failed build by hand. A toast says how many lines were copied.
-- It reads the terminal you were just in, or, if you weren't in one, the first open one of: Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm, VS Code, Cursor.
+- It reads the terminal you were just in, or, if you weren't in one, the first open one of: Terminal, iTerm2, Ghostty, Warp, Alacritty, kitty, WezTerm, Hyper, VS Code (and Insiders), Cursor, Windsurf, Zed.
 - The result is a Markdown block ready for a chat, an issue or an AI assistant: a `### Terminal Trace (App — time)` heading and the command with its output in a code block. Output longer than 120 lines keeps the newest lines (and says how many were left out); when the output is long, lines that look like errors (`error:`, `Traceback`, `FAILED`, `npm ERR!`, `fatal:`, `panic:`, exit codes…) are repeated in an **Errors** block. Colors and escape codes are stripped.
 - **Tools ▸ Terminal Trace ▸ Last Response / Everything** chooses what gets copied. *Everything* is the whole terminal, uncut. Picking one copies with it straight away and makes it what the shortcut copies from then on. Both are also in the command palette.
 - Terminal and iTerm2 are read over AppleScript, so macOS asks once to let Cheese control them (**Automation**). Other terminals are read through **Accessibility**.

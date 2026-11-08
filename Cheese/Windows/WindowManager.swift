@@ -105,6 +105,44 @@ final class WindowManager: WindowControlling {
         window.pid
     }
 
+    /// Every display's full frame in Quartz coordinates, in the same order as `visibleFrames()`.
+    func displayFrames() -> [CGRect] {
+        NSScreen.screens.map { Screens.quartzRect(fromAppKit: $0.frame) }
+    }
+
+    /// The movable window under `point` (Quartz), for drag-to-edge snapping: another app's window
+    /// that isn't minimized or in native full screen. Hit-tests through Accessibility with a short
+    /// timeout so a hung app can't stall the pointer.
+    func window(at point: CGPoint) -> AXWindow? {
+        let systemWide = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(systemWide, Self.hitTestMessagingTimeout)
+        var hit: AXUIElement?
+        guard AXUIElementCopyElementAtPosition(systemWide, Float(point.x), Float(point.y), &hit) == .success,
+              let hit
+        else { return nil }
+        AXUIElementSetMessagingTimeout(hit, Self.hitTestMessagingTimeout)
+
+        var pid: pid_t = 0
+        guard AXUIElementGetPid(hit, &pid) == .success, pid != ProcessInfo.processInfo.processIdentifier else { return nil }
+        let element = stringAttribute(kAXRoleAttribute, of: hit) == kAXWindowRole
+            ? hit
+            : elementAttribute(kAXWindowAttribute, of: hit)
+        guard let element,
+              boolAttribute(kAXMinimizedAttribute, of: element) != true,
+              boolAttribute("AXFullScreen", of: element) != true,
+              isSettable(kAXPositionAttribute, of: element)
+        else { return nil }
+        return AXWindow(app: AXUIElementCreateApplication(pid), element: element, pid: pid)
+    }
+
+    /// Only the window's position, the one value drag detection polls.
+    func origin(of window: AXWindow) -> CGPoint? {
+        pointAttribute(kAXPositionAttribute, of: window.element)
+    }
+
+    /// Seconds a pointer hit test may wait on the app under the pointer.
+    private static let hitTestMessagingTimeout: Float = 0.1
+
     /// Seconds to wait on each app during a batch fill, instead of the system's default of about six.
     private static let batchMessagingTimeout: Float = 0.5
 

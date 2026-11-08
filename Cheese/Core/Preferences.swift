@@ -6,6 +6,8 @@ enum PreferenceKey {
     static let screenshotSaveFolder = "screenshotSaveFolder"
     static let captureDestination = "captureDestination"
     static let historySize = "historySize"
+    /// Whether a copied link has its tracking parameters stripped on the clipboard right away (off unless set).
+    static let copyCleanLinkAutomatically = "copyCleanLinkAutomatically"
     static let ocrLineBreakMode = "ocrLineBreakMode"
     static let hasSeenWelcome = "hasSeenWelcome"
     static let skipsStartupSetup = "skipsStartupSetup"
@@ -27,6 +29,8 @@ enum PreferenceKey {
     static let windowFillMode = "windowFillMode"
     static let terminalTraceScope = "terminalTraceScope"
     static let stageManagerStripInset = "stageManagerStripInset"
+    /// Whether dragging another app's window to a screen edge or corner snaps it there (on unless set false).
+    static let dragToEdgeSnappingEnabled = "dragToEdgeSnappingEnabled"
     static let caffeinateLidClosed = "caffeinateLidClosed"
     static let caffeinateBatteryFloor = "caffeinateBatteryFloor"
     /// Whether Cheese checks GitHub for a newer release at launch and every 12 hours (on unless set false).
@@ -85,6 +89,13 @@ struct Preferences {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+    }
+
+    static let defaultCopyCleanLinkAutomatically = false
+
+    /// Whether copied links are cleaned of tracking parameters as soon as they land on the clipboard.
+    var copyCleanLinkAutomatically: Bool {
+        defaults.object(forKey: PreferenceKey.copyCleanLinkAutomatically) as? Bool ?? Self.defaultCopyCleanLinkAutomatically
     }
 
     var historySize: Int {
@@ -187,6 +198,13 @@ struct Preferences {
         let stored = defaults.object(forKey: PreferenceKey.stageManagerStripInset) as? Double ?? Double(StageManagerLayout.defaultStripInset)
         let range = StageManagerLayout.stripInsetRange
         return min(max(CGFloat(stored), range.lowerBound), range.upperBound)
+    }
+
+    static let defaultDragToEdgeSnapping = true
+
+    /// Whether dragging a window to a screen edge or corner snaps it there.
+    var dragToEdgeSnappingEnabled: Bool {
+        defaults.object(forKey: PreferenceKey.dragToEdgeSnappingEnabled) as? Bool ?? Self.defaultDragToEdgeSnapping
     }
 
     static let defaultCaffeinateLidClosed = true

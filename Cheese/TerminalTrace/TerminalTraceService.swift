@@ -23,7 +23,7 @@ final class TerminalTraceService {
             running: running.compactMap(\.bundleIdentifier)
         )
         guard let terminal = choice,
-              let app = running.first(where: { $0.bundleIdentifier == terminal.bundleID }) else {
+              let app = running.first(where: { $0.bundleIdentifier.flatMap(TerminalApp.init(bundleID:)) == terminal }) else {
             CheeseToast.show("No terminal app is open", systemImage: "terminal")
             return
         }
@@ -52,7 +52,8 @@ final class TerminalTraceService {
                 }
                 return
             }
-            buffer = await readAccessibility(pid: app.processIdentifier, electron: terminal.isElectron)
+            let inspector = TerminalTreeInspector(pid: app.processIdentifier, kind: terminal.kind)
+            buffer = await inspector.snapshotAllowingTreeBuild().text
         }
 
         guard let buffer, let trace = TerminalTraceParser.extract(from: buffer, scope: scope) else {
@@ -110,82 +111,6 @@ final class TerminalTraceService {
                 }
             }
         )
-    }
-
-    // MARK: - Accessibility
-
-    /// How many elements to visit looking for the terminal's text, so a huge window can't stall Cheese.
-    private static let maxVisitedElements = 4000
-
-    private func readAccessibility(pid: pid_t, electron: Bool) async -> String? {
-        let app = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(app, 1)
-        if electron {
-            // The tree is built on request and takes a moment the first time.
-            AXUIElementSetAttributeValue(app, "AXManualAccessibility" as CFString, kCFBooleanTrue)
-        }
-        if let text = accessibilityText(of: app) { return text }
-        guard electron else { return nil }
-        try? await Task.sleep(for: .milliseconds(400))
-        return accessibilityText(of: app)
-    }
-
-    /// The selection if there is one, else the focused element's text, else the longest text area
-    /// in the focused window.
-    private func accessibilityText(of app: AXUIElement) -> String? {
-        if let focused = element(kAXFocusedUIElementAttribute, of: app) {
-            if let selected = string(kAXSelectedTextAttribute, of: focused), !selected.isBlank { return selected }
-            if let value = string(kAXValueAttribute, of: focused), !value.isBlank { return value }
-            // xterm.js (VS Code, Cursor) keeps each row in its own static text.
-            if let rows = staticText(under: focused), !rows.isBlank { return rows }
-        }
-        guard let window = element(kAXFocusedWindowAttribute, of: app) else { return nil }
-        var longest: String?
-        visit(window) { element in
-            guard string(kAXRoleAttribute, of: element) == kAXTextAreaRole,
-                  let value = string(kAXValueAttribute, of: element), !value.isBlank else { return }
-            if value.count > (longest?.count ?? 0) { longest = value }
-        }
-        return longest
-    }
-
-    private func staticText(under root: AXUIElement) -> String? {
-        var rows: [String] = []
-        visit(root) { element in
-            guard string(kAXRoleAttribute, of: element) == kAXStaticTextRole,
-                  let value = string(kAXValueAttribute, of: element) else { return }
-            rows.append(value)
-        }
-        return rows.isEmpty ? nil : rows.joined(separator: "\n")
-    }
-
-    /// Breadth-first over `root` and its descendants, up to `maxVisitedElements`.
-    private func visit(_ root: AXUIElement, _ body: (AXUIElement) -> Void) {
-        var queue = [root]
-        var index = 0
-        while index < queue.count, index < Self.maxVisitedElements {
-            let element = queue[index]
-            index += 1
-            body(element)
-            var value: CFTypeRef?
-            if AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
-               let children = value as? [AXUIElement] {
-                queue += children
-            }
-        }
-    }
-
-    private func element(_ attribute: String, of element: AXUIElement) -> AXUIElement? {
-        var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success,
-              let value, CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
-        return unsafeDowncast(value, to: AXUIElement.self)
-    }
-
-    private func string(_ attribute: String, of element: AXUIElement) -> String? {
-        var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success else { return nil }
-        return value as? String
     }
 }
 

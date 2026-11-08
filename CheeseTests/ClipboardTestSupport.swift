@@ -21,6 +21,12 @@ final class FakePasteboard: PasteboardReading {
         changeCount += 1
     }
 
+    /// Replaces the contents without a new change, like a writer filling in a change it announced earlier.
+    func setKeepingChangeCount(_ items: [[(String, Data)]]) {
+        set(items)
+        changeCount -= 1
+    }
+
     func setString(_ string: String) {
         set([[(PasteboardTypeID.plainText, Data(string.utf8))]])
     }

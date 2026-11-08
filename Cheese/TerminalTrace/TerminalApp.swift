@@ -7,10 +7,30 @@ enum TerminalApp: String, CaseIterable, Sendable {
     case alacritty = "org.alacritty"
     case kitty = "net.kovidgoyal.kitty"
     case wezTerm = "com.github.wez.wezterm"
+    case hyper = "co.zeit.hyper"
     case vsCode = "com.microsoft.VSCode"
+    case vsCodeInsiders = "com.microsoft.VSCodeInsiders"
     case cursor = "com.todesktop.230313mzl4w4u92"
+    case windsurf = "com.exafunction.windsurf"
+    case zed = "dev.zed.Zed"
 
     var bundleID: String { rawValue }
+
+    /// Also accepts other bundle IDs the same app has shipped under (Alacritty's `io.alacritty`).
+    init?(bundleID: String) {
+        if let app = TerminalApp(rawValue: bundleID) {
+            self = app
+        } else if bundleID == "io.alacritty" {
+            self = .alacritty
+        } else {
+            return nil
+        }
+    }
+
+    /// Standalone terminal or an editor's terminal panel (`TerminalHostRegistry`).
+    var kind: TerminalHostKind {
+        TerminalHostRegistry.kind(of: bundleID) ?? .standalone
+    }
 
     var name: String {
         switch self {
@@ -21,8 +41,12 @@ enum TerminalApp: String, CaseIterable, Sendable {
         case .alacritty: "Alacritty"
         case .kitty: "kitty"
         case .wezTerm: "WezTerm"
+        case .hyper: "Hyper"
         case .vsCode: "VS Code"
+        case .vsCodeInsiders: "VS Code Insiders"
         case .cursor: "Cursor"
+        case .windsurf: "Windsurf"
+        case .zed: "Zed"
         }
     }
 
@@ -51,16 +75,11 @@ enum TerminalApp: String, CaseIterable, Sendable {
         }
     }
 
-    /// Electron apps only build their accessibility tree when asked to.
-    var isElectron: Bool {
-        self == .vsCode || self == .cursor
-    }
-
     /// The terminal to read: the app the user was just in if it's a terminal, otherwise the first
     /// running one in `allCases` order.
     static func choose(frontmost: String?, running: [String]) -> TerminalApp? {
-        if let frontmost, let app = TerminalApp(rawValue: frontmost) { return app }
-        let runningSet = Set(running)
-        return allCases.first { runningSet.contains($0.bundleID) }
+        if let frontmost, let app = TerminalApp(bundleID: frontmost) { return app }
+        let runningApps = Set(running.compactMap(TerminalApp.init(bundleID:)))
+        return allCases.first { runningApps.contains($0) }
     }
 }
