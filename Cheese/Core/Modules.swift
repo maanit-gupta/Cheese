@@ -5,6 +5,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
     case screenshots
     case ocr
     case scrollingCapture
+    case screenRecording
     case windowSnapping
     case drawOnScreen
     case qr
@@ -28,6 +29,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .screenshots: "Screenshots"
         case .ocr: "OCR"
         case .scrollingCapture: "Scrolling Capture"
+        case .screenRecording: "Screen Recording"
         case .windowSnapping: "Window Snapping"
         case .drawOnScreen: "Draw on Screen"
         case .qr: "QR"
@@ -48,7 +50,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
     var verb: Verb {
         switch self {
         case .clipboard, .qr, .terminalTrace: .copy
-        case .screenshots, .ocr, .scrollingCapture: .capture
+        case .screenshots, .ocr, .scrollingCapture, .screenRecording: .capture
         case .drawOnScreen: .draw
         case .files: .convert
         case .share, .shelf: .share
@@ -62,6 +64,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .screenshots: "camera.viewfinder"
         case .ocr: "text.viewfinder"
         case .scrollingCapture: "rectangle.expand.vertical"
+        case .screenRecording: "record.circle"
         case .windowSnapping: "rectangle.split.2x1"
         case .drawOnScreen: "pencil.and.scribble"
         case .qr: "qrcode"
@@ -85,6 +88,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .screenshots: "Region, window or screen, straight to the clipboard. Hold Shift to annotate."
         case .ocr: "Copy text, QR codes and barcodes from anything on screen."
         case .scrollingCapture: "Scroll a page by hand, or let it scroll itself, into one tall image."
+        case .screenRecording: "Record a region or the screen, with your voice, system audio and camera, as a video or a GIF."
         case .windowSnapping: "Halves, maximize and display-to-display moves from the keyboard."
         case .drawOnScreen: "Smooth ink, magic shapes and a laser pointer over everything."
         case .qr: "Show what you copied as a QR code for your phone."
@@ -108,6 +112,7 @@ enum ModuleID: String, CaseIterable, Identifiable, Sendable {
         case .screenshots: .captureRegion
         case .ocr: .ocrRegion
         case .scrollingCapture: .scrollingCapture
+        case .screenRecording: .recordRegion
         case .windowSnapping: .snapLeft
         case .drawOnScreen: .drawOnScreen
         case .commandPalette: .commandPalette

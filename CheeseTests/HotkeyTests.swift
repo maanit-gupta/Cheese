@@ -14,6 +14,8 @@ struct HotkeyTests {
             .captureWindow: .five,
             .ocrRegion: .t,
             .scrollingCapture: .s,
+            .recordRegion: .r,
+            .recordFullScreen: .r,
             .snapLeft: .leftArrow,
             .snapRight: .rightArrow,
             .maximize: .upArrow,
@@ -29,7 +31,7 @@ struct HotkeyTests {
             .terminalTrace: .t,
         ]
         // These are a sibling's shortcut plus Shift.
-        let withShift: Set<Hotkey> = [.killAllApps, .fillCurrentWindow, .terminalTrace]
+        let withShift: Set<Hotkey> = [.killAllApps, .fillCurrentWindow, .terminalTrace, .recordFullScreen]
         // Share has no default shortcut; the user can assign one.
         let unbound: Set<Hotkey> = [.showShare, .hush]
         #expect(unbound.allSatisfy { $0.name.initialShortcut == nil })

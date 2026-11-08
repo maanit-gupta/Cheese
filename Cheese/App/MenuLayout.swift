@@ -27,6 +27,10 @@ enum MenuLayout {
             .action(.ocrRegion),
             .action(.scrollingCapture),
             .separator,
+            .action(.recordRegion),
+            .action(.recordFullScreen),
+            .action(.stopRecording),
+            .separator,
             .submenu(title: "After Capture", symbol: "tray.and.arrow.down", children: CaptureDestination.allCases.map {
                 .action(.captureDestination($0))
             }),

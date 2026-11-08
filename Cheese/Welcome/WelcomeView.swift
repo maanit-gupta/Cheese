@@ -222,7 +222,7 @@ struct PermissionNeedRow: View {
                 VStack(alignment: .leading, spacing: DesignTokens.Spacing.hairline) {
                     Text(need.title)
                         .font(DesignTokens.Typography.heading)
-                    Text("For " + ListFormatter.localizedString(byJoining: usedBy.map(\.title)))
+                    Text("For " + ListFormatter.localizedString(byJoining: usedBy.map(\.title)) + (need.isOptional ? " (optional)" : ""))
                         .font(DesignTokens.Typography.caption)
                         .foregroundStyle(.secondary)
                 }

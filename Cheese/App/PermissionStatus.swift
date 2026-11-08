@@ -1,3 +1,4 @@
+import AVFoundation
 import AppKit
 import FinderSync
 import UserNotifications
@@ -41,6 +42,8 @@ final class PermissionStatus {
                 states[need] = .unknown
             case .finderExtension:
                 states[need] = FIFinderSyncController.isExtensionEnabled ? .granted : .missing
+            case .camera, .microphone:
+                states[need] = AVCaptureDevice.authorizationStatus(for: Self.mediaType(need)) == .authorized ? .granted : .missing
             }
         }
         self.states = states
@@ -77,6 +80,20 @@ final class PermissionStatus {
             }
         case .finderExtension:
             FIFinderSyncController.showExtensionManagementInterface()
+        case .camera, .microphone:
+            let type = Self.mediaType(need)
+            Task {
+                if AVCaptureDevice.authorizationStatus(for: type) == .notDetermined {
+                    _ = await AVCaptureDevice.requestAccess(for: type)
+                } else {
+                    MediaPrivacy.openSettings(for: type)
+                }
+                await refresh()
+            }
         }
+    }
+
+    private static func mediaType(_ need: PermissionNeed) -> AVMediaType {
+        need == .camera ? .video : .audio
     }
 }

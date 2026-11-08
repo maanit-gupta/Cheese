@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var shelf: ShelfModule?
     private var share: ShareModule?
     private var qr: QRModule?
+    private var recording: RecordingController?
     private let appHotkeyStore = AppHotkeyStore()
     private let installedApps = InstalledAppIndex()
     private let caffeinate = CaffeinateController()
@@ -69,6 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             openShare: { [weak self] in self?.share?.open() },
             isShareShown: { [weak self] in self?.share?.isPanelShown ?? false }
         )
+        menuBar?.stopRecording = { [weak self] in _ = self?.recording?.stopIfRecording() }
         EditorShortcutVariant.sync()
         registry.refresh()
         FilesHandoff.setEnabled(Preferences().isModuleEnabled(.files))
@@ -81,6 +83,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             StartupSetupPrompt(permissions: permissions, permissionPrompter: permissionPrompter).showIfNeeded()
             welcome.showIfFirstLaunch()
         }
+    }
+
+    /// A recording that's running is saved before Cheese quits.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let recording, recording.isRecording else { return .terminateNow }
+        Task {
+            await recording.stop()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -111,6 +123,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case "share": .share
         case "sweep": .sweep
         case "hush": .hush
+        case "recording": .recording
         default: .general
         }
     }
@@ -154,6 +167,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ))
         let qr = QRModule()
         self.qr = qr
+        let recording = RecordingController(services: recordingServices(capture: capture, draw: draw))
+        self.recording = recording
         let windowManager = WindowManager()
         let snapper = WindowSnapper(controller: windowManager) { FillLayout.current() }
         let dragSnapping = DragSnapController(monitor: WindowDragMonitor(windows: windowManager)) { hit, window in
@@ -164,6 +179,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ScreenshotsModule(capture: capture, editor: editor),
             ocr,
             scrollCapture,
+            ScreenRecordingModule(controller: recording),
             WindowSnappingModule(snapper: snapper, dragSnapping: dragSnapping),
             draw,
             qr,
@@ -320,6 +336,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return CaffeinateModule(controller: caffeinate)
     }
 
+    /// How recordings pick what to record, show their timer, include Draw's ink and hush notifications.
+    private func recordingServices(capture: CaptureController, draw: DrawModule) -> RecordingController.Services {
+        RecordingController.Services(
+            pickRegion: {
+                guard let selection = await capture.selectRegion() else { return nil }
+                selection.session.end(restoreFocus: true)
+                let snapshot = selection.snapshot
+                let scale = Screens.screen(withDisplayID: snapshot.displayID)?.backingScaleFactor ?? selection.snapshot.captured.scale
+                return RecordingTarget(
+                    region: selection.rect, displayID: snapshot.displayID, displayFrame: snapshot.frame,
+                    scale: scale, isFullScreen: false
+                )
+            },
+            fullScreenTarget: {
+                guard let screen = Screens.underMouse, let displayID = screen.displayID else { return nil }
+                return RecordingTarget(
+                    region: screen.frame, displayID: displayID, displayFrame: screen.frame,
+                    scale: screen.backingScaleFactor, isFullScreen: true
+                )
+            },
+            drawWindowIDs: { [weak draw] in
+                guard Preferences().isModuleEnabled(.drawOnScreen), let draw else { return [] }
+                return draw.canvasWindowsForRecording().map { CGWindowID($0.windowNumber) }
+            },
+            setIndicator: { [weak self] text in self?.menuBar?.setIndicator(text, for: .recording) },
+            recordingChanged: { [weak self] isRecording in
+                guard let self, Preferences().isModuleEnabled(.hush) else { return }
+                self.hush.setCheeseRecording(isRecording)
+            }
+        )
+    }
+
     /// Hush, with its own menu bar icon whose menu is drawn from the same registry.
     private func hushModule() -> HushModule {
         let statusItem = HushStatusItem(controller: hush) { [weak self] in
@@ -338,6 +386,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             (.settingsShortcuts, "Shortcuts", "keyboard", .shortcuts),
             (.settingsClipboard, "Clipboard", "doc.on.clipboard", .clipboard),
             (.settingsOCR, "OCR", "text.viewfinder", .ocr),
+            (.settingsRecording, "Recording", "record.circle", .recording),
             (.settingsWindows, "Windows", "macwindow.on.rectangle", .windows),
             (.settingsAppHotkeys, "App Hotkeys", "app.badge", .appHotkeys),
             (.settingsFiles, "Files", "doc.on.doc", .files),

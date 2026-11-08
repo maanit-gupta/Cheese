@@ -4,7 +4,7 @@ import SwiftUI
 struct ShortcutsSettingsView: View {
     private static let sections: [(title: String, hotkeys: [Hotkey])] = [
         ("Clipboard", [.openHistory]),
-        ("Capture", [.captureRegion, .captureFullScreen, .captureWindow, .ocrRegion, .scrollingCapture]),
+        ("Capture", [.captureRegion, .captureFullScreen, .captureWindow, .ocrRegion, .scrollingCapture, .recordRegion, .recordFullScreen]),
         ("Windows", [.snapLeft, .snapRight, .maximize, .snapBottom, .restoreWindow]),
         ("Tools", [.drawOnScreen, .commandPalette, .hush]),
         ("Share", [.toggleShelf, .showShare]),

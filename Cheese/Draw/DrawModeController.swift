@@ -227,6 +227,13 @@ final class DrawModeController {
         Logger.draw.info("Draw mode off")
     }
 
+    /// The canvas windows, made now if they don't exist yet, so a screen recording can include
+    /// drawings made after it starts.
+    func canvasWindowsForRecording() -> [NSWindow] {
+        rebuildOverlays()
+        return overlays.values.map(\.window)
+    }
+
     /// Exits and forgets every drawing: the module was switched off.
     func reset() {
         exit()

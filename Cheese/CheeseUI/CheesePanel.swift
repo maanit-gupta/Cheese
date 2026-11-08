@@ -24,6 +24,8 @@ final class CheesePanel: NSPanel {
         case remembered(key: String, fallback: Fallback)
         /// Hanging under `anchor` (a screen rect, like the menu bar icon's), centered on it.
         case below(NSRect)
+        /// Just below `region` (a screen rect), else just above it, else inside its bottom edge.
+        case around(NSRect)
 
         enum Fallback {
             case centered
@@ -95,6 +97,10 @@ final class CheesePanel: NSPanel {
             let display = NSScreen.screens.first { $0.frame.intersects(anchor) } ?? screen
             guard let visible = display?.visibleFrame else { return }
             setFrameOrigin(PanelPositions.origin(below: anchor, size: frame.size, in: visible))
+        case let .around(region):
+            let display = NSScreen.screens.first { $0.frame.intersects(region) } ?? screen
+            guard let visible = display?.visibleFrame else { return }
+            setFrameOrigin(PanelPositions.origin(around: region, size: frame.size, in: visible))
         case .centered:
             center(on: screen)
         case .nearPointer:
@@ -207,6 +213,20 @@ enum PanelPositions {
 
     static func save(_ origin: NSPoint, forKey key: String, defaults: UserDefaults = .standard) {
         defaults.set([Double(origin.x), Double(origin.y)], forKey: defaultsKey(key))
+    }
+
+    /// Centered on `region`: below it if there's room on screen, else above it, else inside its
+    /// bottom edge. AppKit coordinates.
+    static func origin(around region: NSRect, size: NSSize, in visible: NSRect, gap: CGFloat = 16) -> NSPoint {
+        let margin: CGFloat = 8
+        let x = min(max(region.midX - size.width / 2, visible.minX + margin), visible.maxX - size.width - margin)
+        if region.minY - size.height - gap >= visible.minY {
+            return NSPoint(x: x, y: region.minY - size.height - gap)
+        }
+        if region.maxY + size.height + gap <= visible.maxY {
+            return NSPoint(x: x, y: region.maxY + gap)
+        }
+        return NSPoint(x: x, y: max(region.minY, visible.minY) + gap)
     }
 
     /// Centered under `anchor` with a small gap, kept inside `visible`. AppKit coordinates.

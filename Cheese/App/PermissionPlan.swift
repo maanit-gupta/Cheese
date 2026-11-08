@@ -6,6 +6,10 @@ enum PermissionNeed: CaseIterable, Identifiable, Sendable {
     case notifications
     case localNetwork
     case finderExtension
+    /// Screen recordings with the webcam on.
+    case camera
+    /// Screen recordings with your voice.
+    case microphone
 
     var id: Self { self }
 
@@ -16,6 +20,8 @@ enum PermissionNeed: CaseIterable, Identifiable, Sendable {
         case .notifications: "Notifications"
         case .localNetwork: "Local Network"
         case .finderExtension: "Finder Extension"
+        case .camera: "Camera"
+        case .microphone: "Microphone"
         }
     }
 
@@ -26,7 +32,14 @@ enum PermissionNeed: CaseIterable, Identifiable, Sendable {
         case .notifications: "bell.badge"
         case .localNetwork: "network"
         case .finderExtension: "folder.badge.gearshape"
+        case .camera: "video"
+        case .microphone: "mic"
         }
+    }
+
+    /// Only needed for an extra the user turns on (the camera or microphone in a recording).
+    var isOptional: Bool {
+        self == .camera || self == .microphone
     }
 
     /// The TCC permission behind this need, for the two Cheese can check directly.
@@ -34,7 +47,7 @@ enum PermissionNeed: CaseIterable, Identifiable, Sendable {
         switch self {
         case .screenRecording: .screenRecording
         case .accessibility: .accessibility
-        case .notifications, .localNetwork, .finderExtension: nil
+        case .notifications, .localNetwork, .finderExtension, .camera, .microphone: nil
         }
     }
 }
@@ -45,6 +58,8 @@ enum PermissionPlan {
         switch module {
         case .clipboard: [.accessibility]
         case .screenshots, .ocr: [.screenRecording]
+        // The camera and microphone only when turned on in the recording bar.
+        case .screenRecording: [.screenRecording, .camera, .microphone]
         case .scrollingCapture: [.screenRecording, .accessibility]
         case .windowSnapping: [.accessibility]
         // The zoom lens and snapshots read the screen.

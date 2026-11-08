@@ -26,4 +26,5 @@ extension Logger {
     static let update = Logger(subsystem: subsystem, category: "Update")
     static let sweep = Logger(subsystem: subsystem, category: "Sweep")
     static let hush = Logger(subsystem: subsystem, category: "Hush")
+    static let recording = Logger(subsystem: subsystem, category: "Recording")
 }

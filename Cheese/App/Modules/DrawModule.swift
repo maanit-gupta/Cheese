@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 /// Draw on screen: annotate over everything, then snapshot it.
 @MainActor
@@ -12,6 +12,11 @@ final class DrawModule: CheeseModule {
 
     /// Whether draw mode is on right now.
     var isDrawing: Bool { controller.isActive }
+
+    /// Draw's canvases, for screen recordings to show the ink.
+    func canvasWindowsForRecording() -> [NSWindow] {
+        controller.canvasWindowsForRecording()
+    }
 
     var actions: [CheeseAction] {
         [

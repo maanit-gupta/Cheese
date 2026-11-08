@@ -78,6 +78,8 @@ targets:
         INFOPLIST_KEY_NSAppleEventsUsageDescription: "Cheese reads the files selected in Finder so Files tools can work on them. Office apps are asked to save as PDF only if you turn that on in Settings. Terminal Trace reads the front tab of Terminal or iTerm2 when you ask it to."
         # Asked the first time Cheese Share looks for nearby devices.
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Cheese Share finds phones and computers on your network running LocalSend, and lets them send files and text to this Mac."
+        INFOPLIST_KEY_NSCameraUsageDescription: "Cheese shows your camera in screen recordings when you turn the webcam on."
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: "Cheese records your voice in screen recordings when you turn the microphone on."
         # Not sandboxed: Accessibility and posted CGEvents don't work inside the sandbox.
         ENABLE_APP_SANDBOX: NO
         ENABLE_HARDENED_RUNTIME: NO

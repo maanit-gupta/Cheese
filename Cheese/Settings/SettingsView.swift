@@ -6,6 +6,7 @@ enum SettingsTab: Hashable {
     case shortcuts
     case clipboard
     case ocr
+    case recording
     case windows
     case appHotkeys
     case files
@@ -44,6 +45,9 @@ struct SettingsView: View {
                 }
                 Tab("OCR", systemImage: "text.viewfinder", value: SettingsTab.ocr) {
                     OCRSettingsView(supportedLanguages: dependencies.supportedOCRLanguages())
+                }
+                Tab("Recording", systemImage: "record.circle", value: SettingsTab.recording) {
+                    RecordingSettingsView()
                 }
             }
             Group {

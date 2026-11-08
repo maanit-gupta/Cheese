@@ -61,6 +61,10 @@ struct ActionCatalogueTests {
             ScreenshotsModule(capture: capture, editor: editor),
             OCRModule(capture: capture),
             ScrollCaptureModule(capture: capture, previewActions: ScrollPreviewWindow.Actions(annotate: { _ in }, recognizeText: { _ in })),
+            ScreenRecordingModule(controller: RecordingController(
+                services: RecordingController.Services(pickRegion: { nil }, fullScreenTarget: { nil }),
+                recorder: FakeScreenRecorder(), presenter: FakeRecordingPresenter()
+            )),
             WindowSnappingModule(snapper: WindowSnapper(controller: WindowManager())),
             DrawModule(services: DrawModeController.Services(
                 captureDisplay: { _, _ in throw CaptureError.displayNotFound },
@@ -360,7 +364,8 @@ struct MenuLayoutTests {
             "snapLeft", "snapRight", "maximize", "snapBottom", "restoreWindow",
         ])
         #expect(titles(submenu("Capture", in: visible) ?? []) == [
-            "captureRegion", "captureWindow", "captureFullScreen", "ocrRegion", "scrollingCapture", "—", "After Capture▸",
+            "captureRegion", "captureWindow", "captureFullScreen", "ocrRegion", "scrollingCapture", "—",
+            "recordRegion", "recordFullScreen", "stopRecording", "—", "After Capture▸",
         ])
         #expect(titles(submenu("After Capture", in: submenu("Capture", in: visible) ?? []) ?? []) == [
             "captureDestination.clipboard", "captureDestination.folder", "captureDestination.clipboardAndFolder",
@@ -407,14 +412,17 @@ struct MenuLayoutTests {
 
     @Test func disabledModulesDisappear() {
         let destinations = CaptureDestination.allCases.map { ActionID.captureDestination($0) }
-        let capture = Set<ActionID>([.captureRegion, .captureWindow, .captureFullScreen, .ocrRegion, .scrollingCapture] + destinations)
+        let capture = Set<ActionID>([.captureRegion, .captureWindow, .captureFullScreen, .ocrRegion, .scrollingCapture, .recordRegion, .recordFullScreen, .stopRecording] + destinations)
         let visible = MenuLayout.visible(MenuLayout.standard) { !capture.contains($0) }
         #expect(submenu("Capture", in: visible) == nil)
         #expect(!titles(visible).contains("Capture▸"))
     }
 
     @Test func aSubmenuWithOneItemBecomesAPlainItem() {
-        let visible = MenuLayout.visible(MenuLayout.standard) { $0 == .ocrRegion || !$0.rawValue.hasPrefix("capture") && $0 != .scrollingCapture }
+        let recording: Set<ActionID> = [.recordRegion, .recordFullScreen, .stopRecording]
+        let visible = MenuLayout.visible(MenuLayout.standard) {
+            $0 == .ocrRegion || !$0.rawValue.hasPrefix("capture") && $0 != .scrollingCapture && !recording.contains($0)
+        }
         #expect(titles(visible).contains("ocrRegion!"))
         #expect(!titles(visible).contains("Capture▸"))
     }

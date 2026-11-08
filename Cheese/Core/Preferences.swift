@@ -41,6 +41,14 @@ enum PreferenceKey {
     static let hushEngagedByCheese = "hushEngagedByCheese"
     /// Whether scrolling capture scrolls the page by itself (off unless set: the user scrolls).
     static let scrollCaptureAutoScroll = "scrollCaptureAutoScroll"
+    /// The recording bar's last choices (microphone, system audio, camera, cursor, MP4 or GIF), as JSON.
+    static let recordingOptions = "recordingOptions"
+    /// Frames per second of GIFs made from recordings (15 unless set).
+    static let gifFrameRate = "gifFrameRate"
+    /// Largest width of GIFs made from recordings, in pixels; 0 keeps the recording's width (960 unless set).
+    static let gifMaxWidth = "gifMaxWidth"
+    /// The webcam bubble's size in points: 120, 180 or 240 (180 unless set).
+    static let webcamSize = "webcamSize"
     /// Whether Cheese checks GitHub for a newer release at launch and every 12 hours (on unless set false).
     static let updaterAutoCheck = "updaterAutoCheck"
     /// A version the user chose "Skip This Version" for; automatic checks stay quiet about it.

@@ -4,8 +4,9 @@
 #
 #   scripts/check-size.sh
 #
-# The baseline (scripts/size-baseline.txt) is the Release bundle of v3.5 (commit ca96744), in bytes.
-# It was the v2.5 bundle (commit 5976986, 10653602 bytes) until v3 and v3.5 used up that budget.
+# The baseline (scripts/size-baseline.txt) is the Release bundle of 2.5 with screen recording, in bytes.
+# Before that it was the v3.5 bundle (commit ca96744, 13262975 bytes) until Sweep, Hush and recording
+# used up that budget, and the v2.5 bundle (commit 5976986, 10653602 bytes) until v3 and v3.5 did.
 # Raise it only on purpose, with a note in the commit message.
 set -euo pipefail
 

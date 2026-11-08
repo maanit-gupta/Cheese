@@ -9,6 +9,8 @@ enum Hotkey: CaseIterable, Sendable {
     case captureWindow
     case ocrRegion
     case scrollingCapture
+    case recordRegion
+    case recordFullScreen
     case snapLeft
     case snapRight
     case maximize
@@ -33,6 +35,8 @@ enum Hotkey: CaseIterable, Sendable {
         case .captureWindow: .captureWindow
         case .ocrRegion: .ocrRegion
         case .scrollingCapture: .scrollingCapture
+        case .recordRegion: .recordRegion
+        case .recordFullScreen: .recordFullScreen
         case .snapLeft: .snapLeft
         case .snapRight: .snapRight
         case .maximize: .maximize
@@ -59,6 +63,8 @@ enum Hotkey: CaseIterable, Sendable {
         case .captureWindow: "Capture window"
         case .ocrRegion: "Copy text from region (OCR)"
         case .scrollingCapture: "Scrolling capture"
+        case .recordRegion: "Record a region (again to stop)"
+        case .recordFullScreen: "Record the full screen (again to stop)"
         case .snapLeft: "Snap to left half"
         case .snapRight: "Snap to right half"
         case .maximize: "Maximize"
@@ -87,6 +93,9 @@ extension KeyboardShortcuts.Name {
     static let captureWindow = Self("captureWindow", initial: .init(.five, modifiers: modifiers))
     static let ocrRegion = Self("ocrRegion", initial: .init(.t, modifiers: modifiers))
     static let scrollingCapture = Self("scrollingCapture", initial: .init(.s, modifiers: modifiers))
+    static let recordRegion = Self("recordRegion", initial: .init(.r, modifiers: modifiers))
+    /// The region shortcut plus Shift.
+    static let recordFullScreen = Self("recordFullScreen", initial: .init(.r, modifiers: modifiers.union(.shift)))
     static let snapLeft = Self("snapLeft", initial: .init(.leftArrow, modifiers: modifiers))
     static let snapRight = Self("snapRight", initial: .init(.rightArrow, modifiers: modifiers))
     static let maximize = Self("maximize", initial: .init(.upArrow, modifiers: modifiers))

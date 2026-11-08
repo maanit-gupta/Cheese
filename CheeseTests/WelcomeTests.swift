@@ -34,7 +34,7 @@ struct VerbTests {
 
     @Test func verbsMatchTheBrandTable() {
         #expect(Verb.copy.modules == [.clipboard, .qr, .terminalTrace])
-        #expect(Verb.capture.modules == [.screenshots, .ocr, .scrollingCapture])
+        #expect(Verb.capture.modules == [.screenshots, .ocr, .scrollingCapture, .screenRecording])
         #expect(Verb.draw.modules == [.drawOnScreen])
         #expect(Verb.convert.modules == [.files])
         #expect(Verb.share.modules == [.shelf, .share])

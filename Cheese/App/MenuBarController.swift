@@ -3,6 +3,8 @@ import KeyboardShortcuts
 
 /// Who's showing status text beside the menu bar icon. Listed in the order they're shown.
 enum IndicatorSource: CaseIterable {
+    /// "● 0:42" while recording; first, so it's right next to the icon.
+    case recording
     case caffeinate
     case files
     case share
@@ -29,6 +31,8 @@ final class MenuBarController: NSObject, NSMenuDelegate, NSWindowDelegate, NSDra
     private let openShare: () -> Void
     /// While the Share panel is showing, the indicator opens the menu like the rest of the icon.
     private let isShareShown: () -> Bool
+    /// Clicking the recording timer stops the recording.
+    var stopRecording: () -> Void = {}
 
     /// The view popovers anchor to, so they appear under the menu bar icon.
     var anchorView: NSView? { statusItem.button }
@@ -81,6 +85,10 @@ final class MenuBarController: NSObject, NSMenuDelegate, NSWindowDelegate, NSDra
     }
 
     @objc private func buttonClicked(_ sender: NSStatusBarButton) {
+        if let event = NSApp.currentEvent, event.type == .leftMouseDown, isOnRecordingIndicator(event, in: sender) {
+            stopRecording()
+            return
+        }
         if let event = NSApp.currentEvent, event.type == .leftMouseDown, isOnShareIndicator(event, in: sender), !isShareShown() {
             openShare()
             return
@@ -95,6 +103,15 @@ final class MenuBarController: NSObject, NSMenuDelegate, NSWindowDelegate, NSDra
         statusItem.menu = statusMenu.menu
         button.performClick(nil)
         statusItem.menu = nil
+    }
+
+    /// The recording timer is the first piece of the title, right after the icon.
+    private func isOnRecordingIndicator(_ event: NSEvent, in button: NSStatusBarButton) -> Bool {
+        guard let recording = indicators[.recording], let font = button.font else { return false }
+        let point = button.convert(event.locationInWindow, from: nil)
+        let start = (button.image?.size.width ?? 0) + 2
+        let width = (recording as NSString).size(withAttributes: [.font: font]).width + 8
+        return point.x >= start && point.x <= start + width
     }
 
     /// The Share indicator is the last piece of the title, at the button's trailing edge.

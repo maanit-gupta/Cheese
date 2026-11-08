@@ -69,23 +69,27 @@ enum ImageExport {
     }
 }
 
-/// File names for saved screenshots: `Cheese 2026-10-22 at 14.05.09.png`.
+/// File names for saved screenshots: `Cheese 2026-10-22 at 14.05.09.png`, and for recordings
+/// `Cheese Recording 2026-10-22 at 14.05.09.mp4`.
 enum ScreenshotNaming {
-    static func baseName(for date: Date, timeZone: TimeZone = .current) -> String {
+    static func baseName(for date: Date, prefix: String = "Cheese", timeZone: TimeZone = .current) -> String {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
         let c = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
         func pad(_ value: Int?) -> String { String(format: "%02d", value ?? 0) }
-        return "Cheese \(c.year ?? 0)-\(pad(c.month))-\(pad(c.day)) at \(pad(c.hour)).\(pad(c.minute)).\(pad(c.second))"
+        return "\(prefix) \(c.year ?? 0)-\(pad(c.month))-\(pad(c.day)) at \(pad(c.hour)).\(pad(c.minute)).\(pad(c.second))"
     }
 
     /// The first name that doesn't exist yet, adding " (2)", " (3)"… for captures within the same second.
-    static func uniqueURL(in folder: URL, date: Date, timeZone: TimeZone = .current, exists: (URL) -> Bool) -> URL {
-        let base = baseName(for: date, timeZone: timeZone)
-        var candidate = folder.appending(path: base + ".png", directoryHint: .notDirectory)
+    static func uniqueURL(
+        in folder: URL, date: Date, prefix: String = "Cheese", fileExtension: String = "png",
+        timeZone: TimeZone = .current, exists: (URL) -> Bool
+    ) -> URL {
+        let base = baseName(for: date, prefix: prefix, timeZone: timeZone)
+        var candidate = folder.appending(path: "\(base).\(fileExtension)", directoryHint: .notDirectory)
         var counter = 2
         while exists(candidate) {
-            candidate = folder.appending(path: "\(base) (\(counter)).png", directoryHint: .notDirectory)
+            candidate = folder.appending(path: "\(base) (\(counter)).\(fileExtension)", directoryHint: .notDirectory)
             counter += 1
         }
         return candidate
