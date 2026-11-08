@@ -63,6 +63,8 @@ extension ActionID {
     static let terminalTrace = Self(rawValue: "terminalTrace")
     static let checkForUpdates = Self(rawValue: "checkForUpdates")
     static let installUpdate = Self(rawValue: "installUpdate")
+    static let sweep = Self(rawValue: "sweep")
+    static let settingsSweep = Self(rawValue: "settingsSweep")
 
     /// "Caffeinate: For 1 Hour" and the other fixed lengths.
     static func caffeinate(_ preset: CaffeinatePreset) -> Self {

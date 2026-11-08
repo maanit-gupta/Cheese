@@ -8,7 +8,9 @@ enum MenuLayout {
         case action(ActionID, keyEquivalent: String = "", fullTitle: Bool = false)
         /// Shown in place of the item before it while Option is held, like "Clear All…" for "Clear History".
         case alternate(ActionID)
-        case submenu(title: String, symbol: String, children: [Node])
+        /// A submenu. One that `collapses` turns into its only item when the others are gone; one that
+        /// doesn't stays a submenu as long as it has anything in it (Tools ▸ Mode ▸ Sweep).
+        case submenu(title: String, symbol: String, children: [Node], collapses: Bool = true)
         case header(String)
         case separator
     }
@@ -49,6 +51,11 @@ enum MenuLayout {
                 .action(.terminalTrace),
                 .separator,
             ] + TerminalTraceScope.allCases.map { .action(.terminalTraceScope($0)) }),
+            .separator,
+            // Modes that take over the Mac for a while. Kept as a submenu even with one mode in it.
+            .submenu(title: "Mode", symbol: "switch.2", children: [
+                .action(.sweep),
+            ], collapses: false),
         ]),
         // Keeping the Mac awake, lid open or closed, in one menu of its own.
         .submenu(title: "Caffeinate", symbol: "cup.and.saucer", children: CaffeinatePreset.allCases.map {
@@ -90,11 +97,11 @@ enum MenuLayout {
                 if isAvailable(id) {
                     kept.append(node)
                 }
-            case let .submenu(title, symbol, children):
+            case let .submenu(title, symbol, children, collapses):
                 let visibleChildren = visible(children, isAvailable: isAvailable)
                 let items = visibleChildren.filter(\.isItem)
-                if items.count > 1 {
-                    kept.append(.submenu(title: title, symbol: symbol, children: visibleChildren))
+                if items.count > 1 || (!collapses && !items.isEmpty) {
+                    kept.append(.submenu(title: title, symbol: symbol, children: visibleChildren, collapses: collapses))
                 } else if let only = items.first {
                     kept.append(only.collapsed)
                 }
@@ -110,7 +117,7 @@ enum MenuLayout {
         nodes.flatMap { node -> [ActionID] in
             switch node {
             case let .action(id, _, _), let .alternate(id): [id]
-            case let .submenu(_, _, children): actionIDs(in: children)
+            case let .submenu(_, _, children, _): actionIDs(in: children)
             case .header, .separator: []
             }
         }

@@ -33,6 +33,8 @@ enum PreferenceKey {
     static let dragToEdgeSnappingEnabled = "dragToEdgeSnappingEnabled"
     static let caffeinateLidClosed = "caffeinateLidClosed"
     static let caffeinateBatteryFloor = "caffeinateBatteryFloor"
+    /// How many seconds Sweep locks the keyboard and trackpad (30 unless set).
+    static let sweepDuration = "sweepDuration"
     /// Whether Cheese checks GitHub for a newer release at launch and every 12 hours (on unless set false).
     static let updaterAutoCheck = "updaterAutoCheck"
     /// A version the user chose "Skip This Version" for; automatic checks stay quiet about it.
@@ -221,6 +223,11 @@ struct Preferences {
     var caffeinateBatteryFloor: Int {
         let stored = defaults.object(forKey: PreferenceKey.caffeinateBatteryFloor) as? Int ?? Self.defaultCaffeinateBatteryFloor
         return min(max(stored, 0), 50)
+    }
+
+    /// How long Sweep keeps the keyboard and trackpad locked.
+    var sweepDuration: SweepDuration {
+        SweepDuration.stored(defaults.object(forKey: PreferenceKey.sweepDuration) as? Int)
     }
 
     func isModuleEnabled(_ module: ModuleID) -> Bool {

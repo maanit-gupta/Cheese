@@ -46,7 +46,7 @@ final class StatusMenu: NSObject {
                 item.keyEquivalentModifierMask = (primary?.keyEquivalentModifierMask ?? []).union(.option)
                 item.isAlternate = true
                 menu.addItem(item)
-            case let .submenu(title, symbol, children):
+            case let .submenu(title, symbol, children, _):
                 let submenu = NSMenu()
                 add(children, to: submenu, inSubmenu: true)
                 let parent = NSMenuItem(title: title, action: nil, keyEquivalent: "")

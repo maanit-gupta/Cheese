@@ -77,6 +77,7 @@ struct ActionCatalogueTests {
             ShareModule { _ in },
             AppSweepModule(),
             TerminalTraceModule {},
+            SweepModule(controller: SweepController(blocker: FakeInputBlocker(), assertions: FakeSleepAssertions(), hud: FakeSweepHUD())),
         ]
     }
 
@@ -331,7 +332,7 @@ struct MenuLayoutTests {
             switch node {
             case let .action(id, _, full): full ? "\(id.rawValue)!" : id.rawValue
             case let .alternate(id): "alt:\(id.rawValue)"
-            case let .submenu(title, _, _): "\(title)▸"
+            case let .submenu(title, _, _, _): "\(title)▸"
             case let .header(title): "#\(title)"
             case .separator: "—"
             }
@@ -340,7 +341,7 @@ struct MenuLayoutTests {
 
     private func submenu(_ title: String, in nodes: [Node]) -> [Node]? {
         for node in nodes {
-            if case let .submenu(name, _, children) = node, name == title { return children }
+            if case let .submenu(name, _, children, _) = node, name == title { return children }
         }
         return nil
     }
@@ -363,8 +364,22 @@ struct MenuLayoutTests {
             "captureDestination.clipboard", "captureDestination.folder", "captureDestination.clipboardAndFolder",
         ])
         #expect(titles(submenu("Tools", in: visible) ?? []) == [
-            "autoKillPanel", "killAllApps", "—", "showClipboardQR", "Terminal Trace▸",
+            "autoKillPanel", "killAllApps", "—", "showClipboardQR", "Terminal Trace▸", "—", "Mode▸",
         ])
+        #expect(titles(submenu("Mode", in: submenu("Tools", in: visible) ?? []) ?? []) == ["sweep"])
+    }
+
+    @Test func theModeSubmenuNeverCollapses() {
+        // Sweep alone under Tools: Tools gives way to Mode, but Mode stays a submenu.
+        let visible = MenuLayout.visible(MenuLayout.standard) { $0 == .sweep || $0 == .quit }
+        #expect(titles(visible) == ["Mode▸", "—", version, "quit"])
+        #expect(titles(submenu("Mode", in: visible) ?? []) == ["sweep"])
+
+        // With other tools on, it sits at the bottom of Tools; with Sweep off, it's gone.
+        let withQR = MenuLayout.visible(MenuLayout.standard) { $0 == .sweep || $0 == .showClipboardQR }
+        #expect(titles(submenu("Tools", in: withQR) ?? []) == ["showClipboardQR", "—", "Mode▸"])
+        let noSweep = MenuLayout.visible(MenuLayout.standard) { $0 != .sweep }
+        #expect(!titles(submenu("Tools", in: noSweep) ?? []).contains("Mode▸"))
     }
 
     @Test func caffeinateHasOneListOfLengthsAndTheLidToggle() {

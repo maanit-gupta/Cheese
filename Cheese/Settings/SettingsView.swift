@@ -12,6 +12,7 @@ enum SettingsTab: Hashable {
     case share
     case autoKill
     case caffeinate
+    case sweep
     case permissions
     case about
 }
@@ -44,23 +45,30 @@ struct SettingsView: View {
                     OCRSettingsView(supportedLanguages: dependencies.supportedOCRLanguages())
                 }
             }
-            Tab("Windows", systemImage: "macwindow.on.rectangle", value: .windows) {
-                WindowsSettingsView()
+            Group {
+                Tab("Windows", systemImage: "macwindow.on.rectangle", value: SettingsTab.windows) {
+                    WindowsSettingsView()
+                }
+                Tab("App Hotkeys", systemImage: "app.badge", value: SettingsTab.appHotkeys) {
+                    AppHotkeysSettingsView(model: dependencies.appHotkeys)
+                }
+                Tab("Files", systemImage: "doc.on.doc", value: SettingsTab.files) {
+                    FilesSettingsView(model: dependencies.files)
+                }
+                Tab("Share", systemImage: "dot.radiowaves.left.and.right", value: SettingsTab.share) {
+                    ShareSettingsView()
+                }
             }
-            Tab("App Hotkeys", systemImage: "app.badge", value: .appHotkeys) {
-                AppHotkeysSettingsView(model: dependencies.appHotkeys)
-            }
-            Tab("Files", systemImage: "doc.on.doc", value: .files) {
-                FilesSettingsView(model: dependencies.files)
-            }
-            Tab("Share", systemImage: "dot.radiowaves.left.and.right", value: .share) {
-                ShareSettingsView()
-            }
-            Tab("Auto-Kill", systemImage: "xmark.app", value: .autoKill) {
-                AutoKillSettingsView()
-            }
-            Tab("Caffeinate", systemImage: "cup.and.saucer", value: .caffeinate) {
-                CaffeinateSettingsView(controller: dependencies.caffeinate)
+            Group {
+                Tab("Auto-Kill", systemImage: "xmark.app", value: SettingsTab.autoKill) {
+                    AutoKillSettingsView()
+                }
+                Tab("Caffeinate", systemImage: "cup.and.saucer", value: SettingsTab.caffeinate) {
+                    CaffeinateSettingsView(controller: dependencies.caffeinate)
+                }
+                Tab("Sweep", systemImage: "bubbles.and.sparkles", value: SettingsTab.sweep) {
+                    SweepSettingsView()
+                }
             }
             Tab("Permissions", systemImage: "lock.shield", value: .permissions) {
                 PermissionsSettingsView(

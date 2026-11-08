@@ -103,8 +103,14 @@ protocol SleepAssertions: AnyObject {
 /// While held, App Nap is off so the countdown and battery checks run on time.
 @MainActor
 final class SystemSleepAssertions: SleepAssertions {
+    private let name: String
     private var ids: [IOPMAssertionID] = []
     private var activity: NSObjectProtocol?
+
+    /// `name` is how `pmset -g assertions` lists them.
+    init(name: String = "Cheese Caffeinate") {
+        self.name = name
+    }
 
     func hold(timeout: TimeInterval?) -> Bool {
         var created: [IOPMAssertionID] = []
@@ -113,7 +119,7 @@ final class SystemSleepAssertions: SleepAssertions {
             let seconds = timeout.map { max($0, 1) } ?? 0
             let result = IOPMAssertionCreateWithDescription(
                 type as CFString,
-                "Cheese Caffeinate" as CFString,
+                name as CFString,
                 nil,
                 nil,
                 nil,
@@ -134,7 +140,7 @@ final class SystemSleepAssertions: SleepAssertions {
         if activity == nil {
             activity = ProcessInfo.processInfo.beginActivity(
                 options: .userInitiatedAllowingIdleSystemSleep,
-                reason: "Cheese Caffeinate countdown"
+                reason: "\(name) countdown"
             )
         }
         return true

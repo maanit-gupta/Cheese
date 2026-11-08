@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let appHotkeyStore = AppHotkeyStore()
     private let installedApps = InstalledAppIndex()
     private let caffeinate = CaffeinateController()
+    private let sweep = SweepController()
     private let updates = UpdateService.shared
     private var defaultsObserver: Task<Void, Never>?
 
@@ -95,10 +96,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // `cheese://share` on its own opens the Share panel, for Shortcuts and scripts.
                 share?.open()
             } else if url.host() == "settings" {
-                settingsWindow?.show(tab: url.lastPathComponent == "share" ? .share : .general)
+                settingsWindow?.show(tab: Self.settingsTab(named: url.lastPathComponent))
             } else {
                 files?.openHandoff(url)
             }
+        }
+    }
+
+    /// The tab a `cheese://settings/<name>` link opens; General for anything else.
+    private static func settingsTab(named name: String) -> SettingsTab {
+        switch name {
+        case "share": .share
+        case "sweep": .sweep
+        default: .general
         }
     }
 
@@ -168,6 +178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             TerminalTraceModule { [permissionPrompter] in
                 permissionPrompter.presentAlert(for: .accessibility, feature: "Terminal Trace")
             },
+            SweepModule(controller: sweep),
         ]
         let preferences = Preferences()
         return ActionRegistry(
@@ -318,6 +329,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             (.settingsShare, "Share", "dot.radiowaves.left.and.right", .share),
             (.settingsAutoKill, "Auto-Kill", "xmark.app", .autoKill),
             (.settingsCaffeinate, "Caffeinate", "cup.and.saucer", .caffeinate),
+            (.settingsSweep, "Sweep", "bubbles.and.sparkles", .sweep),
             (.settingsPermissions, "Permissions", "lock.shield", .permissions),
             (.settingsAbout, "About", "info.circle", .about),
         ]
