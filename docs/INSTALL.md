@@ -160,7 +160,7 @@ Look for the cheese wedge near the clock.
 
 Each item shows its current shortcut on the right. Tools you switched off aren't listed.
 
-With **Hush** on, a second icon (a bell) sits next to Cheese's: its menu hushes notifications for a while, or automatically while you share your screen.
+**Tools ▸ Hush** hushes notifications for a while, or automatically while you share your screen.
 
 ### 4. Make the shortcuts yours (optional)
 

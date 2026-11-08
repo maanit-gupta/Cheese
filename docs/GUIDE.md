@@ -123,9 +123,9 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 - **Settings → Auto-Kill** lists the protected apps, and can make every sweep force-quit apps still open after 3 seconds.
 
 ### Hush: no notifications while you share
-- Hush has **its own menu bar icon**, a bell (crossed out while notifications are hushed).
+- Hush lives in **Tools ▸ Hush** in the Cheese menu.
 - **Automatically while sharing** (on by default): notifications stay off the screen whenever it's shared: Zoom, Microsoft Teams, Webex, Slack, Discord or FaceTime sharing your screen, Google Meet or any site sharing from Chrome, Edge, Brave, Arc, Firefox and friends, a mirrored display or AirPlay, someone viewing your Mac through Screen Sharing, and Cheese's own screen recordings. Notifications come back **30 seconds after sharing ends**, so a quick stop and restart doesn't let one through. Spotting meeting apps needs **Screen Recording**.
-- **By hand:** For 30 Minutes, 1 Hour, 2 Hours, Until… (a time) or Indefinitely, with the time left next to the icon. **Turn Off** brings notifications back, and also sits out the share that's on. You can give "Hush: Indefinitely" a shortcut in **Settings → Shortcuts**; pressed again, it turns Hush off.
+- **By hand:** For 30 Minutes, 1 Hour, 2 Hours, Until… (a time) or Indefinitely, with the time left next to the menu bar icon (`Hush 42m`, `Hush ∞`). **Turn Off** brings notifications back, and also sits out the share that's on. You can give "Hush: Indefinitely" a shortcut in **Settings → Shortcuts**; pressed again, it turns Hush off.
 - **Setting it up (once).** macOS doesn't let apps switch Focus themselves, so Hush runs two shortcuts you make in the Shortcuts app:
   1. **Cheese Hush On**: a **Set Focus** action set to *Turn Do Not Disturb On*. Optionally put **Get Current Focus** before it and **Stop and Output** (Current Focus) after it, so a Focus you'd already turned on is left on afterwards.
   2. **Cheese Hush Off**: **Set Focus** set to *Turn Do Not Disturb Off*.
@@ -240,6 +240,7 @@ Click the 🧀 in the menu bar for every tool, so shortcuts are optional:
                                         Left Half · Right Half · Maximize · Bottom Half · Restore Previous Size
  Tools                              ▸   Auto-Kill Apps… · Kill All Open Apps Now · Show Clipboard as QR
                                         Terminal Trace ▸ (Copy Now ⌃⌥⇧T · Last Response · Everything)
+                                        Hush ▸ (status · Hush Automatically While Sharing · For 30 Minutes · For 1 Hour · For 2 Hours · Until… · Indefinitely · Hush Settings…)
                                         Mode ▸ Sweep
  Caffeinate                         ▸   For 30 Minutes · For 1 Hour · For 2 Hours · Until… · Indefinitely
                                         Keep Awake With Lid Closed ✓ · Turn Off
@@ -252,9 +253,9 @@ Click the 🧀 in the menu bar for every tool, so shortcuts are optional:
  Quit Cheese                       ⌘Q
 ```
 
-Tools you've turned off disappear, and a submenu left with one item becomes a plain item (except **Mode**, which stays a submenu). The shortcuts shown are your current ones. A recording's timer (`● 0:42`, click it to stop), Caffeinate's countdown (`42m`, or `Lid 42m` with the lid covered), Files progress (`3/10`) and **Share** (while Cheese Share is listening) show next to the icon, separated by `·`.
+Tools you've turned off disappear, and a submenu left with one item becomes a plain item (except **Mode**, which stays a submenu). The shortcuts shown are your current ones. A recording's timer (`● 0:42`, click it to stop), Caffeinate's countdown (`42m`, or `Lid 42m` with the lid covered), a manual Hush (`Hush 42m`), Files progress (`3/10`) and **Share** (while Cheese Share is listening) show next to the icon, separated by `·`.
 
-Hush has a menu of its own under its bell icon: what it's doing now, **Hush Automatically While Sharing**, For 30 Minutes · For 1 Hour · For 2 Hours · Until… · Indefinitely, **Turn Off** (while hushed) and **Hush Settings…**.
+**Tools ▸ Hush** shows what it's doing now, **Hush Automatically While Sharing**, For 30 Minutes · For 1 Hour · For 2 Hours · Until… · Indefinitely, **Turn Off** (while hushed) and **Hush Settings…**.
 
 ## Welcome and permissions
 

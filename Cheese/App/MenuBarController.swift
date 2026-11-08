@@ -6,6 +6,7 @@ enum IndicatorSource: CaseIterable {
     /// "● 0:42" while recording; first, so it's right next to the icon.
     case recording
     case caffeinate
+    case hush
     case files
     case share
 

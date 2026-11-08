@@ -30,7 +30,7 @@ final class HushController {
     /// Cheese is recording the screen, which counts as sharing.
     private(set) var isCheeseRecording = false
 
-    /// Called after anything the Hush icon shows may have changed.
+    /// Called after anything the menu bar indicator shows may have changed.
     @ObservationIgnored var onChange: (@MainActor () -> Void)?
 
     @ObservationIgnored private let switcher: any FocusSwitching
@@ -68,6 +68,13 @@ final class HushController {
     var manual: ManualHush? { policy.manual }
     var automatic: Bool { policy.automatic }
     var indicatorText: String? { policy.indicatorText(at: now()) }
+
+    /// Beside the Cheese icon while hushed by hand: "Hush 42m", or "Hush ∞" with no end time. Nothing
+    /// during an automatic Hush, which shouldn't draw attention on a shared screen.
+    var menuBarText: String? {
+        guard isEngaged, case .manual = reason else { return nil }
+        return "Hush \(indicatorText ?? "∞")"
+    }
 
     /// What the Hush menu's first line says.
     var statusText: String {

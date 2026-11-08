@@ -55,6 +55,7 @@ enum MenuLayout {
                 .action(.terminalTrace),
                 .separator,
             ] + TerminalTraceScope.allCases.map { .action(.terminalTraceScope($0)) }),
+            .submenu(title: "Hush", symbol: "bell.slash", children: hush, collapses: false),
             .separator,
             // Modes that take over the Mac for a while. Kept as a submenu even with one mode in it.
             .submenu(title: "Mode", symbol: "switch.2", children: [
@@ -83,7 +84,7 @@ enum MenuLayout {
         .action(.quit, keyEquivalent: "q"),
     ]
 
-    /// The Hush icon's menu: what's happening, the automatic toggle, the lengths, Turn Off.
+    /// Tools ▸ Hush: what's happening, the automatic toggle, the lengths, Turn Off.
     static let hush: [Node] = [
         .action(.hushStatus),
         .separator,

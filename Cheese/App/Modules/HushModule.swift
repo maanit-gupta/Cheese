@@ -1,16 +1,14 @@
 /// Hush: holds notifications back while the screen is shared, and on demand for a while, from
-/// its own menu bar icon.
+/// Tools ▸ Hush.
 @MainActor
 final class HushModule: CheeseModule {
     let id = ModuleID.hush
     let controller: HushController
-    private let statusItem: HushStatusItem?
     private let openSettings: @MainActor () -> Void
     private let picker = TimePickerWindow(heading: "Hush notifications until", title: "Hush")
 
-    init(controller: HushController, statusItem: HushStatusItem?, openSettings: @escaping @MainActor () -> Void = {}) {
+    init(controller: HushController, openSettings: @escaping @MainActor () -> Void = {}) {
         self.controller = controller
-        self.statusItem = statusItem
         self.openSettings = openSettings
     }
 
@@ -81,12 +79,10 @@ final class HushModule: CheeseModule {
 
     func start() {
         controller.start()
-        statusItem?.show()
     }
 
     func stop() {
         picker.close()
         controller.stop()
-        statusItem?.hide()
     }
 }

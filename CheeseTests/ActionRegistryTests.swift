@@ -81,7 +81,7 @@ struct ActionCatalogueTests {
             ShareModule { _ in },
             AppSweepModule(),
             TerminalTraceModule {},
-            HushModule(controller: HushController(switcher: FakeFocusSwitcher(), detector: FakeShareDetector()), statusItem: nil),
+            HushModule(controller: HushController(switcher: FakeFocusSwitcher(), detector: FakeShareDetector())),
             SweepModule(controller: SweepController(blocker: FakeInputBlocker(), assertions: FakeSleepAssertions(), hud: FakeSweepHUD())),
         ]
     }
@@ -168,8 +168,7 @@ struct ActionCatalogueTests {
     }
 
     @Test func everyModuleActionIsInTheMenu() {
-        // Hush's actions are in its own icon's menu.
-        let inMenu = Set(MenuLayout.actionIDs(in: MenuLayout.standard + MenuLayout.hush))
+        let inMenu = Set(MenuLayout.actionIDs(in: MenuLayout.standard))
         // The palette is a keyboard tool, and these few live only in it.
         let paletteOnly: Set<ActionID> = [.commandPalette, .clearShelf, .sendClipboard, .killBackgroundApps, .forceKillAllApps]
         let menuActions = actions.filter { $0.module != nil && !paletteOnly.contains($0.id) }
@@ -371,7 +370,7 @@ struct MenuLayoutTests {
             "captureDestination.clipboard", "captureDestination.folder", "captureDestination.clipboardAndFolder",
         ])
         #expect(titles(submenu("Tools", in: visible) ?? []) == [
-            "autoKillPanel", "killAllApps", "—", "showClipboardQR", "Terminal Trace▸", "—", "Mode▸",
+            "autoKillPanel", "killAllApps", "—", "showClipboardQR", "Terminal Trace▸", "Hush▸", "—", "Mode▸",
         ])
         #expect(titles(submenu("Mode", in: submenu("Tools", in: visible) ?? []) ?? []) == ["sweep"])
     }

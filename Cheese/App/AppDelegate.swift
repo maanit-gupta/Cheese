@@ -368,13 +368,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
-    /// Hush, with its own menu bar icon whose menu is drawn from the same registry.
+    /// Hush, in Tools ▸ Hush, with a manual Hush's time left beside the Cheese icon.
     private func hushModule() -> HushModule {
-        let statusItem = HushStatusItem(controller: hush) { [weak self] in
-            self?.registry.map { StatusMenu(registry: $0, layout: MenuLayout.hush) }
+        hush.onChange = { [weak self] in
+            guard let self else { return }
+            self.menuBar?.setIndicator(self.hush.menuBarText, for: .hush)
         }
-        hush.onChange = { [weak statusItem] in statusItem?.update() }
-        return HushModule(controller: hush, statusItem: statusItem) { [weak self] in
+        return HushModule(controller: hush) { [weak self] in
             self?.settingsWindow?.show(tab: .hush)
         }
     }

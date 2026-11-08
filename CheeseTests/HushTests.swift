@@ -260,6 +260,7 @@ struct HushControllerTests {
         await settle()
         #expect(controller.isEngaged)
         #expect(controller.indicatorText == "30m")
+        #expect(controller.menuBarText == "Hush 30m")
         clock.advance(30 * 60)
         controller.poll()
         await settle()
@@ -342,7 +343,7 @@ struct HushControllerTests {
     }
 
     @Test func moduleActionsAndMenu() {
-        let module = HushModule(controller: controller, statusItem: nil)
+        let module = HushModule(controller: controller)
         let ids = module.actions.map(\.id)
         #expect(Set(ids) == Set(MenuLayout.actionIDs(in: MenuLayout.hush)))
         #expect(module.actions.first { $0.id == .hushIndefinitely }?.shortcut == .hush)
