@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let sweep = SweepController()
     private lazy var hush = HushController(openSettings: { [weak self] in self?.settingsWindow?.show(tab: .hush) })
     private let updates = UpdateService.shared
+    private let menuEditor = MenuEditorContext()
     private var defaultsObserver: Task<Void, Never>?
 
     private static var isRunningUnitTests: Bool {
@@ -52,7 +53,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 files: FilesSettingsModel(),
                 caffeinate: caffeinate,
                 hush: hush,
-                updates: updates
+                updates: updates,
+                menuEditor: menuEditor
             )
         )
 
@@ -65,12 +67,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         menuBar = MenuBarController(
-            statusMenu: StatusMenu(registry: registry) { [weak self] in self?.files?.progressMenuItems ?? [] },
+            statusMenu: StatusMenu(registry: registry, progressItems: { [weak self] in self?.files?.progressMenuItems ?? [] }),
             dropHub: makeDropHub(),
             openShare: { [weak self] in self?.share?.open() },
             isShareShown: { [weak self] in self?.share?.isPanelShown ?? false }
         )
         menuBar?.stopRecording = { [weak self] in _ = self?.recording?.stopIfRecording() }
+        connectMenuEditor(registry: registry)
         EditorShortcutVariant.sync()
         registry.refresh()
         FilesHandoff.setEnabled(Preferences().isModuleEnabled(.files))
@@ -276,6 +279,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             CheeseAction(id: .openSettings, title: "Settings…", symbol: "gearshape", module: nil) { [weak self] _ in
                 self?.settingsWindow?.show()
             },
+            CheeseAction(id: .editMenu, title: "Edit Menu…", symbol: "slider.horizontal.3", module: nil) { [weak self] _ in
+                self?.settingsWindow?.show(tab: .menu)
+            },
             CheeseAction(id: .showWelcome, title: "Show Welcome…", symbol: "hand.wave", module: nil) { [weak self] _ in
                 self?.welcome?.show()
             },
@@ -392,9 +398,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// "Settings: General" and friends, so the palette can open Settings on any tab.
+    /// Settings → Menu shows each action as the menu does, and can open the real menu.
+    private func connectMenuEditor(registry: ActionRegistry) {
+        menuEditor.info = { id in
+            guard let action = registry.action(id) else { return nil }
+            let shortcut = action.shortcut.flatMap { KeyboardShortcuts.getShortcut(for: $0)?.description }
+            let moduleOff = action.module.map { !Preferences().isModuleEnabled($0) } ?? false
+            return MenuEditorItemInfo(title: action.menuTitle ?? action.title, symbol: action.symbol, shortcut: shortcut, moduleOff: moduleOff)
+        }
+        menuEditor.showMenu = { [weak self] in self?.menuBar?.openMenu() }
+        menuEditor.openModules = { [weak self] in self?.settingsWindow?.show(tab: .general) }
+    }
+
     private func settingsTabActions() -> [CheeseAction] {
         let tabs: [(ActionID, String, String, SettingsTab)] = [
             (.settingsGeneral, "General", "gearshape", .general),
+            (.settingsMenu, "Menu", "menubar.rectangle", .menu),
             (.settingsShortcuts, "Shortcuts", "keyboard", .shortcuts),
             (.settingsClipboard, "Clipboard", "doc.on.clipboard", .clipboard),
             (.settingsOCR, "OCR", "text.viewfinder", .ocr),

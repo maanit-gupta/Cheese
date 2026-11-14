@@ -12,6 +12,7 @@ struct SettingsDependencies {
     var caffeinate: CaffeinateController
     var hush: HushController
     var updates: UpdateService
+    var menuEditor: MenuEditorContext
 }
 
 /// Hosts `SettingsView` in a plain window. A SwiftUI `Settings` scene is awkward to open

@@ -3,6 +3,7 @@ import SwiftUI
 
 enum SettingsTab: Hashable {
     case general
+    case menu
     case shortcuts
     case clipboard
     case ocr
@@ -36,6 +37,9 @@ struct SettingsView: View {
             Group {
                 Tab("General", systemImage: "gearshape", value: SettingsTab.general) {
                     GeneralSettingsView(showWelcome: dependencies.showWelcome, updates: dependencies.updates)
+                }
+                Tab("Menu", systemImage: "menubar.rectangle", value: SettingsTab.menu) {
+                    MenuSettingsView(context: dependencies.menuEditor)
                 }
                 Tab("Shortcuts", systemImage: "keyboard", value: SettingsTab.shortcuts) {
                     ShortcutsSettingsView()

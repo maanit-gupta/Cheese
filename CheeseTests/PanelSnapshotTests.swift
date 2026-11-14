@@ -61,6 +61,24 @@ struct PanelSnapshotTests {
         let code = try #require(QRGenerator.image(for: link.absoluteString, minimumPixels: 360))
         qr.content = .code(image: code, side: 180, preview: "Q3 Report.pdf", share: .init(token: "t", url: link, expiresAt: .now.addingTimeInterval(598)))
         try render(QRPanelView(model: qr), as: "qr-panel", in: folder)
+
+        // Settings → Menu, with a customized menu (Shelf moved up, Draw hidden, a "New" item).
+        let suite = "PanelSnapshotTests-menu"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        MenuCustomization(preset: .custom, order: [MenuCustomization.root: ["openHistory", "toggleShelf"]], hidden: ["drawOnScreen", "clearHistory"])
+            .save(to: defaults)
+        let context = MenuEditorContext()
+        context.info = { id in
+            let title = id.rawValue.replacing(/([a-z])([A-Z])/) { "\($0.1) \($0.2)" }.capitalized
+            return MenuEditorItemInfo(title: title, symbol: "circle.dashed", shortcut: id == .openHistory ? "⌃⌥V" : nil, moduleOff: id == .showClipboardQR)
+        }
+        try render(MenuSettingsView(context: context, defaults: defaults).frame(width: 640, height: 640), as: "settings-menu", in: folder)
+
+        // Merge Files' options panel with a mixed list.
+        let inputs = try FilesFixture.copy(["rich.docx", "rotated.jpg", "latex-article.pdf", "notes.md"])
+        let panel = AnyFileTool(MergeFilesTool()).panel(inputs: inputs, actions: OptionsPanelActions(run: { _ in }, close: {}))
+        try render(panel.frame(width: 460, height: 560), as: "merge-files-panel", in: folder)
     }
 
     private func render(_ view: some View, as name: String, in folder: URL) throws {

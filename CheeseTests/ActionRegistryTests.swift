@@ -337,7 +337,8 @@ struct MenuLayoutTests {
             switch node {
             case let .action(id, _, full): full ? "\(id.rawValue)!" : id.rawValue
             case let .alternate(id): "alt:\(id.rawValue)"
-            case let .submenu(title, _, _, _): "\(title)▸"
+            case let .submenu(_, title, _, _, _): "\(title)▸"
+            case let .section(id, _, _): "§\(id)"
             case let .header(title): "#\(title)"
             case .separator: "—"
             }
@@ -346,7 +347,7 @@ struct MenuLayoutTests {
 
     private func submenu(_ title: String, in nodes: [Node]) -> [Node]? {
         for node in nodes {
-            if case let .submenu(name, _, children, _) = node, name == title { return children }
+            if case let .submenu(_, name, _, children, _) = node, name == title { return children }
         }
         return nil
     }
@@ -355,7 +356,7 @@ struct MenuLayoutTests {
         let visible = MenuLayout.visible(MenuLayout.standard) { _ in true }
         #expect(titles(visible) == [
             "openHistory", "copyCleanLink", "Capture▸", "drawOnScreen", "Files▸", "showShare", "toggleShelf", "Windows▸", "Tools▸",
-            "Caffeinate▸", "—", "clearHistory", "alt:clearAll", "—", version, "checkForUpdates", "installUpdate",
+            "Caffeinate▸", "—", "clearHistory", "alt:clearAll", "—", version, "checkForUpdates", "installUpdate", "editMenu",
             "openSettings", "quit",
         ])
         #expect(titles(submenu("Windows", in: visible) ?? []) == [

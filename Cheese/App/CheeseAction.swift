@@ -68,6 +68,9 @@ extension ActionID {
     static let checkForUpdates = Self(rawValue: "checkForUpdates")
     /// Capture ▸ After Capture ▸ Add to Photos: the global "Also add to Photos" switch.
     static let addToPhotos = Self(rawValue: "addToPhotos")
+    /// Footer "Edit Menu…": Settings on the Menu tab.
+    static let editMenu = Self(rawValue: "editMenu")
+    static let settingsMenu = Self(rawValue: "settingsMenu")
     static let installUpdate = Self(rawValue: "installUpdate")
     static let sweep = Self(rawValue: "sweep")
     static let settingsSweep = Self(rawValue: "settingsSweep")

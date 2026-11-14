@@ -10,6 +10,7 @@ Everything Cheese does, tool by tool. The [README](../README.md) has the short v
 ### Screenshots
 - **Region** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>4</kbd>, **full screen** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>3</kbd> and **window** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>5</kbd> (with its shadow).
 - Copied straight to the clipboard at full Retina resolution, so nothing clutters your desktop. Prefer files? **Capture ▸ After Capture** (or **Settings → General → Screenshots**) switches every capture to **Save to Folder**, or **Copy and Save** for both. The folder is set just below it (Desktop by default). This covers region, window, full-screen and scrolling captures and draw-mode snapshots.
+- **Also add to Photos** (Settings → General → Screenshots, or **Capture ▸ After Capture ▸ Add to Photos**): on top of copying or saving, captures go into a **Cheese** album in Photos, as lossless PNGs filed under Photos' **Screenshots**. Tick which kinds go: region, window and full screen; scrolling captures; draw-mode snapshots (OCR is text, so it never does). Cheese asks for Photos access when you turn it on. If access is refused or later taken away, captures are still copied or saved, the setting stays on, and the toast says **couldn't add to Photos** with **Open Settings**. **To see captures on your iPhone, turn on iCloud Photos on this Mac and your phone.** Delete the album and Cheese makes a new one. Right-click an image in Clipboard History or on the Shelf and choose **Add to Photos** to send just that one, whether or not the switch is on.
 - **Hold <kbd>⇧</kbd> as you finish** to open the annotation editor: arrows, boxes, text, highlighter, blur, crop, and undo/redo. Save as PNG or copy.
 
 ### Scrolling capture
@@ -189,9 +190,15 @@ Pick a tool and a small panel shows the files (drag to reorder where order matte
 
 | | Tools |
 |---|---|
-| **PDF** | Merge (keeps bookmarks) · Split by ranges (`1-3, 5, 8-`), every N pages or each page · **Page editor** to reorder, rotate, delete and extract pages · **Compress to a target size** · Watermark (text or image) · Page numbers |
+| **Merge** | **Merge Files** (see below) |
+| **PDF** | Split by ranges (`1-3, 5, 8-`), every N pages or each page · **Page editor** to reorder, rotate, delete and extract pages · **Compress to a target size** · Watermark (text or image) · Page numbers |
 | **To PDF** | Images (fit, A4 or Letter; HEIC included) · Word · Excel / CSV · PowerPoint · HTML, Markdown and text |
 | **From PDF** | Images (PNG or JPEG at 72/150/300 DPI) · Word (.docx) · Excel (.xlsx) |
+
+**Merge Files** takes **any mix** of PDFs, images (PNG, JPEG, HEIC, TIFF, WebP, GIF…), Word, Excel, PowerPoint, HTML, Markdown and text, two or more, and makes **one PDF** (the default) or **one Word document**. Select them in Finder and choose **Cheese ▸ Merge Files**, drop them on the menu bar icon, or pick **Files ▸ Merge Files**. The panel lists them with a thumbnail, type and page count: drag to reorder, **+** or drop to add more, × to remove, or **Sort** by name or date modified. The result is `Merged (4 files).pdf` (or `.docx`) next to the first file.
+- **PDF:** PDF and Office pages keep their sizes. An image goes on a page the size of the one before it (A4 or Letter if it comes first), turned landscape when the image is wide, inside a half-inch margin, centered and never enlarged. Options: a **bookmark per file** (on), **page numbers**, and a **divider page** with the file's name before each file.
+- **Word:** PDFs come in as editable text (as in PDF → Word), images as pictures, each Excel sheet as a heading and a table, PowerPoint slides as pictures, and Word documents as real content: their text, lists, tables and pictures, with the first file's headers, footers and page setup. Dividers are a page break and a heading with the file's name; page numbers go in the footer.
+- If a file can't be read, the merge stops and says which one and why ("Couldn't read Budget.pdf: the file is password-protected").
 | **Images** | Convert format (PNG, JPEG, HEIC, TIFF, GIF, BMP, and WebP where macOS can write it) · Resize · Compress (strips location data by default) · Remove background |
 | **Text** | Markdown or HTML → Word |
 
@@ -201,7 +208,8 @@ Watermarks and page numbers keep your PDF's text selectable. Compression only re
 - **Word:** page breaks may land differently from Word on long documents; complex floating layouts, SmartArt and charts can be simplified.
 - **Excel:** values only, as plain tables, with no cell colors, fonts or charts. Each sheet starts on a new page.
 - **PowerPoint:** the roughest of the three. Animations, some shapes, SmartArt and embedded media aren't rendered.
-- **PDF → Word / Excel:** layout is approximate, multi-column pages may need cleanup, complex or merged-cell tables won't be perfect, and text inside images isn't converted unless the whole page is a scan (scans are read with on-device OCR).
+- **PDF → Word / Excel:** layout is approximate. PDF → Word handles two-column papers, keeps ligatures (fi, fl, ff) and hyphenated words whole, keeps superscripts and subscripts, turns ruled rows into tables, and leaves out running heads and page numbers. **Display equations and line drawings come over as pictures, so they aren't editable**; inline math stays text. Text drawn in a font with no text mapping is read with on-device OCR, and so are scans. Pages with more than two columns may need cleanup, complex or merged-cell tables won't be perfect, and text inside images isn't converted unless the whole page is a scan.
+- **Merge Files:** with page numbers on, links inside merged PDFs aren't kept (bookmarks are). In Word output, later files' footnotes, comments, charts and SmartArt are left out, and a style with the same name as one in the first file takes the first file's look.
 
 If **Microsoft Office or LibreOffice** is installed, **Settings → Files** offers to use it for Office → PDF instead (off by default). macOS asks once per app to let Cheese control it, and the app may open while it works. If it fails, Cheese falls back to its built-in renderer and says so.
 
@@ -232,6 +240,7 @@ Click the 🧀 in the menu bar for every tool, so shortcuts are optional:
  Clipboard History                ⌃⌥V
  Capture                            ▸   Region · Window · Screen · OCR · Scrolling
                                         Record Region ⌃⌥R · Record Full Screen ⌃⌥⇧R · Stop Recording (while recording)
+                                        After Capture ▸ Copy to Clipboard · Save to Folder · Copy and Save · Add to Photos
  Draw on Screen                   ⌃⌥D
  Files                              ▸   every Files tool
  Share…
@@ -249,11 +258,22 @@ Click the 🧀 in the menu bar for every tool, so shortcuts are optional:
  ───────────────────────────────────
  Cheese 2.5
  Check for Updates…                     (Update Available (2.6)… once there is one)
+ Edit Menu…
  Settings…                         ⌘,
  Quit Cheese                       ⌘Q
 ```
 
 Tools you've turned off disappear, and a submenu left with one item becomes a plain item (except **Mode**, which stays a submenu). The shortcuts shown are your current ones. A recording's timer (`● 0:42`, click it to stop), Caffeinate's countdown (`42m`, or `Lid 42m` with the lid covered), a manual Hush (`Hush 42m`), Files progress (`3/10`) and **Share** (while Cheese Share is listening) show next to the icon, separated by `·`.
+
+### Customizing the menu
+
+**Settings → Menu** (or **Edit Menu…** near the bottom of the menu) arranges the menu your way:
+- **Drag** an item up or down to move it, at the top level or inside its submenu (Capture, Files, Windows, Tools, Caffeinate…). In **Files**, the PDF, Convert and Images sections move as a whole, and tools move within their section. Items stay in their own menu. Prefer the keyboard? Select a row and press <kbd>⌥</kbd><kbd>⌘</kbd><kbd>↑</kbd> / <kbd>⌥</kbd><kbd>⌘</kbd><kbd>↓</kbd>, or use **Move Up** and **Move Down**; VoiceOver reads each row and announces moves.
+- **Untick** an item to hide it, or a whole submenu. **Hidden items keep their keyboard shortcuts** and stay in the command palette. To switch a feature off completely, use **General → Modules**; a tool that's off is greyed out here with **Module off**.
+- **Presets:** **Full** (everything, in Cheese's order) and **Minimal** (Clipboard History, Capture, Share and Shelf). Changing anything makes it **Custom**. **Reset to Default** goes back to Full.
+- **Always at the bottom:** Clear History (with Clear All… under <kbd>⌥</kbd>), Check for Updates and Edit Menu… can be hidden; the version, Settings… and Quit always show.
+- Changes apply at once; **Show Menu** opens the menu to check. Items added in a later update appear in their usual place, marked **New** the next time you open this tab.
+- This arranges the menu bar menu only; the command palette, Finder's Cheese ▸ menu and the drop hub stay as they are.
 
 **Tools ▸ Hush** shows what it's doing now, **Hush Automatically While Sharing**, For 30 Minutes · For 1 Hour · For 2 Hours · Until… · Indefinitely, **Turn Off** (while hushed) and **Hush Settings…**.
 
@@ -336,7 +356,8 @@ Cheese warns you if a combination is already taken by macOS or the menu. The men
 
 | Tab | What's there |
 |---|---|
-| **General** | Launch at login, screenshot save folder (default: Desktop), single-letter draw keys, updates (check automatically, on by default; version and Check Now), tool on/off switches, Show Welcome… |
+| **General** | Launch at login, after a capture (copy, save or both), screenshot save folder (default: Desktop), **Also add to Photos** and which captures go, single-letter draw keys, updates (check automatically, on by default; version and Check Now), tool on/off switches, Show Welcome… |
+| **Menu** | Arrange the menu bar menu: drag to reorder, untick to hide, Full / Minimal / Custom, Reset to Default, Show Menu |
 | **Shortcuts** | Rebind every global shortcut |
 | **Clipboard** | History size (default 200 unpinned items), copy clean links automatically (off by default) |
 | **OCR** | Languages (English, Hindi) and line-break handling |
@@ -349,7 +370,7 @@ Cheese warns you if a combination is already taken by macOS or the menu. The men
 | **Caffeinate** | Keep awake with the lid closed (on by default), the battery level to stop at (default 10 %), the lid-closed helper's status with Install / Remove, and the session that's running |
 | **Hush** | The two shortcuts' setup with Open Shortcuts and Test, hushing automatically while sharing (on by default), and what Hush is doing now |
 | **Sweep** | How long the keyboard and trackpad stay locked (default 30 s) |
-| **Permissions** | Live status of every permission (Screen Recording, Accessibility, Notifications, Local Network, Finder extension, Camera, Microphone), with shortcuts to System Settings |
+| **Permissions** | Live status of every permission (Screen Recording, Accessibility, Notifications, Local Network, Finder extension, Camera, Microphone, Photos), with shortcuts to System Settings |
 | **About** | Version, license, acknowledgements and the GitHub link (also **About Cheese** in the palette) |
 
 ## Troubleshooting

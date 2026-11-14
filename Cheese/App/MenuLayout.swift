@@ -9,18 +9,43 @@ enum MenuLayout {
         /// Shown in place of the item before it while Option is held, like "Clear All…" for "Clear History".
         case alternate(ActionID)
         /// A submenu. One that `collapses` turns into its only item when the others are gone; one that
-        /// doesn't stays a submenu as long as it has anything in it (Tools ▸ Mode ▸ Sweep).
-        case submenu(title: String, symbol: String, children: [Node], collapses: Bool = true)
+        /// doesn't stays a submenu as long as it has anything in it (Tools ▸ Mode ▸ Sweep). `id` is
+        /// stable and never shown, so a customized order survives renames.
+        case submenu(id: String, title: String, symbol: String, children: [Node], collapses: Bool = true)
+        /// A headed group inside a submenu (Files ▸ PDF / Convert / Images): drawn as a separator, its
+        /// header and its items; reordered as a whole.
+        case section(id: String, title: String, children: [Node])
         case header(String)
         case separator
+
+        /// The ID a customization refers to: an action's raw value, or a submenu's or section's own ID.
+        /// Alternates, headers and separators have none: they go where their item or slot goes.
+        var id: String? {
+            switch self {
+            case let .action(id, _, _): id.rawValue
+            case let .submenu(id, _, _, _, _), let .section(id, _, _): id
+            case .alternate, .header, .separator: nil
+            }
+        }
+
+        var children: [Node] {
+            switch self {
+            case let .submenu(_, _, _, children, _), let .section(_, _, children): children
+            default: []
+            }
+        }
     }
 
-    /// The grouped menu: the verbs the user reaches for, one level deep where it can be.
-    static let standard: [Node] = [
+    /// The whole menu: what can be arranged, then the footer.
+    static let standard: [Node] = body + footer
+
+    /// The grouped menu: the verbs the user reaches for, one level deep where it can be. Everything
+    /// here can be reordered within its parent and hidden (Settings → Menu).
+    static let body: [Node] = [
         .action(.openHistory),
         // Right under Clipboard History, and only while a link is on the clipboard.
         .action(.copyCleanLink),
-        .submenu(title: "Capture", symbol: "camera.viewfinder", children: [
+        .submenu(id: "capture", title: "Capture", symbol: "camera.viewfinder", children: [
             .action(.captureRegion),
             .action(.captureWindow),
             .action(.captureFullScreen),
@@ -31,39 +56,40 @@ enum MenuLayout {
             .action(.recordFullScreen),
             .action(.stopRecording),
             .separator,
-            .submenu(title: "After Capture", symbol: "tray.and.arrow.down", children: CaptureDestination.allCases.map {
+            .submenu(id: "afterCapture", title: "After Capture", symbol: "tray.and.arrow.down", children: CaptureDestination.allCases.map {
                 .action(.captureDestination($0))
             } + [.separator, .action(.addToPhotos)]),
         ]),
         .action(.drawOnScreen),
-        .submenu(title: "Files", symbol: "doc.on.doc", children: filesChildren),
+        .submenu(id: "files", title: "Files", symbol: "doc.on.doc", children: filesChildren),
         .action(.showShare),
         .action(.toggleShelf),
         // These act on other apps' windows. Opening this menu doesn't activate Cheese, so the
         // frontmost window is still the one the user was working in.
-        .submenu(title: "Windows", symbol: "macwindow.on.rectangle", children: [
+        .submenu(id: "windows", title: "Windows", symbol: "macwindow.on.rectangle", children: [
             .action(.fillAllWindows), .action(.fillCurrentWindow), .action(.restoreAllWindows),
             .separator,
             .action(.snapLeft), .action(.snapRight), .action(.maximize), .action(.snapBottom), .action(.restoreWindow),
         ]),
-        .submenu(title: "Tools", symbol: "wrench.and.screwdriver", children: [
+        .submenu(id: "tools", title: "Tools", symbol: "wrench.and.screwdriver", children: [
             .action(.autoKillPanel),
             .action(.killAllApps),
             .separator,
             .action(.showClipboardQR),
-            .submenu(title: "Terminal Trace", symbol: "terminal", children: [
+            // "terminalTrace" is the Copy Now action's ID, so the submenu has its own.
+            .submenu(id: "terminalTraceMenu", title: "Terminal Trace", symbol: "terminal", children: [
                 .action(.terminalTrace),
                 .separator,
             ] + TerminalTraceScope.allCases.map { .action(.terminalTraceScope($0)) }),
-            .submenu(title: "Hush", symbol: "bell.slash", children: hush, collapses: false),
+            .submenu(id: "hush", title: "Hush", symbol: "bell.slash", children: hush, collapses: false),
             .separator,
             // Modes that take over the Mac for a while. Kept as a submenu even with one mode in it.
-            .submenu(title: "Mode", symbol: "switch.2", children: [
+            .submenu(id: "mode", title: "Mode", symbol: "switch.2", children: [
                 .action(.sweep),
             ], collapses: false),
         ]),
         // Keeping the Mac awake, lid open or closed, in one menu of its own.
-        .submenu(title: "Caffeinate", symbol: "cup.and.saucer", children: CaffeinatePreset.allCases.map {
+        .submenu(id: "caffeinate", title: "Caffeinate", symbol: "cup.and.saucer", children: CaffeinatePreset.allCases.map {
             .action(.caffeinate($0))
         } + [
             .action(.caffeinateUntil), .action(.caffeinateIndefinitely),
@@ -72,6 +98,11 @@ enum MenuLayout {
             .separator,
             .action(.caffeinateOff),
         ]),
+    ]
+
+    /// Always at the bottom, in this order. Clear History (with Clear All… under ⌥), the update items
+    /// and Edit Menu… can be hidden; the version header, Settings… and Quit can't.
+    static let footer: [Node] = [
         .separator,
         .action(.clearHistory),
         .alternate(.clearAll),
@@ -80,9 +111,13 @@ enum MenuLayout {
         .header(Brand.versionTitle),
         .action(.checkForUpdates),
         .action(.installUpdate),
+        .action(.editMenu),
         .action(.openSettings, keyEquivalent: ","),
         .action(.quit, keyEquivalent: "q"),
     ]
+
+    /// Footer items that can be hidden.
+    static let hideableFooter: [ActionID] = [.clearHistory, .checkForUpdates, .installUpdate, .editMenu]
 
     /// Tools ▸ Hush: what's happening, the automatic toggle, the lengths, Turn Off.
     static let hush: [Node] = [
@@ -98,10 +133,10 @@ enum MenuLayout {
         .action(.hushSettings),
     ]
 
-    /// Every Files tool under PDF / Convert / Images headers, in the drop menu's order.
+    /// Every Files tool in a PDF / Convert / Images section, in the drop menu's order.
     static var filesChildren: [Node] {
-        ToolApplicability.grouped(ToolID.allCases).enumerated().flatMap { index, group -> [Node] in
-            (index > 0 ? [.separator] : []) + [.header(group.group.title)] + group.tools.map { .action(.files($0)) }
+        ToolApplicability.grouped(ToolID.allCases).map { group in
+            .section(id: "files.\(group.group.rawValue)", title: group.group.title, children: group.tools.map { .action(.files($0)) })
         }
     }
 
@@ -116,14 +151,17 @@ enum MenuLayout {
                 if isAvailable(id) {
                     kept.append(node)
                 }
-            case let .submenu(title, symbol, children, collapses):
+            case let .submenu(id, title, symbol, children, collapses):
                 let visibleChildren = visible(children, isAvailable: isAvailable)
                 let items = visibleChildren.filter(\.isItem)
                 if items.count > 1 || (!collapses && !items.isEmpty) {
-                    kept.append(.submenu(title: title, symbol: symbol, children: visibleChildren, collapses: collapses))
+                    kept.append(.submenu(id: id, title: title, symbol: symbol, children: visibleChildren, collapses: collapses))
                 } else if let only = items.first {
                     kept.append(only.collapsed)
                 }
+            case let .section(_, title, children):
+                // A separator (dropped if it would lead), the header, then the items.
+                kept += [.separator, .header(title)] + visible(children, isAvailable: isAvailable)
             case .header, .separator:
                 kept.append(node)
             }
@@ -136,7 +174,7 @@ enum MenuLayout {
         nodes.flatMap { node -> [ActionID] in
             switch node {
             case let .action(id, _, _), let .alternate(id): [id]
-            case let .submenu(_, _, children, _): actionIDs(in: children)
+            case let .submenu(_, _, _, children, _), let .section(_, _, children): actionIDs(in: children)
             case .header, .separator: []
             }
         }
@@ -177,7 +215,7 @@ enum MenuLayout {
 private extension MenuLayout.Node {
     var isItem: Bool {
         switch self {
-        case .action, .alternate, .submenu: true
+        case .action, .alternate, .submenu, .section: true
         case .header, .separator: false
         }
     }

@@ -30,9 +30,9 @@ Cheese lives in your menu bar and stays out of the way until you press a shortcu
 |---|---|
 | **[Copy](#copy)** | Clipboard history that searches the text inside screenshots · **batch paste** · drag to chat · edit before pasting · **links without tracking** · clipboard as QR |
 | **[Terminal Trace](#terminal-trace)** | One shortcut copies your last command and everything it printed, errors pulled out, as Markdown for a chat, an issue or an AI assistant |
-| **[Capture](#capture)** | Region, window and full-screen screenshots · annotation editor · **screen recording** with your voice, system audio and webcam, to MP4 or GIF · copy text and QR codes from anything on screen · scrolling capture you scroll yourself |
+| **[Capture](#capture)** | Region, window and full-screen screenshots, **straight into Photos** if you like · annotation editor · **screen recording** with your voice, system audio and webcam, to MP4 or GIF · copy text and QR codes from anything on screen · scrolling capture you scroll yourself |
 | **[Draw](#draw)** | Ink over any app, even full screen · magic-pen shapes · laser, spotlight and zoom · whiteboard and blackboard |
-| **[Convert](#convert)** | Offline PDF merge, split, compress, watermark and page numbers · Word, Excel, PowerPoint, images and Markdown to PDF · PDF to Word, Excel and images · image convert, resize, compress and background removal |
+| **[Convert](#convert)** | **Merge any mix of files** into one PDF or Word document · offline PDF split, compress, watermark and page numbers · Word, Excel, PowerPoint, images and Markdown to PDF · PDF to Word (LaTeX papers included), Excel and images · image convert, resize, compress and background removal |
 | **[Share](#share)** | Drop anything on the menu bar icon · links and QR codes for your phone · LocalSend to phones and PCs · a floating Shelf |
 | **[Control](#control)** | Window snapping from the keyboard or **by dragging to an edge** · **edge-to-edge Fill to Screen** · **Hush** notifications while you share your screen · **Sweep** to wipe the screen with the keyboard locked · Auto-Kill · app hotkeys · command palette |
 | **[Caffeinate](#caffeinate)** | Keep your Mac awake for an hour, until a time or indefinitely, **even with the lid closed**, and let it sleep again on its own when time's up |
@@ -54,6 +54,18 @@ Wipe your screen and keyboard without typing gibberish or clicking things: after
 
 **Scrolling capture, at your pace** <kbd>⌃</kbd><kbd>⌥</kbd><kbd>S</kbd>
 Pick the area, then scroll it yourself, as far as you need and as fast or slow as you like, with a live thumbnail of the growing image; click **Done** when you have it. Scrolling back up is fine. Flip on **Auto-scroll** to have Cheese do the scrolling. [More](#capture)
+
+**Customize the menu** (**Settings → Menu**, or **Edit Menu…** at the bottom of the menu)
+Drag items into the order you like, inside the menu and its submenus, and untick the ones you don't use. Start from **Full** or **Minimal** (just Clipboard History, Capture, Share and Shelf); any change makes it **Custom**, and **Reset to Default** brings everything back. Hidden items keep their keyboard shortcuts and stay in the command palette. [More](docs/GUIDE.md#customizing-the-menu)
+
+**Add to Photos**
+Turn on **Also add to Photos** (Settings → General, or **Capture ▸ After Capture ▸ Add to Photos**) and screenshots, scrolling captures and draw snapshots also land in a **Cheese** album in Photos, filed under Screenshots, on top of being copied or saved as usual. With iCloud Photos on, they're on your iPhone and iPad a moment later. Right-click an image in Clipboard History or on the Shelf to send just that one. [More](#capture)
+
+**Merge Files** (replaces Merge PDFs)
+Select a Word document, a few photos and a PDF, and merge them into **one PDF or one Word document**: in Finder's **Cheese ▸** menu, by dropping them on the menu bar icon, or from **Files**. Reorder them with thumbnails in the panel, add bookmarks, divider pages and page numbers. [More](#convert)
+
+**Better PDF → Word**
+PDFs made with LaTeX now convert cleanly: ligatures (fi, fl, ff) stay whole, words aren't run together or split by end-of-line hyphens, superscripts and subscripts stay raised and lowered, two-column papers read in order, running heads and page numbers are left out, tables become Word tables, and **equations and line drawings come over as sharp pictures** (not editable). Text drawn in fonts with no text mapping is read with OCR instead of coming out as gibberish. [More](docs/GUIDE.md#convert-offline-pdf-document-and-image-tools)
 
 **And:** drag a window to a screen edge or corner to snap it there, with a preview of where it lands · links copied from terminals are captured whole, even when they wrapped · **Copy clean link automatically** strips tracking (`utm_`, `fbclid`, `si`, Amazon's `ref`…) from every link you copy · Terminal Trace reads Hyper, Windsurf and Zed too · a new menu bar icon.
 
@@ -116,7 +128,7 @@ Build failed? Don't scroll up and drag-select it: press <kbd>⌃</kbd><kbd>⌥</
 
 ## Capture
 
-Screenshots go straight to the clipboard at full Retina resolution, or into a folder, or both: pick under **Capture ▸ After Capture** or in **Settings → General**.
+Screenshots go straight to the clipboard at full Retina resolution, or into a folder, or both: pick under **Capture ▸ After Capture** or in **Settings → General**. Turn on **Also add to Photos** there too, and captures also go into a **Cheese** album in Photos (filed under Screenshots), so with iCloud Photos on this Mac and your iPhone they show up on your phone; choose which kinds of capture go. Photos is asked for permission when you turn it on, and if it ever says no, the capture is still copied or saved and a note says Photos was skipped.
 
 | Shortcut | Does |
 |---|---|
@@ -153,9 +165,10 @@ Like iLovePDF, but **entirely offline**. No file leaves your Mac. Results are sa
 
 | | Tools |
 |---|---|
-| **PDF** | Merge (keeps bookmarks) · Split by ranges, every N pages or each page · Page editor (reorder, rotate, delete, extract) · **Compress to a target size** · Watermark · Page numbers |
+| **Merge** | **Merge Files:** any mix of PDFs, images, Word, Excel, PowerPoint, HTML, Markdown and text into one **PDF** (a bookmark per file, optional divider pages and page numbers; images placed upright on matching pages) or one **Word document** (PDFs as editable text, spreadsheets as tables, slides as pictures, Word files merged for real). Reorder, add and sort files in the panel |
+| **PDF** | Split by ranges, every N pages or each page · Page editor (reorder, rotate, delete, extract) · **Compress to a target size** · Watermark · Page numbers |
 | **To PDF** | Images (HEIC included) · Word · Excel / CSV · PowerPoint · HTML, Markdown and text |
-| **From PDF** | Images (72–300 DPI) · Word (.docx) · Excel (.xlsx) |
+| **From PDF** | Images (72–300 DPI) · Word (.docx: whole words, real superscripts, tables, equations as pictures; scanned and unmapped text read with OCR) · Excel (.xlsx) |
 | **Images** | Convert format · Resize · Compress (strips location data) · Remove background |
 | **Text** | Markdown or HTML → Word |
 
@@ -253,6 +266,7 @@ On first launch, a short welcome lets you pick your tools and then asks **only f
 | **Screen Recording** | Screenshots, OCR, scrolling capture, screen recordings, draw mode's snapshot and zoom, and Hush spotting meeting apps' share bars |
 | **Accessibility** | Pasting from history, window snapping (keys and dragging), Fill to Screen, auto-scrolling, Terminal Trace in terminals other than Terminal and iTerm2, Sweep |
 | **Microphone** · **Camera** (asked when you switch them on) | Your voice and the webcam bubble in screen recordings |
+| **Photos** (asked when you turn on **Also add to Photos**) | Adding captures to the Cheese album, and **Add to Photos** in Clipboard History and on the Shelf |
 | **Notifications** | Finished Files jobs, files received through Cheese Share |
 | **Local Network** | Cheese Share finding nearby LocalSend devices |
 | **Finder extension** | The **Cheese ▸** menu in Finder (turn it on in **Settings → Files**) |

@@ -194,8 +194,8 @@ struct PhotosWiringTests {
     }
 
     @Test func addToPhotosSitsBelowTheDestinations() throws {
-        let captureNode = try #require(MenuLayout.standard.first { if case .submenu("Capture", _, _, _) = $0 { true } else { false } })
-        guard case let .submenu(_, _, capture, _) = captureNode, let last = capture.last, case let .submenu(_, _, afterCapture, _) = last else {
+        let captureNode = try #require(MenuLayout.standard.first { if case .submenu("capture", _, _, _, _) = $0 { true } else { false } })
+        guard case let .submenu(_, _, _, capture, _) = captureNode, let last = capture.last, case let .submenu(_, _, _, afterCapture, _) = last else {
             Issue.record("no After Capture submenu")
             return
         }

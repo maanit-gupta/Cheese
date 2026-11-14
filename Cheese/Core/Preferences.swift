@@ -13,6 +13,8 @@ enum PreferenceKey {
     static let photosDrawSnapshots = "photosDrawSnapshots"
     /// The "Cheese" album's PhotoKit local identifier, so it's found again (and made again if deleted).
     static let photosAlbumIdentifier = "photosAlbumIdentifier"
+    /// How the menu bar menu is arranged: `MenuCustomization` as JSON (Full unless set).
+    static let menuCustomization = "menuCustomization"
     static let historySize = "historySize"
     /// Whether a copied link has its tracking parameters stripped on the clipboard right away (off unless set).
     static let copyCleanLinkAutomatically = "copyCleanLinkAutomatically"
