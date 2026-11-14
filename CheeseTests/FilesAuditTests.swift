@@ -80,7 +80,7 @@ struct FilesAuditOutputTests {
             "notes.md", "page.html", "scripts.txt", "notes-image.png", "alpha.png", "rotated.jpg", "photo.webp", "animated.gif", "photo.heic",
         ])
         func file(_ name: String) -> URL { inputs.first { $0.lastPathComponent == name } ?? inputs[0] }
-        try keep(try await runJob(MergeTool().work(inputs: [file("latex-article.pdf"), file("rotated.pdf"), file("text.pdf")], options: NoOptions())), as: "merge.pdf")
+        try keep(try await runJob(MergeFilesTool().work(inputs: [file("latex-article.pdf"), file("rotated.pdf"), file("text.pdf")], options: MergeFilesTool.Options())), as: "merge.pdf")
         try keep(try await runJob(CompressTool().work(inputs: [file("mixed.pdf")], options: CompressTool.Options(targetMB: 0.2))), as: "compress.pdf")
         try keep(try await runJob(WatermarkTool().work(inputs: [file("latex-article.pdf")], options: WatermarkTool.Options())), as: "watermark.pdf")
         try keep(try await runJob(PageNumbersTool().work(inputs: [file("rotated.pdf")], options: PageNumbersTool.Options(format: .pageOf))), as: "numbers.pdf")
@@ -98,5 +98,12 @@ struct FilesAuditOutputTests {
         try keep(try await runJob(PDFToXlsxTool().work(inputs: [file("tables.pdf")], options: NoOptions())), as: "tables.xlsx")
         try keep(try await runJob(MarkdownToDocxTool().work(inputs: [file("notes.md")], options: NoOptions())), as: "markdown.docx")
         try keep(try await runJob(MarkdownToDocxTool().work(inputs: [file("page.html")], options: NoOptions())), as: "html.docx")
+        let mixed = ["rich.docx", "rotated.jpg", "photo.webp", "latex-article.pdf", "notes.md", "merged.xlsx", "media.pptx"].map(file)
+        var options = MergeFilesTool.Options()
+        options.dividers = true
+        options.pageNumbers = true
+        try keep(try await runJob(MergeFilesTool().work(inputs: mixed, options: options)), as: "merged-mixed.pdf")
+        options.format = .word
+        try keep(try await runJob(MergeFilesTool().work(inputs: mixed, options: options)), as: "merged-mixed.docx")
     }
 }

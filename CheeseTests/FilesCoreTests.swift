@@ -28,7 +28,7 @@ struct ToolApplicabilityTests {
 
     @Test func onePDFGetsPDFToolsButNotMerge() {
         let tools = ToolApplicability.tools(for: [url("a.pdf")])
-        #expect(!tools.contains(.mergePDFs))
+        #expect(!tools.contains(.mergeFiles))
         #expect(tools.contains(.splitPDF))
         #expect(tools.contains(.editPages))
         #expect(tools.contains(.compressPDF))
@@ -38,14 +38,14 @@ struct ToolApplicabilityTests {
 
     @Test func twoPDFsCanMergeButNotOpenThePageEditor() {
         let tools = ToolApplicability.tools(for: [url("a.pdf"), url("b.pdf")])
-        #expect(tools.contains(.mergePDFs))
+        #expect(tools.contains(.mergeFiles))
         #expect(tools.contains(.watermarkPDF))
         #expect(!tools.contains(.editPages))
     }
 
     @Test func imagesGetImageToolsAndImagesToPDF() {
         let tools = ToolApplicability.tools(for: [url("a.jpg"), url("b.png")])
-        #expect(tools == [.imagesToPDF, .convertImage, .resizeImage, .compressImage, .removeBackground])
+        #expect(tools == [.mergeFiles, .imagesToPDF, .convertImage, .resizeImage, .compressImage, .removeBackground])
     }
 
     @Test func officeAndTextFiles() {
@@ -57,9 +57,11 @@ struct ToolApplicabilityTests {
     }
 
     @Test func mixedSelectionsOnlyGetToolsThatTakeEveryFile() {
-        #expect(ToolApplicability.tools(for: [url("a.pdf"), url("b.png")]).isEmpty)
-        #expect(ToolApplicability.tools(for: [url("a.md"), url("b.txt")]) == [.webToPDF])
-        #expect(ToolApplicability.tools(for: [url("a.md"), url("b.html")]) == [.webToPDF, .markdownToWord])
+        // Merge Files takes any mix of supported files.
+        #expect(ToolApplicability.tools(for: [url("a.pdf"), url("b.png")]) == [.mergeFiles])
+        #expect(ToolApplicability.tools(for: [url("a.md"), url("b.txt")]) == [.mergeFiles, .webToPDF])
+        #expect(ToolApplicability.tools(for: [url("a.md"), url("b.html")]) == [.mergeFiles, .webToPDF, .markdownToWord])
+        #expect(ToolApplicability.tools(for: [url("a.pdf"), url("b.zip")]).isEmpty)
         #expect(ToolApplicability.tools(for: [URL]()).isEmpty)
         #expect(ToolApplicability.tools(for: [url("a.zip")]).isEmpty)
     }
@@ -226,13 +228,13 @@ struct JobQueueTests {
 
 struct JobTextTests {
     @Test func titlesNameOneFileOrCountSeveral() {
-        #expect(JobTitles.inProgress(.mergePDFs, inputs: [url("a.pdf"), url("b.pdf"), url("c.pdf")]) == "Merging 3 PDFs…")
+        #expect(JobTitles.inProgress(.mergeFiles, inputs: [url("a.pdf"), url("b.pdf"), url("c.pdf")]) == "Merging 3 PDFs…")
         #expect(JobTitles.done(.convertImage, inputs: [url("Photo.heic")]) == "Converted Photo.heic")
         #expect(JobTitles.subject([url("a.png"), url("b.pdf")]) == "2 files")
     }
 
     @Test func indicatorSumsFilesAcrossJobs() {
-        let a = JobQueue.Status(id: UUID(), tool: .mergePDFs, title: "", completed: 1, total: 4, isRunning: true)
+        let a = JobQueue.Status(id: UUID(), tool: .mergeFiles, title: "", completed: 1, total: 4, isRunning: true)
         let b = JobQueue.Status(id: UUID(), tool: .convertImage, title: "", completed: 2, total: 6, isRunning: false)
         #expect(JobTitles.indicator([a, b]) == "3/10")
         #expect(JobTitles.indicator([]) == nil)
@@ -373,7 +375,7 @@ struct FilesHandoffTests {
 
     @Test func jobsAreReadOnceThenDeleted() throws {
         let container = makeTemporaryDirectory()
-        let job = FilesHandoff.Job(tool: .mergePDFs, fileURLs: [URL(filePath: "/tmp/a.pdf"), URL(filePath: "/tmp/b.pdf")])
+        let job = FilesHandoff.Job(tool: .mergeFiles, fileURLs: [URL(filePath: "/tmp/a.pdf"), URL(filePath: "/tmp/b.pdf")])
         let id = try FilesHandoff.write(job, to: container)
         #expect(try FilesHandoff.consume(id, from: container) == job)
         #expect(throws: (any Error).self) { try FilesHandoff.consume(id, from: container) }

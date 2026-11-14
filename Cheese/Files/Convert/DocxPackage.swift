@@ -321,6 +321,30 @@ enum SheetJSWriter {
         return data
     }
 
+    /// Every sheet in order, as text rows (what Excel shows, formulas as their values).
+    static func readSheets(_ data: Data) throws -> [(name: String, rows: [[String]])] {
+        let context = try JavaScriptRunner.context(loading: ["xlsx.full.min.js"])
+        context.evaluateScript("""
+        function cheeseReadSheets(base64) {
+            const book = XLSX.read(base64, { type: "base64" });
+            return JSON.stringify(book.SheetNames.map((name) => ({
+                name: name,
+                rows: XLSX.utils.sheet_to_json(book.Sheets[name], { header: 1, raw: false, defval: "", blankrows: false }),
+            })));
+        }
+        """)
+        let json = context.objectForKeyedSubscript("cheeseReadSheets")?.call(withArguments: [data.base64EncodedString()])?.toString()
+        try JavaScriptRunner.check(context)
+        struct Sheet: Decodable {
+            var name: String
+            var rows: [[String]]
+        }
+        guard let json, let sheets = try? JSONDecoder().decode([Sheet].self, from: Data(json.utf8)) else {
+            throw FileToolError.message("The spreadsheet couldn't be read.")
+        }
+        return sheets.map { ($0.name, $0.rows) }
+    }
+
     /// Reads a workbook back as text rows per sheet, for tests and checks.
     static func readRows(_ data: Data) throws -> [String: [[String]]] {
         let context = try JavaScriptRunner.context(loading: ["xlsx.full.min.js"])

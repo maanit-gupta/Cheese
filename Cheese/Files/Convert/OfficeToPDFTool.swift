@@ -31,31 +31,44 @@ struct OfficeToPDFTool: FileTool {
         EmptyView()
     }
 
+    /// One file with the native app when given (falling back to the embedded renderer, noted), or
+    /// the embedded renderer, which gets 60 seconds.
+    static func convert(
+        _ input: URL, kind: OfficeRenderer.Kind, paper: CGSize, native: NativeConverter?, renderer: OfficeRenderer, to output: URL,
+        note: @escaping @Sendable (String) -> Void
+    ) async throws {
+        if let native {
+            do {
+                try await native.convert(input, kind: kind, to: output)
+                return
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                try? FileManager.default.removeItem(at: output)
+                note("\(native.app.name) couldn't convert \(input.lastPathComponent), so Cheese's built-in renderer was used.")
+            }
+        }
+        try await TimeLimit.run(seconds: 60) {
+            try await renderer.render(input, kind: kind, paper: paper, to: output)
+        }
+    }
+
+    /// The native converter Settings asks for, if one is installed.
+    static func nativeConverter(for kind: OfficeRenderer.Kind) -> NativeConverter? {
+        Preferences().usesNativeOfficeApps ? NativeAppDetector.converter(for: kind) : nil
+    }
+
     func work(inputs: [URL], options: NoOptions) -> JobWork {
         let kind = kind
         let paper = PDFPageSize.localeDefault.portraitSize ?? CGSize(width: 595.28, height: 841.89)
-        let native = nativeOverride ?? (Preferences().usesNativeOfficeApps ? NativeAppDetector.converter(for: kind) : nil)
+        let native = nativeOverride ?? Self.nativeConverter(for: kind)
         return JobWork(tool: id, inputs: inputs) { context in
             let renderer = await OfficeRenderer()
             for input in inputs {
                 try Task.checkCancellation()
                 do {
                     let output = context.outputURL(for: input, suffix: nil, extension: "pdf")
-                    if let native {
-                        do {
-                            try await native.convert(input, kind: kind, to: output)
-                            context.fileFinished()
-                            continue
-                        } catch is CancellationError {
-                            throw CancellationError()
-                        } catch {
-                            try? FileManager.default.removeItem(at: output)
-                            context.note("\(native.app.name) couldn't convert \(input.lastPathComponent), so Cheese's built-in renderer was used.")
-                        }
-                    }
-                    try await TimeLimit.run(seconds: 60) {
-                        try await renderer.render(input, kind: kind, paper: paper, to: output)
-                    }
+                    try await Self.convert(input, kind: kind, paper: paper, native: native, renderer: renderer, to: output) { context.note($0) }
                 } catch is CancellationError {
                     await renderer.close()
                     throw CancellationError()

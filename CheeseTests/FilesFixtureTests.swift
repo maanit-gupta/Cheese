@@ -144,13 +144,13 @@ struct PDFToWordFixtureTests {
 struct PDFToolsFixtureTests {
     @Test func mergeKeepsRotationAndRefusesLockedFiles() async throws {
         let inputs = try FilesFixture.copy(["latex-article.pdf", "rotated.pdf", "text.pdf"])
-        let report = try await runJob(MergeTool().work(inputs: inputs, options: NoOptions()))
+        let report = try await runJob(MergeFilesTool().work(inputs: inputs, options: MergeFilesTool.Options()))
         let output = try #require(report.outputs.first)
         #expect(pageCount(output) == 6)
         #expect(PDFDocument(url: output)?.page(at: 3)?.rotation == 90)
 
         let locked = try FilesFixture.copy(["text.pdf", "encrypted.pdf"])
-        await #expect(throws: (any Error).self) { try await runJob(MergeTool().work(inputs: locked, options: NoOptions())) }
+        await #expect(throws: (any Error).self) { try await runJob(MergeFilesTool().work(inputs: locked, options: MergeFilesTool.Options())) }
     }
 
     @Test func splitABigPDFEveryHundredPages() async throws {

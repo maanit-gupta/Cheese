@@ -141,9 +141,9 @@ struct MergeAndSplitTests {
         let folder = makeTemporaryDirectory()
         let a = TestPDFs.write(pages: 2, to: folder.appending(path: "Report.pdf"), label: "A")
         let b = TestPDFs.write(pages: 1, to: folder.appending(path: "Appendix.pdf"), label: "B")
-        let report = try await runJob(MergeTool().work(inputs: [b, a], options: NoOptions()))
+        let report = try await runJob(MergeFilesTool().work(inputs: [b, a], options: MergeFilesTool.Options()))
         let output = try #require(report.outputs.first)
-        #expect(output.lastPathComponent == "Appendix (merged).pdf")
+        #expect(output.lastPathComponent == "Merged (2 files).pdf")
         #expect(TestPDFs.pageTexts(output) == ["B 1", "A 1", "A 2"])
         let document = try #require(PDFDocument(url: output))
         let root = try #require(document.outlineRoot)
@@ -158,8 +158,9 @@ struct MergeAndSplitTests {
         let a = TestPDFs.write(pages: 1, to: folder.appending(path: "a.pdf"))
         let broken = folder.appending(path: "broken.pdf")
         try Data("nope".utf8).write(to: broken)
-        let work = MergeTool().work(inputs: [a, broken], options: NoOptions())
-        await #expect(throws: FileToolError.unreadable("broken.pdf")) { try await runJob(work) }
+        let work = MergeFilesTool().work(inputs: [a, broken], options: MergeFilesTool.Options())
+        await #expect(throws: FileToolError.message("Couldn't read broken.pdf: the file couldn't be opened.")) { try await runJob(work) }
+        #expect(try FileManager.default.contentsOfDirectory(atPath: folder.path(percentEncoded: false)).sorted() == ["a.pdf", "broken.pdf"])
     }
 
     @Test func splitRangesWriteNextToTheOriginal() async throws {

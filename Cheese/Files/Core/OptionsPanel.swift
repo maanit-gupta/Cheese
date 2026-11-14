@@ -84,15 +84,32 @@ struct OptionsPanelView<Tool: FileTool>: View {
             Form {
                 Section {
                     ForEach(Array(inputs.enumerated()), id: \.element) { index, url in
-                        InputRow(url: url, canRemove: inputs.count > tool.id.fileCount.lowerBound) {
-                            inputs.removeAll { $0 == url }
+                        Group {
+                            if tool.editsInputList {
+                                // Fewer than the minimum is fine while editing; Run waits for enough.
+                                RichInputRow(url: url, canRemove: true) { inputs.removeAll { $0 == url } }
+                            } else {
+                                InputRow(url: url, canRemove: inputs.count > tool.id.fileCount.lowerBound) {
+                                    inputs.removeAll { $0 == url }
+                                }
+                            }
                         }
                         .modifier(ReorderableRow(index: index, isEnabled: tool.ordersInputs, inputs: $inputs))
                     }
                 } header: {
-                    Text(inputs.count == 1 ? "File" : "\(inputs.count) files")
+                    HStack {
+                        Text(inputs.count == 1 ? "File" : "\(inputs.count) files")
+                        if tool.editsInputList {
+                            Spacer()
+                            InputListControls(accepted: tool.id.acceptedKinds, inputs: $inputs)
+                        }
+                    }
                 } footer: {
-                    if tool.ordersInputs, inputs.count > 1 {
+                    if tool.editsInputList {
+                        Text("Drag files to change their order, or drop more files here.")
+                            .font(DesignTokens.Typography.caption)
+                            .foregroundStyle(.secondary)
+                    } else if tool.ordersInputs, inputs.count > 1 {
                         Text("Drag files to change their order.")
                             .font(DesignTokens.Typography.caption)
                             .foregroundStyle(.secondary)
@@ -112,6 +129,12 @@ struct OptionsPanelView<Tool: FileTool>: View {
                 }
             }
             .formStyle(.grouped)
+            .dropDestination(for: URL.self) { urls, _ in
+                guard tool.editsInputList else { return false }
+                let before = inputs.count
+                inputs = InputListInfo.adding(urls.filter(\.isFileURL), to: inputs, accepted: tool.id.acceptedKinds)
+                return inputs.count > before
+            }
 
             CheeseDivider()
             CheeseToolbar {

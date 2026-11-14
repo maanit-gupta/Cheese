@@ -12,6 +12,8 @@ protocol FileTool {
     var defaultOptions: Options { get }
     /// Whether the order of the inputs matters, so the panel lets the user drag them into order.
     var ordersInputs: Bool { get }
+    /// The panel shows a richer input list: thumbnails, type and page count, adding, dropping and sorting.
+    var editsInputList: Bool { get }
     /// A one-line note on the tool's known limits, shown in the panel.
     var hint: String? { get }
 
@@ -26,6 +28,7 @@ protocol FileTool {
 
 extension FileTool {
     var ordersInputs: Bool { false }
+    var editsInputList: Bool { false }
     var hint: String? { nil }
 
     func problem(with options: Options, inputs: [URL]) -> String? { nil }

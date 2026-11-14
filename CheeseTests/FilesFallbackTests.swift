@@ -13,8 +13,10 @@ struct FinderSelectionTests {
 
     @Test func keepsOnlyFilesTheToolTakes() {
         let selection = [URL(filePath: "/tmp/a.pdf"), URL(filePath: "/tmp/notes.txt"), URL(filePath: "/tmp/b.pdf")]
-        #expect(FinderSelection.usable(selection, for: .mergePDFs)?.map(\.lastPathComponent) == ["a.pdf", "b.pdf"])
-        #expect(FinderSelection.usable([URL(filePath: "/tmp/a.pdf")], for: .mergePDFs) == nil)
+        #expect(FinderSelection.usable(selection, for: .splitPDF)?.map(\.lastPathComponent) == ["a.pdf", "b.pdf"])
+        let mixed = selection + [URL(filePath: "/tmp/archive.zip")]
+        #expect(FinderSelection.usable(mixed, for: .mergeFiles)?.map(\.lastPathComponent) == ["a.pdf", "notes.txt", "b.pdf"])
+        #expect(FinderSelection.usable([URL(filePath: "/tmp/a.pdf")], for: .mergeFiles) == nil)
         #expect(FinderSelection.usable([URL(filePath: "/tmp/x.png")], for: .compressPDF) == nil)
     }
 }

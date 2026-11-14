@@ -17,7 +17,9 @@ enum ToolGroup: String, CaseIterable, Sendable {
 
 /// Every Files tool. Shared with the Finder extension, so it stays Foundation-only.
 enum ToolID: String, CaseIterable, Codable, Sendable {
-    case mergePDFs
+    /// Was "Merge PDFs". The raw value stays, so saved options and Finder handoffs written by
+    /// older versions still decode.
+    case mergeFiles = "mergePDFs"
     case splitPDF
     case editPages
     case compressPDF
@@ -39,7 +41,7 @@ enum ToolID: String, CaseIterable, Codable, Sendable {
 
     var title: String {
         switch self {
-        case .mergePDFs: "Merge PDFs"
+        case .mergeFiles: "Merge Files"
         case .splitPDF: "Split PDF"
         case .editPages: "Edit Pages"
         case .compressPDF: "Compress PDF"
@@ -64,7 +66,7 @@ enum ToolID: String, CaseIterable, Codable, Sendable {
     /// SF Symbol name.
     var symbol: String {
         switch self {
-        case .mergePDFs: "doc.on.doc"
+        case .mergeFiles: "square.stack.3d.down.right"
         case .splitPDF: "scissors"
         case .editPages: "square.grid.2x2"
         case .compressPDF: "arrow.down.right.and.arrow.up.left"
@@ -88,7 +90,8 @@ enum ToolID: String, CaseIterable, Codable, Sendable {
 
     var group: ToolGroup {
         switch self {
-        case .mergePDFs, .splitPDF, .editPages, .compressPDF, .watermarkPDF, .numberPages: .pdf
+        // Merge Files stays under PDF: its default output is a PDF, and it's where Merge PDFs was.
+        case .mergeFiles, .splitPDF, .editPages, .compressPDF, .watermarkPDF, .numberPages: .pdf
         case .imagesToPDF, .wordToPDF, .excelToPDF, .powerPointToPDF, .webToPDF,
              .pdfToImages, .pdfToWord, .pdfToExcel, .markdownToWord: .convert
         case .convertImage, .resizeImage, .compressImage, .removeBackground: .images
@@ -98,7 +101,8 @@ enum ToolID: String, CaseIterable, Codable, Sendable {
     /// The kinds of file the tool takes. A selection qualifies only if every file is one of them.
     var acceptedKinds: Set<FileKind> {
         switch self {
-        case .mergePDFs, .splitPDF, .editPages, .compressPDF, .watermarkPDF, .numberPages,
+        case .mergeFiles: [.pdf, .image, .word, .excel, .powerPoint, .html, .markdown, .plainText]
+        case .splitPDF, .editPages, .compressPDF, .watermarkPDF, .numberPages,
              .pdfToImages, .pdfToWord, .pdfToExcel: [.pdf]
         case .imagesToPDF, .convertImage, .resizeImage, .compressImage, .removeBackground: [.image]
         case .wordToPDF: [.word]
@@ -112,7 +116,7 @@ enum ToolID: String, CaseIterable, Codable, Sendable {
     /// How many files the tool takes at once.
     var fileCount: ClosedRange<Int> {
         switch self {
-        case .mergePDFs: 2...Int.max
+        case .mergeFiles: 2...Int.max
         case .editPages: 1...1
         default: 1...Int.max
         }
@@ -121,7 +125,7 @@ enum ToolID: String, CaseIterable, Codable, Sendable {
     /// Verbs for progress and notifications: "Merging 3 PDFs…", "Merged 3 PDFs".
     var verbs: (present: String, past: String) {
         switch self {
-        case .mergePDFs: ("Merging", "Merged")
+        case .mergeFiles: ("Merging", "Merged")
         case .splitPDF: ("Splitting", "Split")
         case .editPages: ("Saving", "Saved")
         case .compressPDF, .compressImage: ("Compressing", "Compressed")

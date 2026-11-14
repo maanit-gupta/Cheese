@@ -112,6 +112,19 @@ final class JobContext: Sendable {
         }
     }
 
+    /// Reserves an output with a name of its own, like `Merged (4 files).pdf`, next to `input`.
+    func outputURL(named name: String, nextTo input: URL) -> URL {
+        let folder = folder(for: input)
+        return state.withLock { state in
+            let url = OutputNamer.uniqueFile(named: name, in: folder) { candidate in
+                state.reserved.contains(candidate) || FileManager.default.fileExists(atPath: candidate.path(percentEncoded: false))
+            }
+            state.reserved.insert(url)
+            state.outputs.append((input, url))
+            return url
+        }
+    }
+
     /// Creates an output folder for `input`, like `Report (images)`, for tools that write several files.
     func outputFolder(for input: URL, suffix: String) throws -> URL {
         let parent = folder(for: input)

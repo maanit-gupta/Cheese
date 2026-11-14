@@ -45,6 +45,11 @@ enum OutputNamer {
         uniqueFile(named: fileName(base: baseName(of: input), suffix: suffix, extension: ext), in: folder, exists: exists)
     }
 
+    /// What Merge Files calls its output: `Merged (4 files).pdf`.
+    static func mergedName(fileCount: Int, extension ext: String) -> String {
+        fileName(base: "Merged", suffix: "\(fileCount) files", extension: ext)
+    }
+
     /// The `n`th of `total` files inside a multi-file output folder: `Report-001.png`.
     /// Numbers are zero-padded to at least three digits, more when there are over 999 files.
     static func numberedFile(base: String, index: Int, total: Int, extension ext: String) -> String {

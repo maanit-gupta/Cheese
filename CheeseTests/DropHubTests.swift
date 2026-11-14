@@ -52,7 +52,7 @@ struct DropHubPlanTests {
     }
 
     @Test func toolsAreOnlyForFiles() {
-        let plan = DropHubPlan.make(for: .text("hello"), canShare: true, canShelve: true, tools: [.mergePDFs], size: size)
+        let plan = DropHubPlan.make(for: .text("hello"), canShare: true, canShelve: true, tools: [.mergeFiles], size: size)
         #expect(plan.sections.isEmpty)
     }
 
@@ -111,8 +111,8 @@ struct DropHubRoutingTests {
         let calls = Calls()
         let hub = model(calls: calls)
         hub.load(.files(pdfs))
-        hub.perform(.tool(.mergePDFs))
-        #expect(calls.tools.map(\.0) == [.mergePDFs])
+        hub.perform(.tool(.mergeFiles))
+        #expect(calls.tools.map(\.0) == [.mergeFiles])
         #expect(calls.tools.first?.1 == pdfs)
     }
 

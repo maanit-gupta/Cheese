@@ -14,7 +14,7 @@ final class FileToolRegistry {
 
     static var standardTools: [AnyFileTool] {
         [
-            AnyFileTool(MergeTool()),
+            AnyFileTool(MergeFilesTool()),
             AnyFileTool(SplitTool()),
             AnyFileTool(CompressTool()),
             AnyFileTool(WatermarkTool()),

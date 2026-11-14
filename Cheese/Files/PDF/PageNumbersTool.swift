@@ -95,16 +95,21 @@ struct PageNumbersTool: FileTool {
     func work(inputs: [URL], options: Options) -> JobWork {
         .perFile(tool: id, inputs: inputs) { input, context in
             let output = context.outputURL(for: input, suffix: "numbered", extension: "pdf")
-            try PDFOverlayRenderer.render(input, to: output) { pdf, page in
-                guard let number = PageNumbering.number(forPage: page.index, start: options.start, skipFirst: options.skipFirst) else { return }
-                let total = PageNumbering.total(pageCount: page.count, start: options.start, skipFirst: options.skipFirst)
-                let line = OverlayText.line(
-                    options.format.text(number: number, total: total),
-                    fontName: "Helvetica", size: options.fontSize, color: RGBAColor.black.cgColor
-                )
-                let rect = OverlayLayout.rect(for: OverlayText.size(of: line), at: options.position.anchor, in: page.size, margin: 28)
-                OverlayText.draw(line, centeredAt: CGPoint(x: rect.midX, y: rect.midY), rotation: 0, in: pdf)
-            }
+            try Self.stamp(input, to: output, options: options)
+        }
+    }
+
+    /// Writes `input` with page numbers to `output` (also used by Merge Files).
+    nonisolated static func stamp(_ input: URL, to output: URL, options: Options) throws {
+        try PDFOverlayRenderer.render(input, to: output) { pdf, page in
+            guard let number = PageNumbering.number(forPage: page.index, start: options.start, skipFirst: options.skipFirst) else { return }
+            let total = PageNumbering.total(pageCount: page.count, start: options.start, skipFirst: options.skipFirst)
+            let line = OverlayText.line(
+                options.format.text(number: number, total: total),
+                fontName: "Helvetica", size: options.fontSize, color: RGBAColor.black.cgColor
+            )
+            let rect = OverlayLayout.rect(for: OverlayText.size(of: line), at: options.position.anchor, in: page.size, margin: 28)
+            OverlayText.draw(line, centeredAt: CGPoint(x: rect.midX, y: rect.midY), rotation: 0, in: pdf)
         }
     }
 }
