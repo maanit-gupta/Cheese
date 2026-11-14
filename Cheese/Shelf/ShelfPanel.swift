@@ -752,7 +752,18 @@ final class ShelfDragSourceView: NSView, NSDraggingSource {
     }
 }
 
-/// Open · Show in Finder · Remove from Shelf, for one item.
+/// Which shelf items can go to Photos: stored images and image files.
+enum ShelfPhotos {
+    static func isImage(_ item: ShelfItem, url: URL) -> Bool {
+        switch item.content {
+        case .image: true
+        case .file: FileKind(url: url) == .image
+        case .text, .link: false
+        }
+    }
+}
+
+/// Open · Show in Finder · Add to Photos · Remove from Shelf, for one item.
 @MainActor
 enum ShelfItemMenu {
     static func make(for item: ShelfItem, model: ShelfViewModel) -> NSMenu {
@@ -763,6 +774,9 @@ enum ShelfItemMenu {
         menu.addItem(open)
         if let url = model.store.url(for: item) {
             menu.addItem(ClosureMenuItem(title: "Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) })
+            if ShelfPhotos.isImage(item, url: url), !model.store.isMissing(item) {
+                menu.addItem(ClosureMenuItem(title: "Add to Photos") { Task { await PhotosApp.add(url) } })
+            }
         }
         menu.addItem(.separator())
         menu.addItem(ClosureMenuItem(title: "Remove from Shelf") { model.remove(item) })

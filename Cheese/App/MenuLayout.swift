@@ -33,7 +33,7 @@ enum MenuLayout {
             .separator,
             .submenu(title: "After Capture", symbol: "tray.and.arrow.down", children: CaptureDestination.allCases.map {
                 .action(.captureDestination($0))
-            }),
+            } + [.separator, .action(.addToPhotos)]),
         ]),
         .action(.drawOnScreen),
         .submenu(title: "Files", symbol: "doc.on.doc", children: filesChildren),

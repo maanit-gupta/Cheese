@@ -64,7 +64,8 @@ struct PermissionPlanTests {
 
     @Test func eachNeedOnceInAFixedOrder() {
         let all = PermissionPlan.plan(for: Set(ModuleID.allCases))
-        #expect(all == PermissionNeed.allCases)
+        // Photos is only ever asked for from Settings, when the user turns "Also add to Photos" on.
+        #expect(all == PermissionNeed.allCases.filter { $0 != .photos })
         #expect(PermissionPlan.plan(for: [.scrollingCapture, .ocr]) == [.screenRecording, .accessibility])
     }
 

@@ -54,7 +54,7 @@ final class ScrollCaptureModule: CheeseModule {
         let result = await session.run()
         self.session = nil
         if let result {
-            await CaptureDelivery.deliver(result, noun: "Scrolling capture")
+            await CaptureDelivery.deliver(result, noun: "Scrolling capture", kind: .scrolling)
             preview.show(result)
             if session.reachedLimit {
                 CheeseToast.show("Reached the 30,000 px limit — kept what fit", systemImage: "ruler")

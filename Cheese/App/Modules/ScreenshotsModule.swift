@@ -51,6 +51,6 @@ final class ScreenshotsModule: CheeseModule {
             editor.open(image)
             return
         }
-        Task { await CaptureDelivery.deliver(image, noun: "Screenshot") }
+        Task { await CaptureDelivery.deliver(image, noun: "Screenshot", kind: .standard) }
     }
 }

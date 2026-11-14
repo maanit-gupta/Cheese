@@ -21,22 +21,27 @@ enum ImageExportError: LocalizedError {
 
 /// PNG encoding, copying and saving shared by screenshots, the editor and scrolling capture.
 enum ImageExport {
-    static func pngData(for captured: CapturedImage) throws -> Data {
+    /// - Parameter markedAsScreenshot: writes the EXIF user comment "Screenshot" that macOS's own
+    ///   screenshots carry, which is how Photos files them under Screenshots.
+    static func pngData(for captured: CapturedImage, markedAsScreenshot: Bool = false) throws -> Data {
         let data = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(data, UTType.png.identifier as CFString, 1, nil) else {
             throw ImageExportError.encodingFailed
         }
         let dpi = 72 * captured.scale
-        let properties = ["DPIWidth": dpi, "DPIHeight": dpi] as CFDictionary
-        CGImageDestinationAddImage(destination, captured.image, properties)
+        var properties: [CFString: Any] = [kCGImagePropertyDPIWidth: dpi, kCGImagePropertyDPIHeight: dpi]
+        if markedAsScreenshot {
+            properties[kCGImagePropertyExifDictionary] = [kCGImagePropertyExifUserComment: "Screenshot"]
+        }
+        CGImageDestinationAddImage(destination, captured.image, properties as CFDictionary)
         guard CGImageDestinationFinalize(destination) else { throw ImageExportError.encodingFailed }
         return data as Data
     }
 
     /// Encodes off the main actor, since large captures take a while.
     @concurrent
-    static func pngDataInBackground(for captured: CapturedImage) async throws -> Data {
-        try pngData(for: captured)
+    static func pngDataInBackground(for captured: CapturedImage, markedAsScreenshot: Bool = false) async throws -> Data {
+        try pngData(for: captured, markedAsScreenshot: markedAsScreenshot)
     }
 
     @MainActor

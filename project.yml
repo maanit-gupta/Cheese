@@ -80,6 +80,9 @@ targets:
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Cheese Share finds phones and computers on your network running LocalSend, and lets them send files and text to this Mac."
         INFOPLIST_KEY_NSCameraUsageDescription: "Cheese shows your camera in screen recordings when you turn the webcam on."
         INFOPLIST_KEY_NSMicrophoneUsageDescription: "Cheese records your voice in screen recordings when you turn the microphone on."
+        # Asked when "Also add to Photos" is turned on. Read-write, because finding the Cheese album means reading albums.
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "Cheese adds your screenshots to a Cheese album in Photos so they sync to your other devices."
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "Cheese adds your screenshots to a Cheese album in Photos so they sync to your other devices."
         # Not sandboxed: Accessibility and posted CGEvents don't work inside the sandbox.
         ENABLE_APP_SANDBOX: NO
         ENABLE_HARDENED_RUNTIME: NO

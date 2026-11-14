@@ -66,6 +66,8 @@ extension ActionID {
     static let settingsWindows = Self(rawValue: "settingsWindows")
     static let terminalTrace = Self(rawValue: "terminalTrace")
     static let checkForUpdates = Self(rawValue: "checkForUpdates")
+    /// Capture ▸ After Capture ▸ Add to Photos: the global "Also add to Photos" switch.
+    static let addToPhotos = Self(rawValue: "addToPhotos")
     static let installUpdate = Self(rawValue: "installUpdate")
     static let sweep = Self(rawValue: "sweep")
     static let settingsSweep = Self(rawValue: "settingsSweep")
@@ -97,7 +99,7 @@ extension ActionID {
         Self(rawValue: "captureDestination.\(destination.rawValue)")
     }
 
-    /// "Files: Merge PDFs…" and the other Files tools.
+    /// "Files: Merge Files…" and the other Files tools.
     static func files(_ tool: ToolID) -> Self {
         Self(rawValue: "files.\(tool.rawValue)")
     }

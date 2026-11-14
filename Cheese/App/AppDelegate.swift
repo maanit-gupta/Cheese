@@ -328,7 +328,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 UserDefaults.standard.set(destination.rawValue, forKey: PreferenceKey.captureDestination)
                 CheeseToast.show("After a capture: \(destination.title.lowercased())", systemImage: destination.symbol)
             }
-        }
+        } + [
+            CheeseAction(
+                id: .addToPhotos, title: "After Capture: Add to Photos", symbol: "photo.on.rectangle", module: nil, menuTitle: "Add to Photos",
+                precondition: {
+                    let preferences = Preferences()
+                    return preferences.isModuleEnabled(.screenshots) || preferences.isModuleEnabled(.scrollingCapture)
+                        || preferences.isModuleEnabled(.drawOnScreen)
+                },
+                isChecked: { UserDefaults.standard.bool(forKey: PreferenceKey.photosEnabled) }
+            ) { _ in
+                PhotosSwitch.set(!UserDefaults.standard.bool(forKey: PreferenceKey.photosEnabled), announce: true)
+            },
+        ]
     }
 
     private func caffeinateModule() -> CaffeinateModule {

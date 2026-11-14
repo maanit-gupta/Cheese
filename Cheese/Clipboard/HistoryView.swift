@@ -145,6 +145,10 @@ enum HistoryItemMenu {
                 if let item = model.store.item(withID: id) { model.startEditing(item) }
             })
         }
+        // An explicit action, so it works whether or not captures go to Photos automatically.
+        if item.kind == .image, let file = model.imageURL(for: item) {
+            menu.addItem(ClosureMenuItem(title: "Add to Photos") { Task { await PhotosApp.add(file) } })
+        }
         menu.addItem(.separator())
         menu.addItem(ClosureMenuItem(title: item.isPinned ? "Unpin" : "Pin", handler: run(.togglePin)))
         menu.addItem(ClosureMenuItem(title: "Delete", handler: run(.delete)))

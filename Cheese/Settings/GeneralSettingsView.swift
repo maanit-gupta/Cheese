@@ -13,6 +13,10 @@ struct GeneralSettingsView: View {
     private var captureDestination = Preferences.defaultCaptureDestination
 
     @AppStorage(PreferenceKey.drawLetterKeys) private var drawLetterKeys = true
+    @AppStorage(PreferenceKey.photosEnabled) private var photosEnabled = false
+    @AppStorage(PreferenceKey.photosStandardCaptures) private var photosStandard = true
+    @AppStorage(PreferenceKey.photosScrollingCaptures) private var photosScrolling = true
+    @AppStorage(PreferenceKey.photosDrawSnapshots) private var photosSnapshots = true
 
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var launchAtLoginMessage: String?
@@ -49,6 +53,20 @@ struct GeneralSettingsView: View {
                 Text("Screenshots")
             } footer: {
                 Text("Applies to region, window, full-screen and scrolling captures and to draw-mode snapshots. Also under Capture ▸ After Capture in the menu bar. Hold ⇧ while capturing to open the editor instead.")
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Toggle("Also add to Photos", isOn: Binding(
+                    get: { photosEnabled },
+                    set: { PhotosSwitch.set($0, announce: false) }
+                ))
+                Toggle(CaptureKind.standard.title, isOn: $photosStandard).disabled(!photosEnabled)
+                Toggle(CaptureKind.scrolling.title, isOn: $photosScrolling).disabled(!photosEnabled)
+                Toggle(CaptureKind.drawSnapshot.title, isOn: $photosSnapshots).disabled(!photosEnabled)
+            } footer: {
+                Text("Captures go into a Cheese album, as well as wherever After a capture sends them. To see captures on your iPhone, turn on iCloud Photos on this Mac and your phone.")
                     .font(DesignTokens.Typography.caption)
                     .foregroundStyle(.secondary)
             }

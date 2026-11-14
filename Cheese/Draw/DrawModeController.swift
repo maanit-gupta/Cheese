@@ -1278,7 +1278,7 @@ final class DrawModeController {
                     exit()
                     services.openEditor(image)
                 } else {
-                    await CaptureDelivery.deliver(image, noun: "Snapshot")
+                    await CaptureDelivery.deliver(image, noun: "Snapshot", kind: .drawSnapshot)
                 }
             } catch {
                 Logger.draw.error("Snapshot failed: \(error.localizedDescription, privacy: .public)")

@@ -367,7 +367,7 @@ struct MenuLayoutTests {
             "recordRegion", "recordFullScreen", "stopRecording", "—", "After Capture▸",
         ])
         #expect(titles(submenu("After Capture", in: submenu("Capture", in: visible) ?? []) ?? []) == [
-            "captureDestination.clipboard", "captureDestination.folder", "captureDestination.clipboardAndFolder",
+            "captureDestination.clipboard", "captureDestination.folder", "captureDestination.clipboardAndFolder", "—", "addToPhotos",
         ])
         #expect(titles(submenu("Tools", in: visible) ?? []) == [
             "autoKillPanel", "killAllApps", "—", "showClipboardQR", "Terminal Trace▸", "Hush▸", "—", "Mode▸",
@@ -411,7 +411,7 @@ struct MenuLayoutTests {
 
     @Test func disabledModulesDisappear() {
         let destinations = CaptureDestination.allCases.map { ActionID.captureDestination($0) }
-        let capture = Set<ActionID>([.captureRegion, .captureWindow, .captureFullScreen, .ocrRegion, .scrollingCapture, .recordRegion, .recordFullScreen, .stopRecording] + destinations)
+        let capture = Set<ActionID>([.captureRegion, .captureWindow, .captureFullScreen, .ocrRegion, .scrollingCapture, .recordRegion, .recordFullScreen, .stopRecording, .addToPhotos] + destinations)
         let visible = MenuLayout.visible(MenuLayout.standard) { !capture.contains($0) }
         #expect(submenu("Capture", in: visible) == nil)
         #expect(!titles(visible).contains("Capture▸"))
@@ -420,7 +420,7 @@ struct MenuLayoutTests {
     @Test func aSubmenuWithOneItemBecomesAPlainItem() {
         let recording: Set<ActionID> = [.recordRegion, .recordFullScreen, .stopRecording]
         let visible = MenuLayout.visible(MenuLayout.standard) {
-            $0 == .ocrRegion || !$0.rawValue.hasPrefix("capture") && $0 != .scrollingCapture && !recording.contains($0)
+            $0 == .ocrRegion || !$0.rawValue.hasPrefix("capture") && $0 != .scrollingCapture && $0 != .addToPhotos && !recording.contains($0)
         }
         #expect(titles(visible).contains("ocrRegion!"))
         #expect(!titles(visible).contains("Capture▸"))

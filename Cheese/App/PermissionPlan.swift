@@ -10,6 +10,9 @@ enum PermissionNeed: CaseIterable, Identifiable, Sendable {
     case camera
     /// Screen recordings with your voice.
     case microphone
+    /// "Also add to Photos" and History/Shelf "Add to Photos". Only in Settings → Permissions:
+    /// asked for when the user turns it on, never in the welcome flow.
+    case photos
 
     var id: Self { self }
 
@@ -22,6 +25,7 @@ enum PermissionNeed: CaseIterable, Identifiable, Sendable {
         case .finderExtension: "Finder Extension"
         case .camera: "Camera"
         case .microphone: "Microphone"
+        case .photos: "Photos"
         }
     }
 
@@ -34,12 +38,13 @@ enum PermissionNeed: CaseIterable, Identifiable, Sendable {
         case .finderExtension: "folder.badge.gearshape"
         case .camera: "video"
         case .microphone: "mic"
+        case .photos: "photo.on.rectangle"
         }
     }
 
     /// Only needed for an extra the user turns on (the camera or microphone in a recording).
     var isOptional: Bool {
-        self == .camera || self == .microphone
+        self == .camera || self == .microphone || self == .photos
     }
 
     /// The TCC permission behind this need, for the two Cheese can check directly.
@@ -47,7 +52,7 @@ enum PermissionNeed: CaseIterable, Identifiable, Sendable {
         switch self {
         case .screenRecording: .screenRecording
         case .accessibility: .accessibility
-        case .notifications, .localNetwork, .finderExtension, .camera, .microphone: nil
+        case .notifications, .localNetwork, .finderExtension, .camera, .microphone, .photos: nil
         }
     }
 }
@@ -85,6 +90,11 @@ enum PermissionPlan {
 
     /// The enabled tools that need `need`, in `ModuleID` order: "Used by Screenshots, OCR".
     static func tools(needing need: PermissionNeed, among enabled: Set<ModuleID>) -> [ModuleID] {
-        ModuleID.allCases.filter { enabled.contains($0) && needs(of: $0).contains(need) }
+        if need == .photos {
+            // Not part of any module's plan (so the welcome flow never asks), but these use it.
+            let users: Set<ModuleID> = [.screenshots, .scrollingCapture, .drawOnScreen, .clipboard, .shelf]
+            return ModuleID.allCases.filter { users.contains($0) && enabled.contains($0) }
+        }
+        return ModuleID.allCases.filter { enabled.contains($0) && needs(of: $0).contains(need) }
     }
 }

@@ -44,6 +44,8 @@ final class PermissionStatus {
                 states[need] = FIFinderSyncController.isExtensionEnabled ? .granted : .missing
             case .camera, .microphone:
                 states[need] = AVCaptureDevice.authorizationStatus(for: Self.mediaType(need)) == .authorized ? .granted : .missing
+            case .photos:
+                states[need] = SystemPhotoLibrary.shared.authorizationStatus == .granted ? .granted : .missing
             }
         }
         self.states = states
@@ -80,6 +82,15 @@ final class PermissionStatus {
             }
         case .finderExtension:
             FIFinderSyncController.showExtensionManagementInterface()
+        case .photos:
+            Task {
+                if SystemPhotoLibrary.shared.authorizationStatus == .notDetermined {
+                    _ = await SystemPhotoLibrary.shared.requestAccess()
+                } else {
+                    PhotosApp.openSettings()
+                }
+                await refresh()
+            }
         case .camera, .microphone:
             let type = Self.mediaType(need)
             Task {

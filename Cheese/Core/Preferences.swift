@@ -5,6 +5,14 @@ import Foundation
 enum PreferenceKey {
     static let screenshotSaveFolder = "screenshotSaveFolder"
     static let captureDestination = "captureDestination"
+    /// Whether captures are also added to Photos (off unless set).
+    static let photosEnabled = "photosEnabled"
+    /// Which captures go to Photos while that's on (each on unless set false).
+    static let photosStandardCaptures = "photosStandardCaptures"
+    static let photosScrollingCaptures = "photosScrollingCaptures"
+    static let photosDrawSnapshots = "photosDrawSnapshots"
+    /// The "Cheese" album's PhotoKit local identifier, so it's found again (and made again if deleted).
+    static let photosAlbumIdentifier = "photosAlbumIdentifier"
     static let historySize = "historySize"
     /// Whether a copied link has its tracking parameters stripped on the clipboard right away (off unless set).
     static let copyCleanLinkAutomatically = "copyCleanLinkAutomatically"
@@ -132,6 +140,12 @@ struct Preferences {
     var captureDestination: CaptureDestination {
         defaults.string(forKey: PreferenceKey.captureDestination).flatMap(CaptureDestination.init(rawValue:))
             ?? Self.defaultCaptureDestination
+    }
+
+    /// Whether a capture of this kind is also added to Photos: the switch is on and its kind is ticked.
+    func addsToPhotos(_ kind: CaptureKind) -> Bool {
+        guard defaults.bool(forKey: PreferenceKey.photosEnabled) else { return false }
+        return defaults.object(forKey: kind.photosKey) as? Bool ?? true
     }
 
     var ocrLineBreakMode: OCRLineBreakMode {
