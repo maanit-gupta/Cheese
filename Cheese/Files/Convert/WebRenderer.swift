@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import JavaScriptCore
+import UniformTypeIdentifiers
 
 /// The vendored renderer files bundled under `Renderers/`.
 enum Renderers {
@@ -44,12 +45,82 @@ enum JavaScriptRunner {
 enum MarkdownConverter {
     static func html(fromMarkdown markdown: String) throws -> String {
         let context = try JavaScriptRunner.context(loading: ["marked.umd.js"])
-        let result = context.objectForKeyedSubscript("marked")?.invokeMethod("parse", withArguments: [markdown])
+        let result = context.objectForKeyedSubscript("marked")?.invokeMethod("parse", withArguments: [strippingFrontMatter(markdown)])
         try JavaScriptRunner.check(context)
         guard let result, result.isString, let html = result.toString() else {
             throw FileToolError.message("The Markdown couldn't be converted.")
         }
         return html
+    }
+
+    /// Drops a YAML front matter block (`---` … `---` or `...` at the very top), which is metadata for
+    /// site generators and editors, not part of the document. `marked` would print it as text.
+    static func strippingFrontMatter(_ markdown: String) -> String {
+        var text = Substring(markdown)
+        if text.hasPrefix("\u{FEFF}") {
+            text = text.dropFirst()
+        }
+        guard let opening = text.firstMatch(of: /^---[ \t]*\r?\n/) else { return markdown }
+        let rest = text[opening.range.upperBound...]
+        guard let closing = rest.firstMatch(of: /(?m)^(?:---|\.\.\.)[ \t]*(?:\r?\n|$)/) else { return markdown }
+        return String(rest[closing.range.upperBound...])
+    }
+}
+
+/// Images a document refers to by a relative path, read only from inside the document's own folder.
+enum LocalImages {
+    /// Larger files aren't embedded.
+    static let maxBytes = 25_000_000
+    private static let extensions: Set<String> = ["png", "jpg", "jpeg", "gif", "heic", "heif", "tif", "tiff", "bmp", "webp", "svg"]
+
+    /// The file a relative `src` names, if it's an image inside `folder` (no `..` escapes, no
+    /// absolute paths, no URLs with a scheme).
+    static func resolve(_ source: String, in folder: URL) -> URL? {
+        let trimmed = source.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, !trimmed.hasPrefix("/"), !trimmed.hasPrefix("//"),
+              trimmed.firstMatch(of: /^[A-Za-z][A-Za-z0-9+.\-]*:/) == nil
+        else { return nil }
+        let path = trimmed.removingPercentEncoding ?? trimmed
+        let file = folder.appending(path: path).standardizedFileURL
+        let base = folder.standardizedFileURL.path(percentEncoded: false)
+        let resolved = file.path(percentEncoded: false)
+        guard resolved.hasPrefix(base.hasSuffix("/") ? base : base + "/"),
+              extensions.contains(file.pathExtension.lowercased()),
+              let size = try? file.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
+              size.isRegularFile == true, (size.fileSize ?? .max) <= maxBytes
+        else { return nil }
+        return file
+    }
+
+    /// `<img src="relative">` → a `data:` URI, for markup loaded without file access.
+    static func inliningImages(in html: String, folder: URL) -> String {
+        html.replacing(/(?i)<img\b[^>]*>/) { match in
+            let tag = String(match.0)
+            guard let source = HTMLForDocx.attribute("src", in: tag), let file = resolve(source, in: folder),
+                  let data = try? Data(contentsOf: file)
+            else { return tag }
+            let type = UTType(filenameExtension: file.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
+            return tag.replacing(source, with: "data:\(type);base64,\(data.base64EncodedString())", maxReplacements: 1)
+        }
+    }
+
+    /// The image as upright PNG with its size in points (one pixel per point, or per two on 144-dpi images).
+    static func png(at file: URL) -> (png: Data, size: CGSize)? {
+        guard let source = CGImageSourceCreateWithURL(file as CFURL, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int, let height = properties[kCGImagePropertyPixelHeight] as? Int
+        else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: max(width, height),
+        ]
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary),
+              let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
+        else { return nil }
+        let dpi = properties[kCGImagePropertyDPIWidth] as? Double ?? 72
+        let scale = dpi > 100 ? 72 / dpi : 1
+        return (png, CGSize(width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale))
     }
 }
 
@@ -100,7 +171,8 @@ enum WebRenderer {
         case .html:
             try await view.loadFile(input, readAccess: folder)
         case .markdown:
-            let body = try MarkdownConverter.html(fromMarkdown: try WebDocument.readText(input))
+            // Markup loaded from a string gets no file access, so the file's own images go in as data.
+            let body = LocalImages.inliningImages(in: try MarkdownConverter.html(fromMarkdown: try WebDocument.readText(input)), folder: folder)
             try await view.loadHTML(WebDocument.page(body: body, css: try Renderers.source("print.css"), title: input.lastPathComponent), baseURL: folder)
         default:
             let body = WebDocument.plainText(try WebDocument.readText(input))

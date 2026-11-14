@@ -3,16 +3,24 @@ import Foundation
 
 /// A stretch of text in one font.
 struct LayoutRun: Equatable, Sendable {
+    enum Script: Equatable, Sendable {
+        case none, superscript, `subscript`
+    }
+
     var text: String
     var fontSize: CGFloat
     var isBold = false
     var isItalic = false
+    /// Raised or lowered, like the 2 in x² or the i in aᵢ (Word's `w:vertAlign`).
+    var script: Script = .none
 }
 
 /// One line of text on a page. Frames use a top-left origin, y growing downward.
 struct LayoutLine: Equatable, Sendable {
     var runs: [LayoutRun]
     var frame: CGRect
+    /// The line is a table row: its cells are separated by tab runs.
+    var isTabular = false
 
     var text: String { runs.map(\.text).joined() }
 
@@ -32,6 +40,13 @@ struct LayoutImage: Equatable, Sendable {
     var frame: CGRect
 }
 
+/// What a page holds, already in reading order.
+enum LayoutItem: Equatable, Sendable {
+    case line(LayoutLine)
+    case image(LayoutImage)
+    case equation(LayoutImage, number: String?)
+}
+
 /// A paragraph-level piece of the document, in reading order.
 struct LayoutBlock: Equatable, Sendable {
     enum Kind: Equatable, Sendable {
@@ -39,6 +54,10 @@ struct LayoutBlock: Equatable, Sendable {
         case paragraph
         case listItem(ordered: Bool)
         case image(Int)
+        /// A display equation as a picture, with its number (like "(3)") as text when it was set apart.
+        case equation(Int, number: String?)
+        /// Rows of cells.
+        case table([[String]])
     }
 
     var kind: Kind
@@ -54,32 +73,115 @@ enum TextLayoutAnalyzer {
     /// A gap above a line larger than this share of the usual line height starts a new paragraph.
     static let paragraphGap: CGFloat = 0.6
 
+    /// Lines and images in top-to-bottom order (images go before the first line below them).
     static func blocks(lines: [LayoutLine], images: [LayoutImage] = []) -> [LayoutBlock] {
+        var items: [LayoutItem] = []
+        var pendingImages = images.sorted { $0.frame.minY < $1.frame.minY }
+        for line in lines {
+            while let image = pendingImages.first, image.frame.minY < line.frame.minY {
+                items.append(.image(image))
+                pendingImages.removeFirst()
+            }
+            items.append(.line(line))
+        }
+        items += pendingImages.map { .image($0) }
+        return blocks(items: items)
+    }
+
+    /// Blocks from items already in reading order. `vocabulary` holds the document's words, to tell a
+    /// word hyphenated at a line end ("pa-" "rameter") from a compound ("state-" "of-the-art").
+    static func blocks(items: [LayoutItem], vocabulary: Set<String> = []) -> [LayoutBlock] {
+        let lines = items.compactMap { item -> LayoutLine? in
+            if case let .line(line) = item { line } else { nil }
+        }
         let body = bodySize(of: lines)
         let lineHeight = median(lines.map(\.frame.height)) ?? 12
-        var pendingImages = images.sorted { $0.frame.minY < $1.frame.minY }
         var blocks: [LayoutBlock] = []
         var previous: (line: LayoutLine, kind: LayoutBlock.Kind)?
+        var tableRows: [[String]] = []
+        var tableLines: [LayoutLine] = []
 
-        for line in lines where !line.text.trimmingCharacters(in: .whitespaces).isEmpty {
-            // Images that sit above this line come first.
-            var placedImage = false
-            while let image = pendingImages.first, image.frame.minY < line.frame.minY {
-                blocks.append(LayoutBlock(kind: .image(image.id)))
-                pendingImages.removeFirst()
-                placedImage = true
+        func flushTable() {
+            let rows = tableRows
+            let lines = tableLines
+            tableRows = []
+            tableLines = []
+            guard !rows.isEmpty else { return }
+            if rows.count >= 2 {
+                blocks.append(LayoutBlock(kind: .table(rows)))
+                previous = nil
+            } else if var only = lines.first {
+                // One row on its own isn't a table: "1⇥Introduction" is a numbered heading.
+                only.isTabular = false
+                only.runs = only.runs.map { run in
+                    var copy = run
+                    copy.text = copy.text.replacing("\t", with: " ")
+                    return copy
+                }
+                addLine(only)
             }
+        }
 
+        func addLine(_ line: LayoutLine) {
             let (kind, runs) = classify(line, body: body)
-            if !placedImage, let previous, let last = blocks.last, continues(line, kind: kind, after: previous, lastBlock: last, lineHeight: lineHeight) {
-                blocks[blocks.count - 1].runs = join(last.runs, runs)
+            if let previous, let last = blocks.last, continues(line, kind: kind, after: previous, lastBlock: last, lineHeight: lineHeight) {
+                blocks[blocks.count - 1].runs = join(last.runs, runs, vocabulary: vocabulary)
             } else {
                 blocks.append(LayoutBlock(kind: kind, runs: runs))
             }
             previous = (line, kind)
         }
-        blocks += pendingImages.map { LayoutBlock(kind: .image($0.id)) }
+
+        for item in items {
+            switch item {
+            case let .image(image):
+                flushTable()
+                blocks.append(LayoutBlock(kind: .image(image.id)))
+                previous = nil
+            case let .equation(image, number):
+                flushTable()
+                blocks.append(LayoutBlock(kind: .equation(image.id, number: number)))
+                previous = nil
+            case let .line(line):
+                guard !line.text.trimmingCharacters(in: .whitespaces).isEmpty else { continue }
+                if line.isTabular {
+                    let cells = line.text.components(separatedBy: "\t").map { $0.trimmingCharacters(in: .whitespaces) }
+                    // A row with a different number of cells starts a new table.
+                    if let last = tableRows.last, last.count != cells.count {
+                        flushTable()
+                    }
+                    tableRows.append(cells)
+                    tableLines.append(line)
+                    previous = nil
+                    continue
+                }
+                flushTable()
+                addLine(line)
+            }
+        }
+        flushTable()
         return blocks.map(merged)
+    }
+
+    /// Words as they appear in the text, lowercased, hyphenated compounds included, for `blocks(items:vocabulary:)`.
+    static func vocabulary(of lines: [LayoutLine]) -> Set<String> {
+        var words = Set<String>()
+        for line in lines {
+            // A word cut at the line's end isn't a word yet.
+            var text = line.text
+            if text.hasSuffix("-") {
+                text = String(text.dropLast())
+                if let space = text.lastIndex(where: \.isWhitespace) {
+                    text = String(text[..<space])
+                } else {
+                    continue
+                }
+            }
+            for match in text.matches(of: /[\p{L}]+(?:-[\p{L}]+)*/) {
+                words.insert(String(match.0).lowercased())
+            }
+        }
+        return words
     }
 
     /// The median font size over all characters on the page: what body text is set in.
@@ -135,13 +237,33 @@ enum TextLayoutAnalyzer {
         }
     }
 
-    /// Joins two lines' runs with a space, or rejoins a word hyphenated across the break.
-    private static func join(_ first: [LayoutRun], _ second: [LayoutRun]) -> [LayoutRun] {
+    /// Prefixes whose compounds keep their hyphen ("self-aware", "well-known").
+    static let compoundPrefixes: Set<String> = ["self", "well", "ill", "ex", "all", "half", "non", "co", "cross", "multi"]
+
+    /// Joins two lines' runs with a space, or rejoins a word hyphenated across the break. The hyphen
+    /// stays when the continuation is itself hyphenated ("state-" "of-the-art"), when the document
+    /// spells the word with a hyphen elsewhere, or after a prefix like "well-"; it goes when the
+    /// document spells the word without one, and otherwise.
+    static func join(_ first: [LayoutRun], _ second: [LayoutRun], vocabulary: Set<String> = []) -> [LayoutRun] {
         var result = first
         guard var last = result.popLast() else { return second }
-        let next = second.first?.text.first
+        let nextText = second.map(\.text).joined()
+        let next = nextText.first
         if last.text.hasSuffix("-"), last.text.dropLast().last?.isLetter == true, next?.isLowercase == true {
-            last.text.removeLast()
+            let prefix = String(last.text.dropLast().reversed().prefix { $0.isLetter }.reversed()).lowercased()
+            let continuation = String(nextText.prefix { $0.isLetter || $0 == "-" }).lowercased()
+            let keepsHyphen: Bool = if continuation.contains("-") {
+                true
+            } else if vocabulary.contains(prefix + "-" + continuation) {
+                true
+            } else if vocabulary.contains(prefix + continuation) {
+                false
+            } else {
+                compoundPrefixes.contains(prefix)
+            }
+            if !keepsHyphen {
+                last.text.removeLast()
+            }
         } else if !last.text.hasSuffix(" ") {
             last.text += " "
         }
@@ -169,7 +291,7 @@ enum TextLayoutAnalyzer {
     private static func merged(_ block: LayoutBlock) -> LayoutBlock {
         var copy = block
         copy.runs = block.runs.reduce(into: []) { runs, run in
-            if var last = runs.last, last.fontSize == run.fontSize, last.isBold == run.isBold, last.isItalic == run.isItalic {
+            if var last = runs.last, last.fontSize == run.fontSize, last.isBold == run.isBold, last.isItalic == run.isItalic, last.script == run.script {
                 last.text += run.text
                 runs[runs.count - 1] = last
             } else {

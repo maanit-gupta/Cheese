@@ -71,6 +71,108 @@ enum DocxImageEmbedder {
     }
 }
 
+/// A table to put into a .docx where a placeholder token paragraph stands.
+struct DocxTable: Sendable, Equatable {
+    var token: String
+    var rows: [[String]]
+    /// The first row is a header, set in bold.
+    var hasHeader = true
+    var hasBorders = true
+    /// Column widths in twentieths of a point; equal across the text width when nil.
+    var columnWidths: [Int]?
+    /// `w:jc` per column ("left", "center", "right"); left when nil.
+    var alignments: [String]?
+
+    static func token(_ number: Int) -> String {
+        "CHEESETABLE" + String(format: "%04d", number) + "X"
+    }
+}
+
+/// Swaps each table's token paragraph for a real `w:tbl` with single-line borders and equal
+/// columns across the text width. Pure edits on `word/document.xml`.
+enum DocxTableEmbedder {
+    /// Letter minus 1-inch margins, in twentieths of a point.
+    static let textWidth = 9360
+
+    static func embed(_ tables: [DocxTable], into parts: inout [String: Data]) throws {
+        guard !tables.isEmpty else { return }
+        guard var document = parts[DocxImageEmbedder.documentPath].map({ String(decoding: $0, as: UTF8.self) }) else {
+            throw FileToolError.message("The Word document is missing its body.")
+        }
+        for table in tables {
+            guard let token = document.range(of: ">\(table.token)<"),
+                  let start = paragraphStart(before: token.lowerBound, in: document),
+                  let end = document.range(of: "</w:p>", range: token.upperBound..<document.endIndex)
+            else {
+                throw FileToolError.message("A table couldn't be placed in the Word document.")
+            }
+            var replacement = xml(table)
+            // The body (and a cell) must end in a paragraph.
+            if document[end.upperBound...].hasPrefix("<w:sectPr") {
+                replacement += "<w:p/>"
+            }
+            document.replaceSubrange(start..<end.upperBound, with: replacement)
+        }
+        parts[DocxImageEmbedder.documentPath] = Data(document.utf8)
+    }
+
+    private static func paragraphStart(before index: String.Index, in document: String) -> String.Index? {
+        var search = document[..<index]
+        while let found = search.range(of: "<w:p", options: .backwards) {
+            let next = document[found.upperBound]
+            if next == " " || next == ">" {
+                return found.lowerBound
+            }
+            search = document[..<found.lowerBound]
+        }
+        return nil
+    }
+
+    static func xml(_ table: DocxTable) -> String {
+        let columns = max(table.rows.map(\.count).max() ?? 1, 1)
+        let widths = table.columnWidths.flatMap { $0.count == columns ? $0 : nil } ?? Array(repeating: textWidth / columns, count: columns)
+        let border = table.hasBorders ? #"w:val="single" w:sz="4" w:space="0" w:color="808080""# : #"w:val="nil""#
+        var xml = "<w:tbl><w:tblPr><w:tblW w:w=\"\(widths.reduce(0, +))\" w:type=\"dxa\"/><w:tblBorders>"
+        for edge in ["top", "left", "bottom", "right", "insideH", "insideV"] {
+            xml += "<w:\(edge) \(border)/>"
+        }
+        xml += "</w:tblBorders><w:tblLayout w:type=\"fixed\"/><w:tblCellMar><w:left w:w=\"80\" w:type=\"dxa\"/><w:right w:w=\"80\" w:type=\"dxa\"/></w:tblCellMar></w:tblPr><w:tblGrid>"
+        xml += widths.map { "<w:gridCol w:w=\"\($0)\"/>" }.joined()
+        xml += "</w:tblGrid>"
+        for (rowIndex, row) in table.rows.enumerated() {
+            xml += "<w:tr>"
+            for column in 0..<columns {
+                let cell = column < row.count ? row[column] : ""
+                let bold = table.hasHeader && rowIndex == 0 ? "<w:b/>" : ""
+                let alignment = table.alignments.flatMap { column < $0.count ? $0[column] : nil }.map { "<w:pPr><w:jc w:val=\"\($0)\"/></w:pPr>" } ?? ""
+                xml += "<w:tc><w:tcPr><w:tcW w:w=\"\(widths[column])\" w:type=\"dxa\"/><w:vAlign w:val=\"center\"/></w:tcPr><w:p>\(alignment)"
+                if !cell.isEmpty {
+                    xml += "<w:r><w:rPr>\(bold)<w:sz w:val=\"20\"/></w:rPr><w:t xml:space=\"preserve\">\(escaped(cell))</w:t></w:r>"
+                }
+                xml += "</w:p></w:tc>"
+            }
+            xml += "</w:tr>"
+        }
+        return xml + "</w:tbl>"
+    }
+
+    static func escaped(_ text: String) -> String {
+        var result = ""
+        for scalar in text.unicodeScalars {
+            switch scalar {
+            case "&": result += "&amp;"
+            case "<": result += "&lt;"
+            case ">": result += "&gt;"
+            case "\"": result += "&quot;"
+            // Characters XML 1.0 can't hold.
+            case _ where scalar.value < 0x20 && scalar != "\t" && scalar != "\n" && scalar != "\r": continue
+            default: result.unicodeScalars.append(scalar)
+            }
+        }
+        return result
+    }
+}
+
 /// Reads and writes ZIP packages (.docx, .xlsx) with SheetJS's bundled CFB library in a bare
 /// `JSContext`: synchronous, offline, and no extra dependency.
 enum ZipArchive {

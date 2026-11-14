@@ -1,0 +1,121 @@
+% Source of latex-article.pdf, a self-made fixture for PDF → Word.
+% Rebuild with:  tectonic CheeseTests/Fixtures/Files/latex-article.tex
+% Exercises what LaTeX output does to text extraction: ligatures (fi, fl, ff, ffi, ffl), words placed
+% by kerning with no space characters, end-of-line hyphenation, two columns, running headers and
+% footers, footnotes, inline math (Computer Modern math fonts), and display equations (fractions,
+% sums, integrals, a matrix, aligned equations).
+\documentclass[10pt,twocolumn]{article}
+\usepackage[letterpaper,margin=0.8in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Cheese Fixture Journal}
+\fancyhead[R]{Efficient Flows}
+\fancyfoot[C]{Page \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\title{Efficient Flows in Offline Document Conversion}
+\author{The Cheese Fixture Team}
+\date{November 2026}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\section{Introduction}
+The first finding is that an efficient office workflow keeps documents flowing without
+fluff. Our staff officers were baffled by the difficult shuffle of files between affine
+spaces, so we wrote a fluent and fluffy introduction to make the reflow problem
+concrete.\footnote{The footnote affirms that the effort was sufficient and efficient.}
+Conversion tools traditionally struggle with characteristically hyphenated paragraphs,
+internationalization, and well-known state-of-the-art typesetting systems.
+
+Consider a sequence $a_i$ with $x^2 + y^2 = r^2$ and a parameter $\alpha$ that varies
+between $\beta$ and $\gamma$. When $n \to \infty$ the error $\epsilon_n \le \delta$ for
+every $\lambda > 0$, and the sum $\sum_i w_i$ stays bounded by $\Omega$.
+
+\section{Method}
+We define the transfer as an integral over the unit interval:
+\begin{equation}
+  F(x) = \int_0^1 \frac{e^{-t x}}{1 + t^2} \, dt .
+  \label{eq:transfer}
+\end{equation}
+Equation~\ref{eq:transfer} is evaluated numerically. The total cost is
+\begin{equation}
+  C = \sum_{k=1}^{n} \frac{k^2}{2^k} + \sqrt{\frac{\pi}{2}} .
+\end{equation}
+The rotation is represented by a matrix,
+\begin{equation}
+  R(\theta) = \begin{pmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{pmatrix},
+\end{equation}
+and the two constraints are aligned:
+\begin{align}
+  u + v &= 10, \\
+  2u - v &= 4 .
+\end{align}
+
+Practitioners repeatedly underestimate the difficulty of reconstructing paragraphs
+from positioned glyphs, particularly when justification stretches interword spacing
+and hyphenation splits otherwise unremarkable vocabulary across consecutive lines.
+Nevertheless, careful reconstruction recovers the original sentences
+faithfully.\footnote{Reconstruction also keeps the official figures intact.}
+
+\section{Results}
+Table~\ref{tab:results} lists the measured throughput for each configuration.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\hline
+Configuration & Pages & Seconds \\
+\hline
+Baseline & 120 & 14.2 \\
+Efficient & 120 & 9.8 \\
+Offline & 120 & 11.5 \\
+\hline
+\end{tabular}
+\caption{Throughput by configuration.}
+\label{tab:results}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\setlength{\unitlength}{1pt}
+\begin{picture}(180,90)
+  \put(0,0){\framebox(180,90){}}
+  \put(20,10){\line(1,2){35}}
+  \put(55,80){\line(1,-1){50}}
+  \put(105,30){\line(2,1){55}}
+  \put(20,10){\circle*{4}}
+  \put(55,80){\circle*{4}}
+  \put(105,30){\circle*{4}}
+  \put(160,57){\circle*{4}}
+\end{picture}
+\caption{A simple figure drawn with lines.}
+\end{figure}
+
+The efficient configuration finished first. The offline configuration was slower but
+never touched the network, which the staff officers preferred.
+
+\section{Discussion}
+Extraction from typeset documents is difficult because the typesetter places words by
+kerning rather than by inserting space characters. Ligatures such as fi, fl, ff, ffi
+and ffl collapse several letters into one glyph, so a naive extractor reports
+``efficient'' as a word with a missing letter. Our fluent approach fixes the affected
+officers' documents.
+
+\section{Conclusion}
+We conclude that offline conversion is sufficient for the official office. Future work
+will examine scientific notation such as $E = mc^2$ and $\nabla \cdot \mathbf{B} = 0$.
+
+\clearpage
+\section{Appendix}
+The appendix repeats the running header and footer on a further page so repeated lines can
+be detected and dropped. It also holds a final display equation:
+\begin{equation}
+  \lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n = e .
+\end{equation}
+Affluent, efficient and fluffy words end the document.
+
+\end{document}

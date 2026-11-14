@@ -293,3 +293,272 @@ struct PDFToOfficeIntegrationTests {
         #expect(inventory.contains(["Gears", "88", "150"]))
     }
 }
+
+// MARK: - 2.5 PDF → Word rebuild
+
+/// Characters set at `x`, one em apart unless `gaps` says otherwise, on a baseline at `baseline`.
+private func chars(
+    _ text: String, x: CGFloat = 72, baseline: CGFloat = 100, size: CGFloat = 10, font: String = "CMR10",
+    advance: CGFloat? = nil
+) -> [PageChar] {
+    var position = x
+    return text.map { character in
+        let width = advance ?? size * 0.5
+        defer { position += width }
+        return PageChar(
+            text: String(character), frame: CGRect(x: position, y: baseline - size * 0.75, width: width, height: size),
+            fontSize: size, fontName: font, baseline: baseline
+        )
+    }
+}
+
+struct PageLayoutPlannerTests {
+    @Test func ligaturesBecomeLettersSharingTheGlyphBox() {
+        let ffi = PageChar(text: "\u{FB03}", frame: CGRect(x: 10, y: 0, width: 9, height: 10), fontSize: 10)
+        let pieces = PageLayoutPlanner.normalized(ffi)
+        #expect(pieces.map(\.text) == ["f", "f", "i"])
+        #expect(pieces.map(\.frame.minX) == [10, 13, 16])
+        #expect(PageLayoutPlanner.normalizedText("E\u{FB00}icient \u{FB02}ow") == "Efficient flow")
+        #expect(PageLayoutPlanner.normalized(PageChar(text: "α", frame: .zero, fontSize: 10)).map(\.text) == ["α"])
+    }
+
+    @Test func unreadableTextIsPrivateUseReplacementOrControlCharacters() {
+        #expect(PageLayoutPlanner.isUnreadable("\u{E001}\u{E002}\u{E003} x"))
+        #expect(PageLayoutPlanner.isUnreadable("\u{01}\u{02}\u{03}\u{04}"))
+        #expect(PageLayoutPlanner.isUnreadable("\u{FFFD}\u{FFFD}a"))
+        #expect(!PageLayoutPlanner.isUnreadable("Plain text, α ≤ β"))
+        #expect(!PageLayoutPlanner.isUnreadable("\u{E001}"))
+    }
+
+    @Test func gapsBecomeSpacesAndWideGapsBecomeCells() throws {
+        // "word" then a 3 pt gap (0.3 em: a space), "kern" then 0.5 pt (kerning: no space), then 15 pt (a cell).
+        let line = chars("word", x: 0) + chars("next", x: 23) + chars("ab", x: 43.5) + chars("cell", x: 68.5)
+        let layout = try #require(PageLayoutPlanner.layoutLine(line))
+        #expect(layout.text == "word nextab\tcell")
+        #expect(layout.isTabular)
+    }
+
+    @Test func raisedAndLoweredSmallCharactersAreScripts() throws {
+        var line = chars("x", x: 0)
+        line += chars("2", x: 5, baseline: 96, size: 7)
+        line += chars(" + a", x: 9)
+        line += chars("i", x: 29, baseline: 101.5, size: 7)
+        let layout = try #require(PageLayoutPlanner.layoutLine(line))
+        #expect(layout.runs.map(\.script) == [.none, .superscript, .none, .subscript])
+        #expect(layout.text == "x2 + ai")
+        // A small character on the baseline (a footnote-size word) is not a script.
+        let flat = try #require(PageLayoutPlanner.layoutLine(chars("ab", x: 0) + chars("c", x: 10, size: 7)))
+        #expect(flat.runs.allSatisfy { $0.script == .none })
+    }
+
+    @Test func linesAreProseMathOrFragments() {
+        #expect(PageLayoutPlanner.role(of: chars("The first finding is that", font: "CMR10")) == .prose)
+        var equation = chars("u", font: "CMMI10") + chars("+", font: "CMR10") + chars("v", font: "CMMI10") + chars("=10,", font: "CMR10")
+        #expect(PageLayoutPlanner.role(of: equation) == .math)
+        equation = chars("cos", font: "CMR10") + chars("θ", font: "CMMI10") + chars("−", font: "CMSY10") + chars("sin", font: "CMR10") + chars("θ", font: "CMMI10")
+        #expect(PageLayoutPlanner.role(of: equation) == .math)
+        #expect(PageLayoutPlanner.role(of: chars("(4)")) == .fragment)
+        #expect(PageLayoutPlanner.role(of: chars("lim")) == .fragment)
+        // Inline math inside a sentence stays prose.
+        let inline = chars("the error ", font: "CMR10") + chars("ϵ", font: "CMMI10") + chars(" for every one", font: "CMR10")
+        #expect(PageLayoutPlanner.role(of: inline) == .prose)
+    }
+
+    @Test func displayEquationsBecomeRegionsWithTheirNumberAsText() throws {
+        let before = chars("We define the transfer as an integral:", baseline: 100)
+        let equation = chars("F", x: 120, baseline: 130, font: "CMMI10") + chars("=", x: 126, baseline: 130) + chars("x", x: 132, baseline: 130, font: "CMMI10")
+            + chars("(1)", x: 290, baseline: 130)
+        let limit = chars("0", x: 140, baseline: 138, size: 7, font: "CMR7")
+        let after = chars("Equation one is evaluated numerically here.", baseline: 160)
+        let columns = ColumnLayout(isTwoColumn: false, middle: 300)
+        let (items, rest) = PageLayoutPlanner.equationRegions(lines: [before, equation, limit, after], paths: [], columns: columns)
+        #expect(rest.count == 2)
+        guard case let .equation(frame, number) = try #require(items.first) else {
+            Issue.record("not an equation")
+            return
+        }
+        #expect(number == "(1)")
+        #expect(frame.minX < 121 && frame.maxX < 200)
+        // Clipped to stay clear of the lines above and below.
+        #expect(frame.minY >= 100 && frame.maxY <= 160)
+    }
+
+    @Test func twoAlignedNumbersStayInThePicture() {
+        let rows = [chars("u=1", x: 120, baseline: 130, font: "CMMI10") + chars("(4)", x: 290, baseline: 130),
+                    chars("v=2", x: 120, baseline: 142, font: "CMMI10") + chars("(5)", x: 290, baseline: 142)]
+        #expect(PageLayoutPlanner.equationNumber(in: rows) == nil)
+    }
+
+    @Test func boxesOfLinesFormAFigureButRulesDoNot() {
+        let frame = [CGRect(x: 100, y: 100, width: 180, height: 0.4), CGRect(x: 100, y: 190, width: 180, height: 0.4),
+                     CGRect(x: 100, y: 100, width: 0.4, height: 90), CGRect(x: 280, y: 100, width: 0.4, height: 90),
+                     CGRect(x: 120, y: 120, width: 40, height: 60)]
+        let rule = [CGRect(x: 72, y: 400, width: 400, height: 0.5)]
+        let figures = PageLayoutPlanner.figureRegions(paths: frame + rule, chars: [], pageSize: CGSize(width: 612, height: 792))
+        #expect(figures.count == 1)
+        #expect(figures.first?.contains(CGRect(x: 100, y: 100, width: 180, height: 90)) == true)
+        // A ruled table full of text isn't a picture.
+        let text = (0..<6).flatMap { row in chars("Cell text here", x: 110, baseline: 110 + CGFloat(row) * 12) }
+        #expect(PageLayoutPlanner.figureRegions(paths: frame, chars: text, pageSize: CGSize(width: 612, height: 792)).isEmpty)
+    }
+
+    @Test func twoColumnPagesReadDownTheLeftThenTheRight() {
+        let left = (0..<5).map { chars("left column words here \($0)", x: 60, baseline: 200 + CGFloat($0) * 12) }
+        let right = (0..<5).map { chars("right column words now \($0)", x: 320, baseline: 200 + CGFloat($0) * 12, advance: 4) }
+        let title = chars("A title across both columns of the page", x: 150, baseline: 100, advance: 8)
+        let columns = ColumnLayout(lines: left + right + [title])
+        #expect(columns.isTwoColumn)
+        let items = (right + left + [title]).compactMap(PageLayoutPlanner.layoutLine).map(PageItem.line)
+        let order = columns.ordered(items).compactMap { item -> String? in
+            if case let .line(line) = item { line.text } else { nil }
+        }
+        #expect(order.first?.hasPrefix("A title") == true)
+        #expect(order[1].hasPrefix("left column") && order[5].hasPrefix("left column"))
+        #expect(order[6].hasPrefix("right column"))
+    }
+
+    @Test func runningHeadersAndPageNumbersRepeatedOnMostPagesAreDropped() {
+        func page(_ number: Int) -> PlannedPage {
+            PlannedPage(items: [
+                .line(LayoutLine(runs: [LayoutRun(text: "Journal of Cheese", fontSize: 9)], frame: CGRect(x: 72, y: 20, width: 100, height: 9))),
+                .line(LayoutLine(runs: [LayoutRun(text: "Body on page \(number)", fontSize: 10)], frame: CGRect(x: 72, y: 300, width: 100, height: 10))),
+                .line(LayoutLine(runs: [LayoutRun(text: "Page \(number)", fontSize: 9)], frame: CGRect(x: 290, y: 760, width: 40, height: 9))),
+            ])
+        }
+        let cleaned = PageLayoutPlanner.removingRunningLines([page(1), page(2), page(3)], pageHeights: [792, 792, 792])
+        #expect(cleaned.allSatisfy { $0.items.count == 1 })
+        // A single page keeps everything.
+        #expect(PageLayoutPlanner.removingRunningLines([page(1)], pageHeights: [792])[0].items.count == 3)
+    }
+
+    @Test func unreadableGlyphRowsBecomeOCRRegionsOutsidePictures() {
+        let row = (0..<8).map { CGRect(x: 72 + CGFloat($0) * 8, y: 140, width: 8, height: 14) }
+        let inEquation = (0..<4).map { CGRect(x: 300 + CGFloat($0) * 8, y: 140, width: 8, height: 14) }
+        let regions = PageLayoutPlanner.missingTextRegions(row + inEquation, pictures: [CGRect(x: 290, y: 130, width: 60, height: 30)])
+        #expect(regions.count == 1)
+        #expect(regions.first?.minX == 72)
+    }
+}
+
+struct TextLayoutAnalyzerHyphenationTests {
+    private func lines(_ texts: [String]) -> [LayoutItem] {
+        texts.enumerated().map { index, text in
+            .line(LayoutLine(runs: [LayoutRun(text: text, fontSize: 10)], frame: CGRect(x: 72, y: 100 + CGFloat(index) * 12, width: 200, height: 10)))
+        }
+    }
+
+    @Test func compoundsKeepTheirHyphenAndBrokenWordsJoin() {
+        let blocks = TextLayoutAnalyzer.blocks(items: lines(["a well-known state-", "of-the-art pa-", "rameter and self-", "aware text"]))
+        #expect(blocks.first?.text == "a well-known state-of-the-art parameter and self-aware text")
+    }
+
+    @Test func theDocumentsOwnSpellingDecides() {
+        let joined = TextLayoutAnalyzer.blocks(items: lines(["some co-", "operation"]), vocabulary: ["cooperation"])
+        #expect(joined.first?.text == "some cooperation")
+        let kept = TextLayoutAnalyzer.blocks(items: lines(["an e-", "mail"]), vocabulary: ["e-mail"])
+        #expect(kept.first?.text == "an e-mail")
+        let vocabulary = TextLayoutAnalyzer.vocabulary(of: [LayoutLine(runs: [LayoutRun(text: "A non-linear model, linear-", fontSize: 10)], frame: .zero)])
+        #expect(vocabulary == ["a", "non-linear", "model"])
+    }
+
+    @Test func tabularRowsBecomeATableAndALoneRowIsAHeading() {
+        func row(_ text: String, _ y: CGFloat, size: CGFloat = 10) -> LayoutItem {
+            .line(LayoutLine(runs: [LayoutRun(text: text, fontSize: size)], frame: CGRect(x: 72, y: y, width: 200, height: size), isTabular: true))
+        }
+        let body = (0..<3).map { index in
+            LayoutItem.line(LayoutLine(runs: [LayoutRun(text: "Body text at the usual size for the page.", fontSize: 10)], frame: CGRect(x: 72, y: 300 + CGFloat(index) * 12, width: 200, height: 10)))
+        }
+        let blocks = TextLayoutAnalyzer.blocks(items: [row("1\tIntroduction", 60, size: 14)] + body + [row("Name\tCount", 400), row("Lantern\t2", 412)])
+        #expect(blocks.first?.kind == .heading(level: 2))
+        #expect(blocks.first?.text == "1 Introduction")
+        #expect(blocks.last?.kind == .table([["Name", "Count"], ["Lantern", "2"]]))
+    }
+
+    @Test func equationsAreTheirOwnBlocks() {
+        let items: [LayoutItem] = lines(["Text before"]) + [.equation(LayoutImage(id: 3, frame: .zero), number: "(2)")] + lines(["Text after"])
+        let blocks = TextLayoutAnalyzer.blocks(items: items)
+        #expect(blocks.map(\.kind) == [.paragraph, .equation(3, number: "(2)"), .paragraph])
+    }
+}
+
+struct DocxTableEmbedderTests {
+    @Test func replacesTheTokenParagraphWithATableAndKeepsABodyParagraphLast() throws {
+        let table = DocxTable(token: DocxTable.token(1), rows: [["Item", "Count"], ["A & B", "<2>"]])
+        let document = #"<w:document><w:body><w:p><w:pPr/><w:r><w:t>Before</w:t></w:r></w:p><w:p w:rsidR="1"><w:r><w:t>CHEESETABLE0001X</w:t></w:r></w:p><w:sectPr/></w:body></w:document>"#
+        var parts = [DocxImageEmbedder.documentPath: Data(document.utf8)]
+        try DocxTableEmbedder.embed([table], into: &parts)
+        let xml = String(decoding: try #require(parts[DocxImageEmbedder.documentPath]), as: UTF8.self)
+        #expect(!xml.contains("CHEESETABLE"))
+        #expect(xml.contains("<w:t>Before</w:t>"))
+        #expect(xml.contains("<w:tbl>") && xml.contains("</w:tbl><w:p/><w:sectPr/>"))
+        #expect(xml.contains("A &amp; B") && xml.contains("&lt;2&gt;"))
+        #expect(xml.components(separatedBy: "<w:b/>").count == 3)
+    }
+
+    @Test func aMissingTokenIsAnError() {
+        var parts = [DocxImageEmbedder.documentPath: Data("<w:body/>".utf8)]
+        #expect(throws: (any Error).self) { try DocxTableEmbedder.embed([DocxTable(token: DocxTable.token(1), rows: [["a"]])], into: &parts) }
+    }
+}
+
+struct MarkdownAndHTMLPreparationTests {
+    @Test func frontMatterIsDropped() {
+        #expect(MarkdownConverter.strippingFrontMatter("---\ntitle: X\ntags: [a]\n---\n# Heading") == "# Heading")
+        #expect(MarkdownConverter.strippingFrontMatter("---\ntitle: X\n...\nBody") == "Body")
+        // A horizontal rule later in the file, or an unclosed block, stays.
+        #expect(MarkdownConverter.strippingFrontMatter("Intro\n---\nMore") == "Intro\n---\nMore")
+        #expect(MarkdownConverter.strippingFrontMatter("---\nno end") == "---\nno end")
+    }
+
+    @Test func tablesAndLocalImagesBecomeTokens() throws {
+        let folder = makeTemporaryDirectory()
+        let image = try #require(FileFixtures.halfTransparentImage())
+        #expect(FileFixtures.write(image, to: folder.appending(path: "pic.png"), type: .png))
+        let html = """
+        <p>Intro</p><table><thead><tr><th>Name</th><th>Qty</th></tr></thead><tr><td><b>Lamp</b></td><td>2 &amp; 3</td></tr></table>
+        <img src="pic.png"><img src="../secret.png"><img src="https://example.com/x.png"><img src="/etc/x.png">
+        """
+        let prepared = HTMLForDocx.prepare(html, folder: folder)
+        #expect(prepared.tables.first?.rows == [["Name", "Qty"], ["Lamp", "2 & 3"]])
+        #expect(prepared.tables.first?.hasHeader == true)
+        #expect(prepared.images.count == 1)
+        #expect(prepared.html.contains(DocxTable.token(1)) && prepared.html.contains(DocxImage.token(1)))
+        #expect(prepared.html.contains("../secret.png") && prepared.html.contains("https://example.com/x.png"))
+    }
+
+    @Test func onlyImagesInsideTheFolderResolve() throws {
+        let folder = makeTemporaryDirectory()
+        try FileManager.default.createDirectory(at: folder.appending(path: "img"), withIntermediateDirectories: true)
+        try Data([0]).write(to: folder.appending(path: "img/a.png"))
+        try Data([0]).write(to: folder.appending(path: "notes.txt"))
+        #expect(LocalImages.resolve("img/a.png", in: folder) != nil)
+        #expect(LocalImages.resolve("img/../img/a.png", in: folder) != nil)
+        #expect(LocalImages.resolve("../a.png", in: folder) == nil)
+        #expect(LocalImages.resolve("notes.txt", in: folder) == nil)
+        #expect(LocalImages.resolve("file:///etc/a.png", in: folder) == nil)
+        #expect(LocalImages.resolve("/img/a.png", in: folder) == nil)
+        #expect(LocalImages.inliningImages(in: #"<img alt="x" src="img/a.png">"#, folder: folder).contains("data:image/png;base64,AA=="))
+    }
+}
+
+struct PDFContentScannerTests {
+    @Test func findsFontsGlyphPositionsAndPaths() throws {
+        let url = makeTemporaryDirectory().appending(path: "scan.pdf")
+        var box = CGRect(x: 0, y: 0, width: 612, height: 792)
+        let context = try #require(CGContext(url as CFURL, mediaBox: &box, nil))
+        context.beginPDFPage(nil)
+        TestPDFs.draw("Hi", at: CGPoint(x: 72, y: 700), size: 20, bold: true, in: context)
+        context.stroke(CGRect(x: 100, y: 100, width: 50, height: 40))
+        context.endPDFPage()
+        context.closePDF()
+        let page = try #require(CGPDFDocument(url as CFURL)?.page(at: 1))
+        let scanned = PDFContentScanner.scan(page)
+        #expect(scanned.glyphs.count == 2)
+        let first = try #require(scanned.glyphs.first)
+        #expect(first.fontName.contains("Helvetica-Bold"))
+        #expect(abs(first.origin.x - 72) < 0.5 && abs(first.origin.y - 700) < 0.5)
+        #expect(abs(first.size - 20) < 0.5)
+        #expect(scanned.glyphs[1].origin.x > first.origin.x + 5)
+        #expect(scanned.paths.contains { abs($0.minX - 100) < 1 && abs($0.width - 50) < 1 && abs($0.height - 40) < 1 })
+    }
+}

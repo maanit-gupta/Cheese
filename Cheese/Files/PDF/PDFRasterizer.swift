@@ -31,8 +31,10 @@ enum PDFRasterizer {
         return context.makeImage()
     }
 
-    /// One region of a page (in page space, unrotated) at `dpi`, for cropping out images.
-    static func render(_ page: CGPDFPage, region: CGRect, dpi: CGFloat) -> CGImage? {
+    /// One region of the page as it's shown (upright page points, top-left origin) at `dpi`.
+    static func render(_ page: CGPDFPage, uprightRegion region: CGRect, dpi: CGFloat) -> CGImage? {
+        let size = PDFPageDrawing.uprightSize(of: page)
+        let box = page.getBoxRect(.cropBox)
         let scale = dpi / 72
         let width = max(Int((region.width * scale).rounded(.up)), 1)
         let height = max(Int((region.height * scale).rounded(.up)), 1)
@@ -44,8 +46,11 @@ enum PDFRasterizer {
         else { return nil }
         context.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
         context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        context.interpolationQuality = .high
         context.scaleBy(x: scale, y: scale)
-        context.translateBy(x: -region.minX, y: -region.minY)
+        context.translateBy(x: -region.minX, y: -(size.height - region.maxY))
+        context.concatenate(page.getDrawingTransform(.cropBox, rect: CGRect(origin: .zero, size: size), rotate: 0, preserveAspectRatio: true))
+        context.clip(to: box)
         context.drawPDFPage(page)
         return context.makeImage()
     }

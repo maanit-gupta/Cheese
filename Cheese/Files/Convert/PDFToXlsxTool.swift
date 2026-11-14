@@ -29,7 +29,7 @@ enum PDFToXlsx {
         for index in 0..<document.pageCount {
             try Task.checkCancellation()
             guard let page = document.page(at: index) else { continue }
-            let words = PDFTextExtractor.hasText(page) ? PDFTextExtractor.words(on: page) : try ScannedPageReader.words(on: page)
+            let words = PDFTextExtractor.isReadable(page) ? PDFTextExtractor.words(on: page) : try ScannedPageReader.words(on: page)
             for plan in TableDetector.sheets(forPage: index + 1, words: words) {
                 sheets.append(SheetJSWriter.Sheet(name: plan.name, rows: plan.rows.map { $0.map { CellValueParser.parse($0, locale: locale) } }))
             }

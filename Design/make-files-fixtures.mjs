@@ -10,6 +10,8 @@
 //   deck.pptx     3 slides at 16:9: a title slide, a bulleted slide, a slide with a shape and a table
 //   budget.xlsx   2 sheets: "Budget" (text, numbers, a date column) and "Team" (names and roles)
 //   data.csv      a small comma-separated table
+//   media.pptx    2 slides: a picture with a caption text box, and two free text boxes
+//   merged.xlsx   3 sheets: merged header cells, formulas with cached values, and a wide sheet
 //
 // make-files-fixtures.swift makes the PDF, Word and HEIC fixtures.
 import { createRequire } from "node:module";
@@ -83,6 +85,37 @@ XLSX.utils.book_append_sheet(book, budget, "Budget");
 XLSX.utils.book_append_sheet(book, team, "Team");
 XLSX.writeFile(book, join(out, "budget.xlsx"), { compression: true });
 console.log("wrote budget.xlsx");
+
+// PowerPoint with a picture and free text boxes (the picture is notes-image.png, made by the Swift script).
+const media = new PptxGenJS();
+media.layout = "LAYOUT_16x9";
+const pictureSlide = media.addSlide();
+pictureSlide.addImage({ path: join(out, "notes-image.png"), x: 0.5, y: 0.5, w: 4, h: 2 });
+pictureSlide.addText("Route overview", { x: 5, y: 0.8, w: 4.5, h: 0.8, fontSize: 28, bold: true, color: "1F3A5F" });
+pictureSlide.addText("Two days, twenty miles", { x: 5, y: 1.7, w: 4.5, h: 0.6, fontSize: 18, color: "555555" });
+const boxes = media.addSlide();
+boxes.addText("Left box text", { x: 0.5, y: 1, w: 4, h: 1.5, fontSize: 20, fill: { color: "FFF3C4" } });
+boxes.addText("Right box text", { x: 5.5, y: 2.5, w: 4, h: 1.5, fontSize: 20, fill: { color: "DDE6F0" } });
+await media.writeFile({ fileName: join(out, "media.pptx") });
+console.log("wrote media.pptx");
+
+// Excel with merged cells, formulas and several sheets
+const summary = XLSX.utils.aoa_to_sheet([
+  ["Quarterly Summary", "", ""],
+  ["Region", "Q1", "Q2"],
+  ["North", 120, 140],
+  ["South", 90, 110],
+  ["Total", { f: "SUM(B3:B4)", v: 210 }, { f: "SUM(C3:C4)", v: 250 }],
+]);
+summary["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }];
+const notes = XLSX.utils.aoa_to_sheet([["Note"], ["Figures are unaudited."]]);
+const wide = XLSX.utils.aoa_to_sheet([Array.from({ length: 12 }, (_, i) => `Column ${i + 1}`), Array.from({ length: 12 }, (_, i) => i * 10)]);
+const merged = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(merged, summary, "Summary");
+XLSX.utils.book_append_sheet(merged, notes, "Notes");
+XLSX.utils.book_append_sheet(merged, wide, "Wide");
+XLSX.writeFile(merged, join(out, "merged.xlsx"), { compression: true });
+console.log("wrote merged.xlsx");
 
 writeFileSync(join(out, "data.csv"), "City,Population,Founded\nMumbai,12442373,1507\nDelhi,11034555,1052\nPune,3124458,1689\n");
 console.log("wrote data.csv");

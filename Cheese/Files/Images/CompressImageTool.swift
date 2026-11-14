@@ -20,8 +20,13 @@ struct CompressImageTool: FileTool {
 
     func work(inputs: [URL], options: Options) -> JobWork {
         .perFile(tool: id, inputs: inputs) { input, context in
-            guard let format = ImageFormat(url: input), ImageFormat.writable.contains(format) else {
+            guard let original = ImageFormat(url: input) else {
                 throw FileToolError.message("\(input.lastPathComponent) is in a format Cheese can't write.")
+            }
+            // Macs without a WebP encoder still compress WebP, into HEIC (lossy, keeps transparency).
+            let format = ImageFormat.writable.contains(original) ? original : .heic
+            if format != original {
+                context.note("This Mac can't write \(original.title), so \(input.lastPathComponent) was compressed to \(format.title).")
             }
             let source = try ImageFiles.source(at: input)
             let output = context.outputURL(for: input, suffix: "compressed", extension: format.fileExtension)

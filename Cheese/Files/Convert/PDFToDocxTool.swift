@@ -23,23 +23,57 @@ struct PDFToDocxTool: FileTool {
 }
 
 enum PDFConversionLimits {
-    static let hint = "Layout is approximate: multi-column pages may need cleanup, complex or merged-cell tables won't be perfect, and text inside images isn't converted unless the whole page is scanned."
+    static let hint = "Layout is approximate: display equations and line drawings come across as pictures (not editable), pages with more than two columns may need cleanup, complex or merged-cell tables won't be perfect, and text inside images isn't converted unless the whole page is scanned."
 }
 
 enum PDFToDocx {
     /// Images smaller than this (in points, either side) are decoration, not content.
     static let minimumImageSide: CGFloat = 24
+    /// Equations are cropped sharp enough to print: at least 300 dpi.
+    static let equationDPI: CGFloat = 300
+    static let imageDPI: CGFloat = 200
 
     static func convert(_ input: URL) throws -> Data {
         let document = try PDFFiles.open(input)
-        var builder = DocxBuilder()
+        var pages: [PlannedPage] = []
+        var heights: [CGFloat] = []
         for index in 0..<document.pageCount {
             try Task.checkCancellation()
+            guard let page = document.page(at: index) else {
+                pages.append(PlannedPage(items: []))
+                heights.append(0)
+                continue
+            }
+            let geometry = PDFPageGeometry(page)
+            heights.append(geometry.size.height)
+            if PDFTextExtractor.hasText(page) {
+                pages.append(PageLayoutPlanner.plan(PDFTextExtractor.pageInput(on: page)))
+            } else {
+                pages.append(PlannedPage(items: [], needsOCR: true))
+            }
+        }
+        pages = PageLayoutPlanner.removingRunningLines(pages, pageHeights: heights)
+        let vocabulary = TextLayoutAnalyzer.vocabulary(of: pages.flatMap { page in
+            page.items.compactMap { item -> LayoutLine? in
+                if case let .line(line) = item { line } else { nil }
+            }
+        })
+
+        var builder = DocxBuilder()
+        for (index, planned) in pages.enumerated() {
+            try Task.checkCancellation()
             guard let page = document.page(at: index) else { continue }
-            let scanned = !PDFTextExtractor.hasText(page)
-            let lines = scanned ? try ScannedPageReader.lines(on: page) : PDFTextExtractor.lines(on: page)
-            let images = scanned ? [] : self.images(on: page, builder: &builder)
-            builder.append(TextLayoutAnalyzer.blocks(lines: lines, images: images), bodySize: TextLayoutAnalyzer.bodySize(of: lines))
+            let items: [LayoutItem]
+            if planned.needsOCR {
+                let lines = try ScannedPageReader.lines(on: page)
+                items = lines.map { .line($0) }
+            } else {
+                items = try layoutItems(planned.items, on: page, builder: &builder)
+            }
+            let lines = items.compactMap { item -> LayoutLine? in
+                if case let .line(line) = item { line } else { nil }
+            }
+            builder.append(TextLayoutAnalyzer.blocks(items: items, vocabulary: vocabulary), bodySize: TextLayoutAnalyzer.bodySize(of: lines))
             if index < document.pageCount - 1 {
                 builder.pageBreak()
             }
@@ -47,19 +81,36 @@ enum PDFToDocx {
         return try builder.docx()
     }
 
-    /// Crops each image on the page out by rendering its region, in reading position.
-    private static func images(on page: PDFPage, builder: inout DocxBuilder) -> [LayoutImage] {
+    /// Crops pictures (images, drawings, equations) and reads unreadable lines with OCR.
+    private static func layoutItems(_ items: [PageItem], on page: PDFPage, builder: inout DocxBuilder) throws -> [LayoutItem] {
         guard let cgPage = page.pageRef else { return [] }
-        let box = page.bounds(for: .cropBox)
-        return PDFImageInspector.imageRects(on: cgPage).compactMap { rect in
-            let visible = rect.intersection(box)
-            guard !visible.isNull, visible.width >= minimumImageSide, visible.height >= minimumImageSide,
-                  let image = PDFRasterizer.render(cgPage, region: visible, dpi: 150),
-                  let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
-            else { return nil }
-            let id = builder.addImage(png: png, size: visible.size)
-            return LayoutImage(id: id, frame: PDFTextExtractor.topLeft(visible, in: box))
+        let size = PDFPageGeometry(page).size
+        let pageBox = CGRect(origin: .zero, size: size)
+        return try items.compactMap { item -> LayoutItem? in
+            switch item {
+            case let .line(line):
+                return .line(line)
+            case let .image(rect), let .figure(rect):
+                let visible = rect.intersection(pageBox)
+                guard !visible.isNull, visible.width >= minimumImageSide, visible.height >= minimumImageSide,
+                      let png = png(cgPage, region: visible, dpi: imageDPI)
+                else { return nil }
+                return .image(LayoutImage(id: builder.addImage(png: png, size: visible.size), frame: visible))
+            case let .equation(rect, number):
+                let visible = rect.intersection(pageBox)
+                guard !visible.isNull, let png = png(cgPage, region: visible, dpi: equationDPI) else { return nil }
+                return .equation(LayoutImage(id: builder.addImage(png: png, size: visible.size), frame: visible), number: number)
+            case let .unreadable(rect, fontSize):
+                let text = try ScannedPageReader.text(in: rect, on: page)
+                guard !text.isEmpty else { return nil }
+                return .line(LayoutLine(runs: [LayoutRun(text: text, fontSize: fontSize)], frame: rect))
+            }
         }
+    }
+
+    private static func png(_ page: CGPDFPage, region: CGRect, dpi: CGFloat) -> Data? {
+        guard let image = PDFRasterizer.render(page, uprightRegion: region, dpi: dpi) else { return nil }
+        return NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
     }
 }
 
@@ -71,6 +122,7 @@ struct DocxBuilder {
 
     private let text = NSMutableAttributedString()
     private var images: [Int: DocxImage] = [:]
+    private var tables: [DocxTable] = []
     private var listNumber = 0
 
     /// Registers an image and returns its ID for a `LayoutImage`.
@@ -102,6 +154,13 @@ struct DocxBuilder {
                 listNumber = 0
                 guard let image = images[id] else { continue }
                 appendParagraph([LayoutRun(text: image.token, fontSize: 11)], size: 11, forceBold: false, spacingBefore: 0, spacingAfter: 8)
+            case let .equation(id, number):
+                listNumber = 0
+                guard let image = images[id] else { continue }
+                appendEquation(token: image.token, number: number)
+            case let .table(rows):
+                listNumber = 0
+                appendTable(rows)
             }
         }
     }
@@ -111,10 +170,38 @@ struct DocxBuilder {
         text.append(NSAttributedString(string: "\u{0C}", attributes: [.font: font(size: 11, bold: false, italic: false)]))
     }
 
+    /// Adds a table where a token paragraph stands (Cocoa's writer drops text tables).
+    mutating func appendTable(_ rows: [[String]]) {
+        let table = DocxTable(token: DocxTable.token(tables.count + 1), rows: rows)
+        tables.append(table)
+        appendParagraph([LayoutRun(text: table.token, fontSize: 11)], size: 11, forceBold: false, spacingBefore: 0, spacingAfter: 8)
+    }
+
+    /// A display equation: the picture centered, and its number (if any) at the right margin, laid
+    /// out as a borderless two-cell table (tab stops after an inline picture aren't honored everywhere).
+    private mutating func appendEquation(token: String, number: String?) {
+        guard let number else {
+            let style = NSMutableParagraphStyle()
+            style.alignment = .center
+            style.paragraphSpacingBefore = 4
+            style.paragraphSpacing = 8
+            text.append(NSAttributedString(string: "\(token)\n", attributes: [.font: font(size: 11, bold: false, italic: false), .paragraphStyle: style]))
+            return
+        }
+        let table = DocxTable(
+            token: DocxTable.token(tables.count + 1), rows: [[token, number]], hasHeader: false, hasBorders: false,
+            columnWidths: [DocxTableEmbedder.textWidth - 1200, 1200], alignments: ["center", "right"]
+        )
+        tables.append(table)
+        appendParagraph([LayoutRun(text: table.token, fontSize: 11)], size: 11, forceBold: false, spacingBefore: 0, spacingAfter: 8)
+    }
+
     func docx() throws -> Data {
         let written = try DocxWriter.docx(from: text)
-        guard !images.isEmpty else { return written }
+        guard !images.isEmpty || !tables.isEmpty else { return written }
         var parts = try ZipArchive.read(written)
+        // Tables first: an equation's table cell holds its picture's token.
+        try DocxTableEmbedder.embed(tables, into: &parts)
         try DocxImageEmbedder.embed(images.keys.sorted().compactMap { images[$0] }, into: &parts)
         return try ZipArchive.write(parts)
     }
@@ -128,10 +215,16 @@ struct DocxBuilder {
             style.tabStops = [NSTextTab(textAlignment: .left, location: indent / 2), NSTextTab(textAlignment: .left, location: indent)]
         }
         for run in runs {
-            text.append(NSAttributedString(string: run.text, attributes: [
+            var attributes: [NSAttributedString.Key: Any] = [
                 .font: font(size: size, bold: forceBold || run.isBold, italic: run.isItalic),
                 .paragraphStyle: style,
-            ]))
+            ]
+            switch run.script {
+            case .superscript: attributes[.superscript] = 1
+            case .subscript: attributes[.superscript] = -1
+            case .none: break
+            }
+            text.append(NSAttributedString(string: run.text, attributes: attributes))
         }
         text.append(NSAttributedString(string: "\n", attributes: [.font: font(size: size, bold: false, italic: false), .paragraphStyle: style]))
     }

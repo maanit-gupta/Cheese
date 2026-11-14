@@ -16,6 +16,7 @@ node_modules/
 !/README.md
 !/docs/**/*.md
 !/Cheese/Resources/Renderers/VENDORED.md
+!/CheeseTests/Fixtures/Files/*.md
 CLAUDE*.md
 AGENTS.md
 .claude/
