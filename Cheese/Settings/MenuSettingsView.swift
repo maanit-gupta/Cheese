@@ -24,8 +24,9 @@ struct MenuSettingsView: View {
                 Button("Reset to Default…") { confirmsReset = true }
             }
 
+            // Takes whatever height is left: Settings is a fixed 500 pt window.
             MenuOutline(model: model)
-                .frame(minHeight: 230)
+                .frame(maxWidth: .infinity, minHeight: 120, maxHeight: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
                 .overlay(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium).strokeBorder(.separator))
 
@@ -54,7 +55,8 @@ struct MenuSettingsView: View {
             Text("Hidden items keep their keyboard shortcuts and stay in the command palette. To turn a feature off completely, use General → Modules.")
                 .font(DesignTokens.Typography.caption)
                 .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            // No `.fixedSize(vertical:)` here: AppKit measures the tab's minimum size at a tiny width,
+            // where this caption came out ~1,300 pt tall and pushed the whole Settings window off-screen.
         }
         .padding(DesignTokens.Spacing.xxLarge)
         .onAppear { model.opened() }
