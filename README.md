@@ -11,6 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/maanit-gupta/Cheese/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/maanit-gupta/Cheese?color=FFC83D&label=download"></a>
+  <a href="https://github.com/maanit-gupta/Cheese/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/maanit-gupta/Cheese/total?color=FFC83D&label=downloads"></a>
   <img alt="macOS 15+" src="https://img.shields.io/badge/macOS-15%2B-1d1d1f">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138">
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-2f9e74"></a>
