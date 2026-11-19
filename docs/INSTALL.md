@@ -53,6 +53,8 @@ Continue with [First launch](#first-launch).
 3. Drag **Cheese.app** into your **Applications** folder.
 4. Double-click **Cheese** in Applications.
 
+Opened straight from Downloads or the Desktop instead, Cheese moves itself to `/Applications/Cheese.app` (replacing an older copy there and quitting it if it's running), moves the extra copies in Downloads, on the Desktop and in Applications (such as `Cheese 2.app`) to the Trash, and reopens from Applications. If the copy in Applications is newer, that one opens instead. When `/Applications` isn't writable by your account, Cheese stays where it is.
+
 ### Getting past Gatekeeper (one time only)
 
 Cheese is free and open source, and it isn't notarized by Apple (that needs a paid developer account). The first time you open it, macOS shows **"Cheese" Not Opened** or **Apple could not verify "Cheese"…**. That's expected.

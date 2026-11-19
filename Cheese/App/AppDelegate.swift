@@ -31,9 +31,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 
+    /// True while this process hands over to the copy in /Applications (see `AppRelocator`).
+    private var isHandingOver = false
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Before any status item, hotkey or window: a downloaded copy moves itself into Applications.
+        isHandingOver = AppRelocator.relocateIfNeeded()
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // The test bundle is hosted in the app; don't add a status item or grab hotkeys there.
-        guard !Self.isRunningUnitTests else { return }
+        guard !Self.isRunningUnitTests, !isHandingOver else { return }
 
         MainMenu.install { [aboutWindow] in aboutWindow.show() }
         let openPermissionSettings: @MainActor (Permission) -> Void = { [permissionPrompter] permission in
@@ -106,6 +114,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// `cheese://share/<uuid>` from the Share menu opens Cheese Share with the shared items;
     /// `cheese://share` opens it empty; `cheese://settings/share` opens Settings on the Share tab.
     func application(_ application: NSApplication, open urls: [URL]) {
+        guard !isHandingOver else { return }
         for url in urls {
             if ShareHandoff.jobID(from: url) != nil {
                 share?.openHandoff(url)
